@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zach's Math Class - 數學教學網站</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: "PingFang HK", "Microsoft YaHei", sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* Header */
+        header {
+            text-align: center;
+            padding: 40px 0;
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            margin-bottom: 30px;
+        }
+        
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        header h1 span {
+            color: #ffd700;
+        }
+        
+        header p {
+            font-size: 1.2em;
+            opacity: 0.8;
+        }
+        
+        /* Navigation */
+        nav {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
+        
+        nav a {
+            padding: 12px 24px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 25px;
+            text-decoration: none;
+            color: #fff;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        
+        nav a:hover, nav a.active {
+            background: rgba(255,215,0,0.2);
+            border-color: #ffd700;
+        }
+        
+        /* Sections */
+        .section {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+        
+        .section.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Cards */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .card {
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 25px;
+            transition: transform 0.3s;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card h3 {
+            color: #ffd700;
+            margin-bottom: 15px;
+        }
+        
+        .card p {
+            opacity: 0.8;
+            line-height: 1.6;
+        }
+        
+        .card .tag {
+            display: inline-block;
+            padding: 5px 12px;
+            background: #4ade80;
+            color: #000;
+            border-radius: 15px;
+            font-size: 0.85em;
+            margin-top: 10px;
+        }
+        
+        .card .tag.s3 { background: #60a5fa; }
+        .card .tag.s5 { background: #f472b6; }
+        
+        /* AI Tutor Button */
+        .ai-tutor-btn {
+            display: block;
+            width: 200px;
+            margin: 30px auto;
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 30px;
+            color: #fff;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .ai-tutor-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(102,126,234,0.4);
+        }
+        
+        /* Contact */
+        .contact-info {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 30px;
+        }
+        
+        .contact-info h3 {
+            color: #ffd700;
+            margin-bottom: 15px;
+        }
+        
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 30px;
+            opacity: 0.6;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎓 <span>Zach's</span> Math Class</h1>
+            <p>中一、中三、中五 數學專門班</p>
+        </header>
+        
+        <nav>
+            <a href="#" class="active" onclick="showSection('home')">🏠 主頁</a>
+            <a href="#" onclick="showSection('s1')">📗 中一</a>
+            <a href="#" onclick="showSection('s3')">📙 中三</a>
+            <a href="#" onclick="showSection('s5')">📕 中五</a>
+            <a href="#" onclick="showSection('ai-tutor')">🤖 AI 導師</a>
+        </nav>
+        
+        <!-- Home Section -->
+        <section id="home" class="section active">
+            <div class="card-grid">
+                <div class="card">
+                    <h3>📗 中一數學</h3>
+                    <p>建立堅實基礎，鞏固運算技巧，輕鬆過渡初中數學</p>
+                    <span class="tag">溫習班</span>
+                    <span class="tag">拔尖班</span>
+                </div>
+                <div class="card">
+                    <h3>📙 中三數學</h3>
+                    <p>備戰DSE，掌握考試技巧，針對性操卷</p>
+                    <span class="tag s3">溫習班</span>
+                    <span class="tag s3">拔尖班</span>
+                </div>
+                <div class="card">
+                    <h3>📕 中五數學</h3>
+                    <p>最後衝刺，模擬考試，全面提升應試能力</p>
+                    <span class="tag s5">溫習班</span>
+                    <span class="tag s5">拔尖班</span>
+                </div>
+                <div class="card">
+                    <h3>🤖 AI 個人導師</h3>
+                    <p>24/7 AI 補習助手，即時解答數學問題</p>
+                    <span class="tag">免費使用</span>
+                </div>
+            </div>
+            
+            <button class="ai-tutor-btn" onclick="showSection('ai-tutor')">
+                🚀 開始使用 AI 導師
+            </button>
+            
+            <div class="contact-info">
+                <h3>📬 聯絡 Zach</h3>
+                <p>如有任何查詢，歡迎與我聯繫</p>
+                <p>📧 zach@school.edu.hk</p>
+            </div>
+        </section>
+        
+        <!-- S1 Section -->
+        <section id="s1" class="section">
+            <h2>📗 中一數學班</h2>
+            <div class="card-grid">
+                <div class="card">
+                    <h3>🌟 溫習班</h3>
+                    <p>鞏固基礎概念，每週複習課本重點</p>
+                    <p><strong>內容：</strong>整數運算、分數、小數、因數與倍數</p>
+                </div>
+                <div class="card">
+                    <h3>🏆 拔尖班</h3>
+                    <p>挑戰進階題目，培養數學思維</p>
+                    <p><strong>內容：</strong>奧數啟蒙、推理題、應用題</p>
+                </div>
+            </div>
+            <button class="ai-tutor-btn" onclick="showSection('ai-tutor')">
+                🤖 問 AI 導師 (中一)
+            </button>
+        </section>
+        
+        <!-- S3 Section -->
+        <section id="s3" class="section">
+            <h2>📙 中三數學班</h2>
+            <div class="card-grid">
+                <div class="card">
+                    <h3>🌟 溫習班</h3>
+                    <p>針對考試內容，加強薄弱環節</p>
+                    <p><strong>內容：</strong>代數、方程、幾何基礎、統計</p>
+                </div>
+                <div class="card">
+                    <h3>🏆 拔尖班</h3>
+                    <p>備戰DSE，操練past paper</p>
+                    <p><strong>內容：</strong>MC技巧、Long Question 解題策略</p>
+                </div>
+            </div>
+            <button class="ai-tutor-btn" onclick="showSection('ai-tutor')">
+                🤖 問 AI 導師 (中三)
+            </button>
+        </section>
+        
+        <!-- S5 Section -->
+        <section id="s5" class="section">
+            <h2>📕 中五數學班</h2>
+            <div class="card-grid">
+                <div class="card">
+                    <h3>🌟 溫習班</h3>
+                    <p>DSE最後衝刺，全面溫習</p>
+                    <p><strong>內容：</strong>所有必修課題、模擬考試</p>
+                </div>
+                <div class="card">
+                    <h3>🏆 拔尖班</h3>
+                    <p>搶分攻略針對性訓練</p>
+                    <p><strong>內容：</strong>MC秒殺技巧、Long Question 必殺技</p>
+                </div>
+            </div>
+            <button class="ai-tutor-btn" onclick="showSection('ai-tutor')">
+                🤖 問 AI 導師 (中五)
+            </button>
+        </section>
+        
+        <!-- AI Tutor Section -->
+        <section id="ai-tutor" class="section">
+            <h2>🤖 AI 個人導師</h2>
+            <div class="card">
+                <h3>歡迎使用 AI 補習導師</h3>
+                <p>呢度你可以：</p>
+                <ul style="margin: 15px 0; padding-left: 20px; line-height: 2;">
+                    <li>📝 問數學問題</li>
+                    <li>📷 上傳功課相片</li>
+                    <li>📚 自學數學遊戲</li>
+                    <li>📖 睇筆記</li>
+                </ul>
+                <p><strong>注意：</strong>請選擇你既班別然後輸入密碼登入</p>
+            </div>
+            <div class="card-grid">
+                <div class="card">
+                    <h3>🔐 登入</h3>
+                    <select id="class-select" style="width: 100%; padding: 10px; margin: 10px 0; border-radius: 8px;">
+                        <option value="">-- 選擇班別 --</option>
+                        <option value="1C">1C</option>
+                        <option value="3D">3D</option>
+                        <option value="S5G2">S5 Group 2</option>
+                    </select>
+                    <input type="password" id="password-input" placeholder="密碼" style="width: 100%; padding: 10px; margin: 10px 0; border-radius: 8px; border: none;">
+                    <button onclick="login()" style="width: 100%; padding: 12px; background: #667eea; border: none; border-radius: 8px; color: #fff; cursor: pointer;">登入</button>
+                    <p id="login-error" style="color: #ff6b6b; margin-top: 10px;"></p>
+                </div>
+            </div>
+        </section>
+        
+        <footer>
+            <p>© 2026 Zach's Math Class | Made with 🎓</p>
+        </footer>
+    </div>
+    
+    <script>
+        function showSection(id) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            // Show selected section
+            document.getElementById(id).classList.add('active');
+            
+            // Update nav
+            document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+        
+        function login() {
+            const classSelect = document.getElementById('class-select').value;
+            const password = document.getElementById('password-input').value;
+            const error = document.getElementById('login-error');
+            
+            if (!classSelect || !password) {
+                error.textContent = '請選擇班別同輸入密碼';
+                return;
+            }
+            
+            // Simple password check (in production, use proper auth)
+            if (password === 'math2026') {
+                error.textContent = '';
+                alert('登入成功！呢功能即將推出...');
+            } else {
+                error.textContent = '密碼錯誤，請聯絡 Zach';
+            }
+        }
+    </script>
+</body>
+</html>
