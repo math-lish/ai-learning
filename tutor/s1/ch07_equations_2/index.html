@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ch4 一元一次方程（一）- 中一數學</title>
+    <title>Ch7 一元一次方程（二）- 中一數學</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: "PingFang HK", "Microsoft YaHei", sans-serif;
-            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            background: linear-gradient(135deg, #f39c12 0%, #d68910 100%);
             min-height: 100vh;
             color: #333;
             padding: 20px;
@@ -31,7 +31,7 @@
             font-size: 0.9em;
             margin-bottom: 15px;
         }
-        header h1 { color: #3498db; font-size: 2em; }
+        header h1 { color: #f39c12; font-size: 1.8em; }
         header .subtitle { color: #666; margin-top: 5px; }
         .tabs {
             display: flex;
@@ -55,7 +55,7 @@
         .tab:hover { background: rgba(255,255,255,0.5); }
         .tab.active {
             background: white;
-            color: #3498db;
+            color: #f39c12;
             font-weight: bold;
             box-shadow: 0 5px 20px rgba(0,0,0,0.1);
         }
@@ -69,7 +69,7 @@
         }
         .section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .section h2 { color: #3498db; margin-bottom: 20px; font-size: 1.5em; }
+        .section h2 { color: #f39c12; margin-bottom: 20px; font-size: 1.5em; }
         .note-block {
             background: #f8f9fa;
             border-radius: 15px;
@@ -95,13 +95,13 @@
         }
         .example-title { font-weight: bold; color: #1976d2; margin-bottom: 10px; }
         .method-box {
-            background: #e3f2fd;
-            border-left: 4px solid #2196f3;
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
             padding: 15px;
             margin: 15px 0;
             border-radius: 8px;
         }
-        .method-title { font-weight: bold; color: #1565c0; margin-bottom: 10px; }
+        .method-title { font-weight: bold; color: #e65100; margin-bottom: 10px; }
         .practice-item {
             background: #f8f9fa;
             border-radius: 15px;
@@ -122,7 +122,7 @@
             transition: all 0.3s;
             font-size: 1em;
         }
-        .option-btn:hover { border-color: #3498db; background: #f0f8ff; }
+        .option-btn:hover { border-color: #f39c12; background: #fffbf0; }
         .option-btn.correct { background: #d4edda; border-color: #28a745; }
         .option-btn.wrong { background: #f8d7da; border-color: #dc3545; }
         footer {
@@ -137,8 +137,8 @@
     <div class="container">
         <header>
             <a href="../../index.html" class="back-btn">← 返回課題選擇</a>
-            <h1>📗 Ch4 一元一次方程（一）</h1>
-            <p class="subtitle">中一數學 | 天秤法、移項、文字題</p>
+            <h1>📗 Ch7 一元一次方程（二）</h1>
+            <p class="subtitle">中一數學 | 四種解方程方法</p>
         </header>
         
         <div class="tabs">
@@ -152,70 +152,72 @@
             <h2>📖 重點筆記</h2>
             
             <div class="note-block">
-                <h3>1. 甚麼是一元一次方程？</h3>
-                <p>只含一個未知數，且未知數的最高次數為 1 的方程</p>
-                <div class="formula">
-                    例如：x + 5 = 12, 3x - 7 = 8
-                </div>
-            </div>
-            
-            <div class="note-block">
-                <h3>2. 天秤法</h3>
-                <p>將方程想像成天秤，兩邊必須保持平衡</p>
+                <h3>四種解方程方法</h3>
+                
                 <div class="method-box">
-                    <div class="method-title">⚖️ 天秤法三大原則</div>
-                    <p>• 兩邊同時加上相同的數</p>
-                    <p>• 兩邊同時減去相同的數</p>
-                    <p>• 兩邊同時乘以相同的數</p>
-                    <p>• 兩邊同時除以相同的數（除數不能為 0）</p>
+                    <div class="method-title">📐 方法一：未知數在同一邊</div>
+                    <p><strong>做法：</strong>先做同類項加减，将未知数合并到一边</p>
+                    <div class="example">
+                        <div class="example-title">例：3x + 5 = x + 13</div>
+                        <p>Step 1: 移項（未知數移到左邊）</p>
+                        <p>3x - x = 13 - 5</p>
+                        <p>Step 2: 合併同類項</p>
+                        <p>2x = 8</p>
+                        <p>Step 3: 求 x</p>
+                        <p>x = 4</p>
+                    </div>
                 </div>
-                <div class="example">
-                    <div class="example-title">例：x + 5 = 12</div>
-                    <p>Step 1: 兩邊同時減 5</p>
-                    <p>x + 5 - 5 = 12 - 5</p>
-                    <p>Step 2: 求 x</p>
-                    <p>x = 7</p>
+                
+                <div class="method-box">
+                    <div class="method-title">⚖️ 方法二：天秤法（未知數在兩邊）</div>
+                    <p><strong>做法：</strong>利用天秤原理，兩邊同時做相同的運算</p>
+                    <div class="example">
+                        <div class="example-title">例：5x - 3 = 2x + 9</div>
+                        <p>Step 1: 兩邊同時 +3</p>
+                        <p>5x = 2x + 12</p>
+                        <p>Step 2: 兩邊同時 -2x</p>
+                        <p>3x = 12</p>
+                        <p>Step 3: 兩邊同時 ÷3</p>
+                        <p>x = 4</p>
+                    </div>
+                </div>
+                
+                <div class="method-box">
+                    <div class="method-title">📦 方法三：拆括號（日式拆括號）</div>
+                    <p><strong>做法：</strong>括號前有數字，要將該數字乘入括號內每一項</p>
+                    <div class="example">
+                        <div class="example-title">例：2(x + 3) = 14</div>
+                        <p>Step 1: 拆括號</p>
+                        <p>2x + 6 = 14</p>
+                        <p>Step 2: 移項</p>
+                        <p>2x = 14 - 6</p>
+                        <p>Step 3: 求 x</p>
+                        <p>2x = 8 → x = 4</p>
+                    </div>
+                </div>
+                
+                <div class="method-box">
+                    <div class="method-title">🔢 方法四：分母變括號</div>
+                    <p><strong>做法：</strong>將分母乘到等式兩邊，消除分數</p>
+                    <div class="example">
+                        <div class="example-title">例：(x/3) + 2 = 5</div>
+                        <p>Step 1: 兩邊同時 ×3（消除分母）</p>
+                        <p>x + 6 = 15</p>
+                        <p>Step 2: 移項</p>
+                        <p>x = 15 - 6</p>
+                        <p>Step 3: 求 x</p>
+                        <p>x = 9</p>
+                    </div>
                 </div>
             </div>
             
             <div class="note-block">
-                <h3>3. 直接移項</h3>
-                <p>將方程中的項移到另一邊，要變號</p>
-                <div class="formula">
-                    <strong>移項變號口決：</strong><br>
-                    加變減、減變加<br>
-                    乘變除、除變乘
-                </div>
-                <div class="example">
-                    <div class="example-title">例：x + 8 = 15</div>
-                    <p>移項：x = 15 - 8</p>
-                    <p>x = 7</p>
-                </div>
-                <div class="example">
-                    <div class="example-title">例：3x = 12</div>
-                    <p>移項：x = 12 ÷ 3</p>
-                    <p>x = 4</p>
-                </div>
-            </div>
-            
-            <div class="note-block">
-                <h3>4. 解方程步驟</h3>
-                <p>1. 睇：有冇括號？有就先拆</p>
-                <p>2. 移：將未知數放同一邊，數字放另一邊（記住變號！）</p>
-                <p>3. 合併：同類項合併</p>
-                <p>4. 求：未知數等於幾多</p>
-            </div>
-            
-            <div class="note-block">
-                <h3>5. 文字題（初步）</h3>
-                <p><strong>設未知數：</strong>將要求既數设为 x</p>
-                <div class="example">
-                    <div class="example-title">例：小明有 15 元，小紅比小明多 4 元。小紅有幾多元？</div>
-                    <p><strong>設：</strong>小紅有 x 元</p>
-                    <p><strong>方程：</strong>x = 15 + 4</p>
-                    <p><strong>解：</strong>x = 19</p>
-                    <p><strong>答：</strong>小紅有 19 元</p>
-                </div>
+                <h3>解方程步驟總結</h3>
+                <p>1. 有括號？→ 先拆括號</p>
+                <p>2. 有分母？→ 消除分母</p>
+                <p>3. 移項（天秤法）</p>
+                <p>4. 合併同類項</p>
+                <p>5. 求未知數</p>
             </div>
         </div>
         
@@ -224,39 +226,39 @@
             <h2>💻 互動練習</h2>
             
             <div class="practice-item">
-                <h3>練習 1：天秤法</h3>
-                <p>問題：x + 7 = 15，x = ?</p>
-                <button class="option-btn" onclick="checkAnswer(this, true)">A. x = 8</button>
-                <button class="option-btn" onclick="checkAnswer(this, false)">B. x = 7</button>
-                <button class="option-btn" onclick="checkAnswer(this, false)">C. x = 9</button>
+                <h3>練習 1：未知數在同一邊</h3>
+                <p>問題：4x + 7 = 2x + 15，x = ?</p>
+                <button class="option-btn" onclick="checkAnswer(this, false)">A. x = 3</button>
+                <button class="option-btn" onclick="checkAnswer(this, true)">B. x = 4</button>
+                <button class="option-btn" onclick="checkAnswer(this, false)">C. x = 5</button>
                 <button class="option-btn" onclick="checkAnswer(this, false)">D. x = 6</button>
             </div>
             
             <div class="practice-item">
-                <h3>練習 2：移項</h3>
-                <p>問題：x - 4 = 9，x = ?</p>
-                <button class="option-btn" onclick="checkAnswer(this, false)">A. x = 5</button>
-                <button class="option-btn" onclick="checkAnswer(this, true)">B. x = 13</button>
-                <button class="option-btn" onclick="checkAnswer(this, false)">C. x = 14</button>
-                <button class="option-btn" onclick="checkAnswer(this, false)">D. x = 4</button>
+                <h3>練習 2：天秤法</h3>
+                <p>問題：6x - 2 = 3x + 10，x = ?</p>
+                <button class="option-btn" onclick="checkAnswer(this, true)">A. x = 4</button>
+                <button class="option-btn" onclick="checkAnswer(this, false)">B. x = 3</button>
+                <button class="option-btn" onclick="checkAnswer(this, false)">C. x = 5</button>
+                <button class="option-btn" onclick="checkAnswer(this, false)">D. x = 6</button>
             </div>
             
             <div class="practice-item">
-                <h3>練習 3：乘法</h3>
-                <p>問題：3x = 18，x = ?</p>
-                <button class="option-btn" onclick="checkAnswer(this, false)">A. x = 5</button>
-                <button class="option-btn" onclick="checkAnswer(this, false)">B. x = 6</button>
+                <h3>練習 3：拆括號</h3>
+                <p>問題：3(x - 2) = 12，x = ?</p>
+                <button class="option-btn" onclick="checkAnswer(this, false)">A. x = 4</button>
+                <button class="option-btn" onclick="checkAnswer(this, false)">B. x = 5</button>
                 <button class="option-btn" onclick="checkAnswer(this, true)">C. x = 6</button>
-                <button class="option-btn" onclick="checkAnswer(this, false)">D. x = 8</button>
+                <button class="option-btn" onclick="checkAnswer(this, false)">D. x = 7</button>
             </div>
             
             <div class="practice-item">
-                <h3>練習 4：除法</h3>
-                <p>問題：x ÷ 4 = 5，x = ?</p>
-                <button class="option-btn" onclick="checkAnswer(this, false)">A. x = 15</button>
-                <button class="option-btn" onclick="checkAnswer(this, true)">B. x = 20</button>
-                <button class="option-btn" onclick="checkAnswer(this, false)">C. x = 25</button>
-                <button class="option-btn" onclick="checkAnswer(this, false)">D. x = 9</button>
+                <h3>練習 4：分母變括號</h3>
+                <p>問題：(x/4) + 3 = 7，x = ?</p>
+                <button class="option-btn" onclick="checkAnswer(this, false)">A. x = 12</button>
+                <button class="option-btn" onclick="checkAnswer(this, true)">B. x = 16</button>
+                <button class="option-btn" onclick="checkAnswer(this, false)">C. x = 20</button>
+                <button class="option-btn" onclick="checkAnswer(this, false)">D. x = 24</button>
             </div>
         </div>
         
@@ -266,43 +268,43 @@
             
             <div class="practice-item">
                 <h3>Question 1 (MC)</h3>
-                <p>解方程：x + 12 = 20</p>
-                <p>A. x = 6 &nbsp;&nbsp; B. x = 8 &nbsp;&nbsp; C. x = 10 &nbsp;&nbsp; D. x = 32</p>
+                <p>解方程：5x + 4 = 2x + 19</p>
+                <p>A. x = 3 &nbsp;&nbsp; B. x = 5 &nbsp;&nbsp; C. x = 7 &nbsp;&nbsp; D. x = 8</p>
                 <div class="example">
-                    <strong>答案：B. x = 8</strong><br>
-                    <strong>解說：</strong>x = 20 - 12 = 8
+                    <strong>答案：B. x = 5</strong><br>
+                    <strong>解說：</strong>5x - 2x = 19 - 4 → 3x = 15 → x = 5
                 </div>
             </div>
             
             <div class="practice-item">
                 <h3>Question 2 (MC)</h3>
-                <p>解方程：5x = 35</p>
-                <p>A. x = 5 &nbsp;&nbsp; B. x = 6 &nbsp;&nbsp; C. x = 7 &nbsp;&nbsp; D. x = 8</p>
+                <p>解方程：4(x + 3) = 28</p>
+                <p>A. x = 3 &nbsp;&nbsp; B. x = 4 &nbsp;&nbsp; C. x = 5 &nbsp;&nbsp; D. x = 7</p>
                 <div class="example">
-                    <strong>答案：C. x = 7</strong><br>
-                    <strong>解說：</strong>x = 35 ÷ 5 = 7
+                    <strong>答案：B. x = 4</strong><br>
+                    <strong>解說：</strong>4x + 12 = 28 → 4x = 16 → x = 4
                 </div>
             </div>
             
             <div class="practice-item">
-                <h3>Question 3 (文字題)</h3>
-                <p>一個數的 3 倍是 24。這個數是多少？</p>
+                <h3>Question 3 (MC)</h3>
+                <p>解方程：(x/5) - 2 = 3</p>
+                <p>A. x = 20 &nbsp;&nbsp; B. x = 25 &nbsp;&nbsp; C. x = 30 &nbsp;&nbsp; D. x = 35</p>
                 <div class="example">
-                    <strong>答案：x = 8</strong><br>
-                    <strong>解說：</strong>設這個數為 x<br>
-                    3x = 24<br>
-                    x = 24 ÷ 3 = 8
+                    <strong>答案：B. x = 25</strong><br>
+                    <strong>解說：</strong>x/5 = 5 → x = 25
                 </div>
             </div>
             
             <div class="practice-item">
-                <h3>Question 4 (文字題)</h3>
-                <p>小明有 x 元，他買了一本價值 18 元的書後，剩下 7 元。小明本來有幾多元？</p>
+                <h3>Question 4 (Long Question)</h3>
+                <p>小明有 x 元，小華比小明多 5 元。如果兩人一共有 27 元，他們各有多少元？</p>
                 <div class="example">
-                    <strong>答案：25 元</strong><br>
-                    <strong>解說：</strong><br>
-                    x - 18 = 7<br>
-                    x = 7 + 18 = 25
+                    <strong>答案：</strong><br>
+                    <strong>設：</strong>小明有 x 元，則小華有 (x + 5) 元<br>
+                    <strong>方程：</strong>x + (x + 5) = 27<br>
+                    <strong>解：</strong>2x + 5 = 27 → 2x = 22 → x = 11<br>
+                    <strong>答：</strong>小明有 11 元，小華有 16 元
                 </div>
             </div>
         </div>
