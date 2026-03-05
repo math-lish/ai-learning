@@ -3,187 +3,175 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>數學遊戲 - Zach's Math Games</title>
+    <title>數學遊戲 - 按課題分類</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             min-height: 100vh;
-            padding: 20px;
+            padding: 15px;
         }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-        }
+        .container { max-width: 900px; margin: 0 auto; }
         h1 {
             color: white;
             text-align: center;
-            margin-bottom: 30px;
-            font-size: 2rem;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
         .back-link {
             display: inline-block;
             color: white;
             text-decoration: none;
-            margin-bottom: 20px;
-            padding: 10px 20px;
+            margin-bottom: 15px;
+            padding: 8px 16px;
             background: rgba(255,255,255,0.2);
-            border-radius: 25px;
-            transition: 0.3s;
+            border-radius: 20px;
         }
-        .back-link:hover {
-            background: rgba(255,255,255,0.3);
-        }
-        .category {
+        .grade-section {
             background: white;
             border-radius: 16px;
             padding: 20px;
             margin-bottom: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
         }
-        .category h2 {
-            color: #333;
+        .grade-title {
+            font-size: 1.4rem;
+            font-weight: bold;
             margin-bottom: 15px;
-            font-size: 1.3rem;
-            border-bottom: 2px solid #667eea;
             padding-bottom: 10px;
+            border-bottom: 3px solid;
         }
-        .games-grid {
+        .grade-s1 .grade-title { border-color: #ff6b6b; color: #c0392b; }
+        .grade-s2 .grade-title { border-color: #4ecdc4; color: #16a085; }
+        
+        .chapters-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 12px;
         }
-        .game-btn {
-            display: block;
-            padding: 15px;
-            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%);
-            border: none;
+        .chapter-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
             border-radius: 12px;
+            padding: 15px;
+            border-left: 4px solid;
+            transition: all 0.3s;
+        }
+        .chapter-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+        }
+        .chapter-card.s1 { border-color: #ff6b6b; }
+        .chapter-card.s2 { border-color: #4ecdc4; }
+        
+        .chapter-num {
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .chapter-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .games-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .game-link {
+            display: inline-block;
+            padding: 6px 12px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 20px;
             text-decoration: none;
             color: #333;
-            font-weight: 600;
-            font-size: 0.95rem;
-            text-align: center;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            font-size: 0.85rem;
+            transition: all 0.2s;
         }
-        .game-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        .game-link:hover {
+            background: #667eea;
             color: white;
-        }
-        .game-btn .icon {
-            font-size: 1.5rem;
-            display: block;
-            margin-bottom: 5px;
+            border-color: #667eea;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <a href="../index.html" class="back-link">← 返回主頁</a>
-        <h1>🎮 數學遊戲專區</h1>
+        <h1>📚 數學遊戲 - 按課題分類</h1>
         
-        <div class="category">
-            <h2>📐 中一幾何</h2>
-            <div class="games-grid">
-                <a href="簡易圖形面積和周界.html" class="game-btn">
-                    <span class="icon">📐</span>
-                    簡易圖形面積周界
-                </a>
-                <a href="複合圖形的面積和周界.html" class="game-btn">
-                    <span class="icon">🔺</span>
-                    複合圖形面積
-                </a>
-                <a href="重溫面積公式.html" class="game-btn">
-                    <span class="icon">📏</span>
-                    重溫面積公式
-                </a>
-                <a href="1d_求面積和周界_限時版.html" class="game-btn">
-                    <span class="icon">⏱️</span>
-                    求面積周界限時版
-                </a>
+        <!-- S1 中一 -->
+        <div class="grade-section grade-s1">
+            <div class="grade-title">📕 中一 (S1)</div>
+            <div class="chapters-grid">
+                
+                <div class="chapter-card s1">
+                    <div class="chapter-num">Ch1</div>
+                    <div class="chapter-title">正數與負數</div>
+                    <div class="games-list">
+                        <a href="Ch1_有向數/有向數.html" class="game-link">有向數練習</a>
+                    </div>
+                </div>
+                
+                <div class="chapter-card s1">
+                    <div class="chapter-num">Ch3</div>
+                    <div class="chapter-title">代數式</div>
+                    <div class="games-list">
+                        <a href="Ch3_代數式/指數化簡練習.html" class="game-link">指數化簡</a>
+                        <a href="Ch3_代數式/主項轉換練習.html" class="game-link">主項轉換</a>
+                        <a href="Ch3_代數式/第二學期基礎短答題.html" class="game-link">基礎短答題</a>
+                    </div>
+                </div>
+                
+                <div class="chapter-card s1">
+                    <div class="chapter-num">Ch7</div>
+                    <div class="chapter-title">面積與體積</div>
+                    <div class="games-list">
+                        <a href="Ch7_面積體積/簡易圖形面積和周界.html" class="game-link">簡易圖形</a>
+                        <a href="Ch7_面積體積/複合圖形的面積和周界.html" class="game-link">複合圖形</a>
+                        <a href="Ch7_面積體積/重溫面積公式.html" class="game-link">面積公式</a>
+                        <a href="Ch7_面積體積/1d_求面積和周界_限時版.html" class="game-link">限時挑戰</a>
+                        <a href="Ch7_面積體積/2a_柱體體積及總表面面積.html" class="game-link">柱體</a>
+                        <a href="Ch7_面積體積/2b_柱體體積及總表面面積.html" class="game-link">柱體進階</a>
+                        <a href="Ch7_面積體積/2_圓錐體_平截頭體練習.html" class="game-link">圓錐/平截頭</a>
+                    </div>
+                </div>
+                
             </div>
         </div>
-
-        <div class="category">
-            <h2>📊 中一/中二 代數</h2>
-            <div class="games-grid">
-                <a href="有向數.html" class="game-btn">
-                    <span class="icon">➕</span>
-                    有向數練習
-                </a>
-                <a href="指數化簡練習.html" class="game-btn">
-                    <span class="icon">🔢</span>
-                    指數化簡
-                </a>
-                <a href="主項轉換練習.html" class="game-btn">
-                    <span class="icon">📝</span>
-                    主項轉換
-                </a>
-                <a href="第二學期基礎短答題.html" class="game-btn">
-                    <span class="icon">📋</span>
-                    基礎短答題
-                </a>
+        
+        <!-- S2 中二 -->
+        <div class="grade-section grade-s2">
+            <div class="grade-title">📗 中二 (S2)</div>
+            <div class="chapters-grid">
+                
+                <div class="chapter-card s2">
+                    <div class="chapter-num">Ch1</div>
+                    <div class="chapter-title">簡單線性規劃</div>
+                    <div class="games-list">
+                        <a href="Ch1_線性規劃/直角坐標大冒險.html" class="game-link">坐標大冒險</a>
+                        <a href="Ch1_線性規劃/坐標幾何練習.html" class="game-link">坐標幾何</a>
+                    </div>
+                </div>
+                
+                <div class="chapter-card s2">
+                    <div class="chapter-num">Ch4</div>
+                    <div class="chapter-title">多項式</div>
+                    <div class="games-list">
+                        <a href="Ch4_多項式/1多項式的數學語言.html" class="game-link">多項式基礎</a>
+                        <a href="Ch4_多項式/2多項式的加减法運算.html" class="game-link">加减運算</a>
+                        <a href="Ch4_多項式/3單項式的乘除法運算.html" class="game-link">乘除運算</a>
+                        <a href="Ch4_多項式/4多項式的加减乘法.html" class="game-link">綜合運算</a>
+                    </div>
+                </div>
+                
             </div>
         </div>
-
-        <div class="category">
-            <h2>🔢 多項式遊戲</h2>
-            <div class="games-grid">
-                <a href="1多項式的數學語言.html" class="game-btn">
-                    <span class="icon">1️⃣</span>
-                    多項式基礎
-                </a>
-                <a href="2多項式的加減法運算.html" class="game-btn">
-                    <span class="icon">2️⃣</span>
-                    多項式加减
-                </a>
-                <a href="3單項式的乘除法運算.html" class="game-btn">
-                    <span class="icon">3️⃣</span>
-                    單項式乘除
-                </a>
-                <a href="4多項式的加減乘法.html" class="game-btn">
-                    <span class="icon">4️⃣</span>
-                    多項式綜合
-                </a>
-            </div>
-        </div>
-
-        <div class="category">
-            <h2>📍 坐標幾何</h2>
-            <div class="games-grid">
-                <a href="直角坐標大冒險.html" class="game-btn">
-                    <span class="icon">🗺️</span>
-                    直角坐標大冒險
-                </a>
-                <a href="坐標幾何練習.html" class="game-btn">
-                    <span class="icon">📍</span>
-                    坐標幾何練習
-                </a>
-            </div>
-        </div>
-
-        <div class="category">
-            <h2>🔷 立體幾何</h2>
-            <div class="games-grid">
-                <a href="2a_柱體體積及總表面面積.html" class="game-btn">
-                    <span class="icon">📦</span>
-                    柱體面積/體積
-                </a>
-                <a href="2b_柱體體積及總表面面積.html" class="game-btn">
-                    <span class="icon">🎲</span>
-                    柱體進階
-                </a>
-                <a href="2_圓錐體_平截頭體練習.html" class="game-btn">
-                    <span class="icon">🔺</span>
-                    圓錐/平截頭體
-                </a>
-            </div>
-        </div>
+        
     </div>
 </body>
 </html>
