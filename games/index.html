@@ -41,10 +41,9 @@
             font-weight: bold;
             margin-bottom: 15px;
             padding-bottom: 10px;
-            border-bottom: 3px solid;
+            border-bottom: 3px solid #ff6b6b;
+            color: #c0392b;
         }
-        .grade-s1 .grade-title { border-color: #ff6b6b; color: #c0392b; }
-        .grade-s2 .grade-title { border-color: #4ecdc4; color: #16a085; }
         
         .chapters-grid {
             display: grid;
@@ -55,15 +54,13 @@
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
             border-radius: 12px;
             padding: 15px;
-            border-left: 4px solid;
+            border-left: 4px solid #ff6b6b;
             transition: all 0.3s;
         }
         .chapter-card:hover {
             transform: translateY(-3px);
             box-shadow: 0 8px 20px rgba(0,0,0,0.12);
         }
-        .chapter-card.s1 { border-color: #ff6b6b; }
-        .chapter-card.s2 { border-color: #4ecdc4; }
         
         .chapter-num {
             font-size: 0.85rem;
@@ -93,9 +90,9 @@
             transition: all 0.2s;
         }
         .game-link:hover {
-            background: #667eea;
+            background: #ff6b6b;
             color: white;
-            border-color: #667eea;
+            border-color: #ff6b6b;
         }
     </style>
 </head>
@@ -105,11 +102,11 @@
         <h1>📚 數學遊戲 - 按課題分類</h1>
         
         <!-- S1 中一 -->
-        <div class="grade-section grade-s1">
-            <div class="grade-title">📕 中一 (S1)</div>
+        <div class="grade-section">
+            <div class="grade-title">📕 中一 (S1) 數學</div>
             <div class="chapters-grid">
                 
-                <div class="chapter-card s1">
+                <div class="chapter-card">
                     <div class="chapter-num">Ch1</div>
                     <div class="chapter-title">正數與負數</div>
                     <div class="games-list">
@@ -117,7 +114,7 @@
                     </div>
                 </div>
                 
-                <div class="chapter-card s1">
+                <div class="chapter-card">
                     <div class="chapter-num">Ch3</div>
                     <div class="chapter-title">代數式</div>
                     <div class="games-list">
@@ -127,7 +124,18 @@
                     </div>
                 </div>
                 
-                <div class="chapter-card s1">
+                <div class="chapter-card">
+                    <div class="chapter-num">Ch6</div>
+                    <div class="chapter-title">多項式</div>
+                    <div class="games-list">
+                        <a href="Ch6_多項式/1多項式的數學語言.html" class="game-link">多項式基礎</a>
+                        <a href="Ch6_多項式/2多項式的加减法運算.html" class="game-link">加减運算</a>
+                        <a href="Ch6_多項式/3單項式的乘除法運算.html" class="game-link">乘除運算</a>
+                        <a href="Ch6_多項式/4多項式的加减乘法.html" class="game-link">綜合運算</a>
+                    </div>
+                </div>
+                
+                <div class="chapter-card">
                     <div class="chapter-num">Ch7</div>
                     <div class="chapter-title">面積與體積</div>
                     <div class="games-list">
@@ -141,31 +149,12 @@
                     </div>
                 </div>
                 
-            </div>
-        </div>
-        
-        <!-- S2 中二 -->
-        <div class="grade-section grade-s2">
-            <div class="grade-title">📗 中二 (S2)</div>
-            <div class="chapters-grid">
-                
-                <div class="chapter-card s2">
-                    <div class="chapter-num">Ch1</div>
-                    <div class="chapter-title">簡單線性規劃</div>
+                <div class="chapter-card">
+                    <div class="chapter-num">Ch10</div>
+                    <div class="chapter-title">坐標幾何</div>
                     <div class="games-list">
-                        <a href="Ch1_線性規劃/直角坐標大冒險.html" class="game-link">坐標大冒險</a>
-                        <a href="Ch1_線性規劃/坐標幾何練習.html" class="game-link">坐標幾何</a>
-                    </div>
-                </div>
-                
-                <div class="chapter-card s2">
-                    <div class="chapter-num">Ch4</div>
-                    <div class="chapter-title">多項式</div>
-                    <div class="games-list">
-                        <a href="Ch4_多項式/1多項式的數學語言.html" class="game-link">多項式基礎</a>
-                        <a href="Ch4_多項式/2多項式的加减法運算.html" class="game-link">加减運算</a>
-                        <a href="Ch4_多項式/3單項式的乘除法運算.html" class="game-link">乘除運算</a>
-                        <a href="Ch4_多項式/4多項式的加减乘法.html" class="game-link">綜合運算</a>
+                        <a href="Ch10_坐標/直角坐標大冒險.html" class="game-link">坐標大冒險</a>
+                        <a href="Ch10_坐標/坐標幾何練習.html" class="game-link">坐標幾何</a>
                     </div>
                 </div>
                 
