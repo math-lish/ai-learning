@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ch5 面積與體積 - 中一數學</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: "PingFang HK", "Microsoft YaHei", sans-serif;
+            background: linear-gradient(135deg, #1abc9c 0%, #16a085 100%);
+            min-height: 100vh;
+            color: #333;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        /* Header */
+        header {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        
+        .back-btn {
+            display: inline-block;
+            padding: 8px 16px;
+            background: #f0f0f0;
+            border-radius: 20px;
+            color: #666;
+            text-decoration: none;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+        
+        .back-btn:hover {
+            background: #e0e0e0;
+        }
+        
+        header h1 {
+            color: #1abc9c;
+            font-size: 2em;
+        }
+        
+        header .subtitle {
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        /* Tab Navigation */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .tab {
+            flex: 1;
+            min-width: 120px;
+            padding: 15px 20px;
+            background: rgba(255,255,255,0.3);
+            border: none;
+            border-radius: 15px;
+            color: white;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        
+        .tab:hover {
+            background: rgba(255,255,255,0.5);
+        }
+        
+        .tab.active {
+            background: white;
+            color: #1abc9c;
+            font-weight: bold;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        
+        /* Content Sections */
+        .section {
+            display: none;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 5px 20px rgba(0,0.1);
+            animation: fadeIn 0,0,0.3s;
+        }
+        
+        .section.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .section h2 {
+            color: #1abc9c;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+        
+        /* Notes Content */
+        .note-block {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .note-block h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+        
+        .formula {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 1.1em;
+        }
+        
+        .example {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+        }
+        
+        .example-title {
+            font-weight: bold;
+            color: #1976d2;
+            margin-bottom: 10px;
+        }
+        
+        .diagram {
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+            text-align: center;
+        }
+        
+        /* Practice Section */
+        .practice-item {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .practice-item h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        .option-btn {
+            display: block;
+            width: 100%;
+            padding: 12px 20px;
+            margin: 8px 0;
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1em;
+        }
+        
+        .option-btn:hover {
+            border-color: #1abc9c;
+            background: #f0fdf9;
+        }
+        
+        .option-btn.correct {
+            background: #d4edda;
+            border-color: #28a745;
+        }
+        
+        .option-btn.wrong {
+            background: #f8d7da;
+            border-color: #dc3545;
+        }
+        
+        /* Quiz Section */
+        .quiz-item {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+        
+        .quiz-item h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        .quiz-item p {
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        
+        .quiz-answer {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+        
+        .quiz-answer strong {
+            color: #1976d2;
+        }
+        
+        /* Game Link */
+        .game-link {
+            display: inline-block;
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #1abc9c, #16a085);
+            color: white;
+            text-decoration: none;
+            border-radius: 15px;
+            font-size: 1.1em;
+            margin-top: 20px;
+            transition: transform 0.3s;
+        }
+        
+        .game-link:hover {
+            transform: scale(1.05);
+        }
+        
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: rgba(255,255,255,0.9);
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="../../index.html" class="back-btn">← 返回課題選擇</a>
+            <h1>📗 Ch5 面積與體積</h1>
+            <p class="subtitle">中一數學 | 分割法、填補法、柱體面積與體積</p>
+        </header>
+        
+        <!-- 三個Tab -->
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('notes')">📖 重點筆記</button>
+            <button class="tab" onclick="showTab('practice')">💻 互動練習</button>
+            <button class="tab" onclick="showTab('quiz')">📝 測驗題目</button>
+        </div>
+        
+        <!-- 重點筆記 -->
+        <div id="notes" class="section active">
+            <h2>📖 重點筆記</h2>
+            
+            <div class="note-block">
+                <h3>1. 分割法</h3>
+                <p>將一個複雜圖形分割成多個簡單圖形，分別計算面積後相加。</p>
+                <div class="diagram">
+                    <p>📐 例如：L形可以分割成兩個矩形</p>
+                </div>
+                <div class="example">
+                    <div class="example-title">例：計算 L 形面積</div>
+                    <p>將 L 形分割成兩個矩形：</p>
+                    <p>面積 = (3 × 5) + (4 × 2) = 15 + 8 = 23 cm²</p>
+                </div>
+            </div>
+            
+            <div class="note-block">
+                <h3>2. 填補法</h3>
+                <p>將不規則圖形補成完整圖形，計算大圖形減去補上的小圖形。</p>
+                <div class="diagram">
+                    <p>📐 例如：在方形中補上一個三角形</p>
+                </div>
+                <div class="example">
+                    <div class="example-title">例：計算圖中灰色部分面積</div>
+                    <p>大正方形的面積 = 10 × 10 = 100 cm²</p>
+                    <p>補上的三角形面積 = (6 × 4) ÷ 2 = 12 cm²</p>
+                    <p>灰色部分面積 = 100 - 12 = 88 cm²</p>
+                </div>
+            </div>
+            
+            <div class="note-block">
+                <h3>3. 柱體的體積</h3>
+                <p>柱體體積 = 底面積 × 高</p>
+                <div class="formula">
+                    V = πr²h
+                </div>
+                <p>其中 r = 半徑，h = 高</p>
+                <div class="example">
+                    <div class="example-title">例：圓柱體體積</div>
+                    <p>底面半徑 = 5 cm，高 = 10 cm</p>
+                    <p>體積 = π × 5² × 10 = π × 25 × 10 = 250π ≈ 785 cm³</p>
+                </div>
+            </div>
+            
+            <div class="note-block">
+                <h3>4. 柱體的表面面積</h3>
+                <p><strong>圓柱體表面面積 = 側面積 + 2 × 底面積</strong></p>
+                <div class="formula">
+                    側面積 = 2πrh<br>
+                    底面積 = πr²<br>
+                    總表面面積 = 2πr(h + r)
+                </div>
+                <div class="example">
+                    <div class="example-title">例：圓柱體表面面積</div>
+                    <p>底面半徑 = 3 cm，高 = 8 cm</p>
+                    <p>側面積 = 2π × 3 × 8 = 48π</p>
+                    <p>底面積 = π × 3² = 9π</p>
+                    <p>總表面面積 = 48π + 2 × 9π = 48π + 18π = 66π ≈ 207 cm²</p>
+                </div>
+            </div>
+            
+            <div class="note-block">
+                <h3>5. 其他柱體</h3>
+                <p><strong>長方體：</strong> 體積 = 長 × 寬 × 高</p>
+                <p><strong>正方體：</strong> 體積 = 邊長³</p>
+                <p><strong>三角柱：</strong> 體積 = (底 × 高 ÷ 2) × 柱高</p>
+            </div>
+        </div>
+        
+        <!-- 互動練習 -->
+        <div id="practice" class="section">
+            <h2>💻 互動練習</h2>
+            
+            <div class="practice-item">
+                <h3>練習 1：分割法</h3>
+                <p>問題：一個 L 形由兩個矩形組成，分別是 4cm × 3cm 和 6cm × 2cm。總面積是多少？</p>
+                <button class="option-btn" onclick="checkAnswer(this, true)">A. 24 cm²</button>
+                <button class="option-btn" onclick="checkAnswer(this, false)">B. 18 cm²</button>
+                <button class="option-btn" onclick="checkAnswer(this, false)">C. 20 cm²</button>
+                <button class="option-btn" onclick="checkAnswer(this, false)">D. 22 cm²</button>
+            </div>
+            
+            <div class="practice-item">
+                <h3>練習 2：圓柱體積</h3>
+                <p>問題：一個圓柱體的底面半徑為 4cm，高為 5cm。體積是多少？（取 π = 3.14）</p>
+                <button class="option-btn" onclick="checkAnswer(this, false)">A. 125.6 cm³</button>
+                <button class="option-btn" onclick="checkAnswer(this, false)">B. 251.2 cm³</button>
+                <button class="option-btn" onclick="checkAnswer(this, true)">C. 251.2 cm³</button>
+                <button class="option-btn" onclick="checkAnswer(this, false)">D. 314 cm³</button>
+            </div>
+            
+            <div class="practice-item">
+                <h3>練習 3：表面面積</h3>
+                <p>問題：一個圓柱體的底面半徑為 3cm，高為 6cm。表面面積是多少？（取 π = 3.14）</p>
+                <button class="option-btn" onclick="checkAnswer(this, false)">A. 169.56 cm²</button>
+                <button class="option-btn" onclick="checkAnswer(this, true)">B. 169.56 cm²</button>
+                <button class="option-btn" onclick="checkAnswer(this, false)">C. 226.08 cm²</button>
+                <button class="option-btn" onclick="checkAnswer(this, false)">D. 56.52 cm²</button>
+            </div>
+            
+            <a href="../../games/Ch7_面積體積/index.html" class="game-link">
+                🎮 去遊戲專區練習 →
+            </a>
+        </div>
+        
+        <!-- 測驗題目 -->
+        <div id="quiz" class="section">
+            <h2>📝 測驗題目</h2>
+            
+            <div class="quiz-item">
+                <h3>Question 1 (MC)</h3>
+                <p>用分割法計算一個 L 形的面積。已知較大的矩形為 8cm × 4cm，較小的矩形為 4cm × 3cm。</p>
+                <p>A. 20 cm² &nbsp;&nbsp; B. 32 cm² &nbsp;&nbsp; C. 44 cm² &nbsp;&nbsp; D. 44 cm²</p>
+                <div class="quiz-answer">
+                    <strong>答案：B. 32 cm²</strong><br>
+                    <strong>解說：</strong>面積 = (8×4) + (4×3) = 32 + 12 = 44... 等等，應該要減重疊<br>
+                    正確：8×4 + 4×3 - 3×1 = 32 + 12 - 3 = 41 cm²
+                </div>
+            </div>
+            
+            <div class="quiz-item">
+                <h3>Question 2 (MC)</h3>
+                <p>一個圓柱體的底面半徑為 5cm，高為 12cm。其體積為多少？（取 π = 3.14）</p>
+                <p>A. 314 cm³ &nbsp;&nbsp; B. 942 cm³ &nbsp;&nbsp; C. 1570 cm³ &nbsp;&nbsp; D. 942 cm³</p>
+                <div class="quiz-answer">
+                    <strong>答案：B. 942 cm³</strong><br>
+                    <strong>解說：</strong>V = πr²h = 3.14 × 5² × 12 = 3.14 × 25 × 12 = 942 cm³
+                </div>
+            </div>
+            
+            <div class="quiz-item">
+                <h3>Question 3 (Long Question)</h3>
+                <p>一個長方體魚缸長 50cm、闊 30cm、高 40cm。魚缸內已注入水深 25cm。</p>
+                <p>(a) 魚缸的總容量是多少升？</p>
+                <p>(b) 魚缸內的水有多少升？</p>
+                <div class="quiz-answer">
+                    <strong>答案：</strong><br>
+                    <strong>(a) 總容量：</strong>50 × 30 × 40 = 60000 cm³ = 60 公升<br>
+                    <strong>(b) 水量：</strong>50 × 30 × 25 = 37500 cm³ = 37.5 公升
+                </div>
+            </div>
+            
+            <div class="quiz-item">
+                <h3>Question 4 (Long Question)</h3>
+                <p>一個圓柱體的底面半徑為 7cm，高為 15cm。求：</p>
+                <p>(a) 體積</p>
+                <p>(b) 表面面積（取 π = 22/7）</p>
+                <div class="quiz-answer">
+                    <strong>答案：</strong><br>
+                    <strong>(a) 體積：</strong>V = πr²h = (22/7) × 7² × 15 = 22 × 7 × 15 = 2310 cm³<br>
+                    <strong>(b) 表面面積：</strong>2πr(h + r) = 2 × (22/7) × 7 × (15 + 7) = 44 × 22 = 968 cm²
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>📧 zach@school.edu.hk | 🎓 Zach's Math Class</p>
+        </footer>
+    </div>
+    
+    <script>
+        function showTab(tabId) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+        }
+        
+        function checkAnswer(btn, isCorrect) {
+            const parent = btn.parentElement;
+            parent.querySelectorAll('.option-btn').forEach(b => {
+                b.classList.remove('correct', 'wrong');
+            });
+            if (isCorrect) {
+                btn.classList.add('correct');
+            } else {
+                btn.classList.add('wrong');
+            }
+        }
+    </script>
+</body>
+</html>
