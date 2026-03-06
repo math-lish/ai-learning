@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>多項式運算挑戰</title>
+<style>
+  :root {
+    --primary: #4285f4;
+    --success: #34a853;
+    --warning: #fbbc05;
+    --danger: #ea4335;
+    --bg: #f8f9fa;
+    --text: #333;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg);
+    margin: 0;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    box-sizing: border-box;
+    color: var(--text);
+  }
+  .card {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 500px;
+    text-align: center;
+  }
+  h2 { margin-top: 0; color: #333; margin-bottom: 20px;}
+  
+  .score-board {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: var(--primary);
+    margin-bottom: 15px;
+    padding: 10px;
+    background: #e8f0fe;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    margin: 8px 0;
+    transition: 0.2s;
+    width: 100%;
+    position: relative;
+  }
+  .btn:active { transform: scale(0.98); }
+  
+  .btn-level {
+    background: white;
+    color: var(--primary);
+    border: 2px solid var(--primary);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 15px;
+  }
+  .btn-level:hover { background: #f1f8ff; }
+  
+  .stat-badge {
+    font-size: 0.85rem;
+    color: #555;
+    margin-top: 5px;
+    font-weight: normal;
+    background: #eee;
+    padding: 2px 10px;
+    border-radius: 10px;
+  }
+
+  .question-box {
+    font-size: 1.6rem;
+    margin: 20px 0;
+    font-family: 'Times New Roman', serif;
+    background: #fff;
+    padding: 20px 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+  }
+  
+  .options-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .option-btn {
+    background: white;
+    border: 2px solid #ddd;
+    color: #333;
+    padding: 15px;
+    font-size: 1.2rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'Times New Roman', serif;
+    transition: background 0.2s;
+  }
+  .option-btn:hover { border-color: var(--primary); }
+  
+  /* 正確答案高亮 */
+  .option-correct-highlight {
+    background-color: #d4edda !important;
+    border-color: #28a745 !important;
+    color: #155724 !important;
+  }
+  
+  input[type="text"] {
+    width: 80%;
+    padding: 12px;
+    font-size: 1.3rem;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    text-align: center;
+    font-family: 'Times New Roman', serif;
+  }
+  
+  .feedback {
+    margin-top: 15px;
+    font-weight: bold;
+    min-height: 24px;
+    padding: 12px;
+    border-radius: 6px;
+  }
+  .feedback.correct { background-color: #d4edda; color: #155724; }
+  .feedback.wrong { background-color: #f8d7da; color: #721c24; }
+  .feedback.warning { background-color: #fff3cd; color: #856404; }
+  
+  .hidden { display: none !important; }
+  
+  /* Sup tag styling */
+  sup { font-size: 0.7em; vertical-align: super; }
+  
+  .nav-btn {
+    background: #6c757d;
+    font-size: 0.9rem;
+    margin-top: 20px;
+  }
+</style>
+</head>
+<body>
+
+<div class="card" id="menu-screen">
+  <h2>多項式運算挑戰</h2>
+  <p>請選擇挑戰程度</p>
+  
+  <button class="btn btn-level" onclick="startGame(1)">
+    <span>程度一：拆括號基礎 (無補答)</span>
+    <span class="stat-badge" id="stat-1">答對: 0 / 0</span>
+  </button>
+  
+  <button class="btn btn-level" onclick="startGame(2)">
+    <span>程度二：混合運算選擇 (無補答)</span>
+    <span class="stat-badge" id="stat-2">答對: 0 / 0</span>
+  </button>
+  
+  <button class="btn btn-level" onclick="startGame(3)">
+    <span>程度三：進階運算填空 (有補答)</span>
+    <span class="stat-badge" id="stat-3">答對: 0 / 0</span>
+  </button>
+</div>
+
+<div class="card hidden" id="game-screen">
+  <div class="score-board">
+    <span>本局分數: <span id="score-display">0</span></span>
+    <span>程度 <span id="level-display">1</span></span>
+  </div>
+  
+  <div id="question-area" class="question-box"></div>
+  
+  <div id="options-area" class="options-grid"></div>
+  
+  <div id="input-area" class="hidden">
+    <input type="text" id="answer-input" placeholder="例如: 12x^2-6xy" autocomplete="off">
+    <div style="font-size:0.85rem; color:#666; margin-bottom:10px;">提示：平方請用 ^2 (如 x^2)，不需空格</div>
+    <button class="btn" onclick="checkInputAnswer()">提交答案</button>
+  </div>
+
+  <div id="feedback-area" class="feedback"></div>
+  
+  <button id="next-btn" class="btn hidden" onclick="nextQuestion()">下一題</button>
+  <button class="btn nav-btn" onclick="goHome()">回主選單</button>
+</div>
+
+<script>
+// 全局統計數據 (Session Stats)
+let globalStats = {
+  1: { correct: 0, total: 0 },
+  2: { correct: 0, total: 0 },
+  3: { correct: 0, total: 0 }
+};
+
+// 單局遊戲狀態
+let state = {
+  score: 0,
+  level: 1,
+  currentQuestion: null,
+  attempts: 0 // 0 = first try, 1 = second try
+};
+
+// 工具函式：隨機整數
+function randomPosInt() {
+  return Math.floor(Math.random() * 8) + 2; // 2 to 9
+}
+
+// 工具函式：生成帶符號的項目
+function term(coef, variable) {
+  if (coef === 0) return "";
+  let str = "";
+  if (coef === 1) str = "+";
+  else if (coef === -1) str = "-";
+  else if (coef > 0) str = "+" + coef;
+  else str = coef; 
+  return str + variable;
+}
+
+// 工具函式：HTML 格式化
+function formatHTML(str) {
+  if (str.startsWith("+")) str = str.substring(1);
+  return str.replace(/\^2/g, "<sup>2</sup>");
+}
+
+// 更新主選單上的統計數據顯示
+function updateMenuStats() {
+  for (let i = 1; i <= 3; i++) {
+    document.getElementById(`stat-${i}`).innerText = 
+      `答對: ${globalStats[i].correct} / ${globalStats[i].total}`;
+  }
+}
+
+// 開始遊戲
+function startGame(lvl) {
+  state.level = lvl;
+  state.score = 0; // 重置本局分數
+  
+  document.getElementById("score-display").innerText = "0";
+  document.getElementById("level-display").innerText = lvl;
+  
+  document.getElementById("menu-screen").classList.add("hidden");
+  document.getElementById("game-screen").classList.remove("hidden");
+  
+  nextQuestion();
+}
+
+// 回到主選單
+function goHome() {
+  updateMenuStats();
+  document.getElementById("game-screen").classList.add("hidden");
+  document.getElementById("menu-screen").classList.remove("hidden");
+}
+
+// 下一題
+function nextQuestion() {
+  state.attempts = 0;
+  let fb = document.getElementById("feedback-area");
+  fb.innerText = "";
+  fb.className = "feedback";
+  
+  document.getElementById("next-btn").classList.add("hidden");
+  document.getElementById("answer-input").value = "";
+  
+  generateQuestion();
+}
+
+// 生成題目邏輯
+function generateQuestion() {
+  let qHtml = "";
+  let correct = "";
+  let distractors = [];
+
+  // 生成係數
+  let a = randomPosInt();
+  let b = randomPosInt() * (Math.random() > 0.5 ? 1 : -1);
+  let c = randomPosInt();
+  let d = randomPosInt() * (Math.random() > 0.5 ? 1 : -1);
+
+  // 題目部件
+  let p1 = `(${a}x${b>0?'+'+b:b}y)`;
+  let p2 = `(${c}x${d>0?'+'+d:d}y)`;
+
+  // 決定運算類型
+  let type = "sub"; 
+  if (state.level === 1) {
+    type = "sub";
+  } else {
+    // 程度二、三隨機
+    let r = Math.random();
+    if (r < 0.33) type = "add";
+    else if (r < 0.66) type = "sub";
+    else type = "mult";
+  }
+
+  // 運算邏輯
+  if (type === "add") {
+    qHtml = `${p1} + ${p2} =`;
+    if (state.level === 1 || state.level === 2) {
+       correct = `${a}x${term(b,'y')}${term(c,'x')}${term(d,'y')}`;
+       distractors.push(`${a}x${term(b,'y')}${term(c,'x')}${term(-d,'y')}`);
+    } else {
+      let coefX = a + c;
+      let coefY = b + d;
+      correct = `${coefX}x${term(coefY,'y')}`;
+    }
+  } else if (type === "sub") {
+    qHtml = `${p1} - ${p2} =`;
+    if (state.level === 1 || state.level === 2) {
+      // 正確: 後項變號
+      correct = `${a}x${term(b,'y')}${term(-c,'x')}${term(-d,'y')}`;
+      // 錯誤1: 後項沒變號
+      distractors.push(`${a}x${term(b,'y')}${term(-c,'x')}${term(d,'y')}`);
+      // 錯誤2: 亂變號
+      distractors.push(`${a}x${term(-b,'y')}${term(-c,'x')}${term(-d,'y')}`);
+    } else {
+      let coefX = a - c;
+      let coefY = b - d;
+      correct = `${coefX}x${term(coefY,'y')}`;
+    }
+  } else if (type === "mult") {
+    qHtml = `${p1}${p2} =`;
+    let term1 = a * c;
+    let term2 = (a * d) + (b * c);
+    let term3 = b * d;
+    let expandedStr = `${term1}x^2${term(term2, 'xy')}${term(term3, 'y^2')}`;
+    
+    if (state.level === 2) {
+      correct = expandedStr;
+      distractors.push(`${term1}x^2${term(term3, 'y^2')}`); // 缺中間項
+      distractors.push(`${a}x${term(b,'y')}${term(c,'x')}${term(d,'y')}`); // 僅拆括號
+    } else {
+      correct = expandedStr;
+    }
+  }
+
+  state.currentQuestion = {
+    html: qHtml,
+    correctRaw: correct,
+    answerType: (state.level === 3) ? 'input' : 'choice'
+  };
+
+  // 渲染 DOM
+  document.getElementById("question-area").innerHTML = qHtml;
+
+  if (state.level === 3) {
+    document.getElementById("options-area").classList.add("hidden");
+    document.getElementById("input-area").classList.remove("hidden");
+    document.querySelector("#input-area button").disabled = false;
+    document.getElementById("answer-input").disabled = false;
+    document.getElementById("answer-input").focus();
+  } else {
+    document.getElementById("input-area").classList.add("hidden");
+    document.getElementById("options-area").classList.remove("hidden");
+    
+    let opts = [correct, ...distractors];
+    // 程度一只有兩個選項
+    if(state.level === 1) opts = opts.slice(0, 2); 
+    
+    // 洗牌
+    opts.sort(() => Math.random() - 0.5);
+    
+    let optsHtml = "";
+    opts.forEach(opt => {
+      let displayOpt = formatHTML(opt);
+      optsHtml += `<button class="option-btn" data-val="${opt}" onclick="checkChoice('${opt.replace(/'/g, "\\'")}')">${displayOpt}</button>`;
+    });
+    document.getElementById("options-area").innerHTML = optsHtml;
+  }
+}
+
+// 字串正規化
+function normalize(str) {
+  str = str.replace(/\s/g, "");
+  if (str.startsWith("+")) str = str.substring(1);
+  return str;
+}
+
+// 核心計分與統計邏輯
+function handleScore(isCorrect, correctAnsText) {
+  let fb = document.getElementById("feedback-area");
+  let scoreSpan = document.getElementById("score-display");
+  let nextBtn = document.getElementById("next-btn");
+
+  // === 程度一 & 二：無補答 ===
+  if (state.level === 1 || state.level === 2) {
+    globalStats[state.level].total++; // 總數 +1
+    
+    if (isCorrect) {
+      state.score += 1;
+      globalStats[state.level].correct++; // 答對 +1
+      fb.innerText = "答對了！";
+      fb.className = "feedback correct";
+    } else {
+      state.score -= 1;
+      // 答錯不加 correct
+      fb.innerHTML = `答錯了。正確答案是：${formatHTML(correctAnsText)}`;
+      fb.className = "feedback wrong";
+      // 高亮正確答案
+      highlightCorrectOption(correctAnsText);
+    }
+    
+    scoreSpan.innerText = state.score;
+    disableInputs();
+    nextBtn.classList.remove("hidden");
+    return;
+  }
+
+  // === 程度三：有補答 ===
+  // 第一次嘗試
+  if (state.attempts === 0) {
+    if (isCorrect) {
+      // 一次答對
+      state.score += 1;
+      globalStats[state.level].total++;
+      globalStats[state.level].correct++; // 算答對
+      
+      fb.innerText = "答對了！";
+      fb.className = "feedback correct";
+      scoreSpan.innerText = state.score;
+      disableInputs();
+      nextBtn.classList.remove("hidden");
+    } else {
+      // 第一次答錯 (給予補答機會，尚未結算統計)
+      fb.innerText = "答錯了，請再試一次！(補答機會)";
+      fb.className = "feedback warning";
+      state.attempts = 1; 
+    }
+  } else {
+    // 第二次嘗試 (補答)
+    globalStats[state.level].total++; // 這題終於結束了，總數 +1
+    
+    if (isCorrect) {
+      // 補答答對
+      state.score += 0.5;
+      globalStats[state.level].correct++; // 雖然是補答，但最終算解出來了，計入答對
+      
+      fb.innerText = "答對了！(補答成功)";
+      fb.className = "feedback correct";
+    } else {
+      // 補答失敗
+      state.score -= 1;
+      // 不加 correct
+      fb.innerHTML = `答錯了。正確答案是：${formatHTML(correctAnsText)}`;
+      fb.className = "feedback wrong";
+    }
+    
+    scoreSpan.innerText = state.score;
+    disableInputs();
+    nextBtn.classList.remove("hidden");
+  }
+}
+
+function highlightCorrectOption(correctVal) {
+  let btns = document.querySelectorAll(".option-btn");
+  btns.forEach(btn => {
+    if (btn.dataset.val === correctVal) {
+        btn.classList.add("option-correct-highlight");
+    }
+  });
+}
+
+function disableInputs() {
+  let btns = document.querySelectorAll(".option-btn");
+  btns.forEach(b => b.disabled = true);
+  
+  let inpBtn = document.querySelector("#input-area button");
+  if(inpBtn) inpBtn.disabled = true;
+  
+  let inp = document.getElementById("answer-input");
+  if(inp) inp.disabled = true;
+}
+
+function checkChoice(userVal) {
+  let isCorrect = (userVal === state.currentQuestion.correctRaw);
+  handleScore(isCorrect, state.currentQuestion.correctRaw);
+}
+
+function checkInputAnswer() {
+  let userVal = document.getElementById("answer-input").value;
+  let normUser = normalize(userVal);
+  let normAns = normalize(state.currentQuestion.correctRaw);
+  let isCorrect = (normUser === normAns);
+  handleScore(isCorrect, state.currentQuestion.correctRaw);
+}
+</script>
+</body>
+</html>

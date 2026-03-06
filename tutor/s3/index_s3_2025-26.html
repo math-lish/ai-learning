@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中三數學 2025-26 | 靈風中學</title>
+    <style>
+        :root {
+            --primary: #4A90E2;
+            --secondary: #F39C12;
+            --success: #2ECC71;
+            --danger: #E74C3C;
+            --dark: #2C3E50;
+            --light: #ECF0F1;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Noto Sans TC', 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: var(--dark);
+        }
+        
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, #4A90E2 0%, #00D2FF 100%);
+            color: white;
+            padding: 60px 20px;
+            text-align: center;
+        }
+        
+        .hero h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .hero .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .hero .info {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .hero .info-item {
+            background: rgba(255,255,255,0.2);
+            padding: 10px 20px;
+            border-radius: 20px;
+        }
+        
+        /* Main Content */
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        /* Chapter Cards */
+        .chapter {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        
+        .chapter:hover {
+            transform: translateY(-5px);
+        }
+        
+        .chapter-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .chapter-num {
+            width: 50px;
+            height: 50px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            font-weight: bold;
+        }
+        
+        .chapter h2 {
+            font-size: 1.5rem;
+            color: var(--dark);
+        }
+        
+        .chapter .dates {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+        
+        .chapter .lessons {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .chapter .lessons h3 {
+            font-size: 1rem;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+        
+        .chapter .topics {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .topic-tag {
+            background: #e8f4f8;
+            color: var(--primary);
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+        }
+        
+        /* Formula Box */
+        .formulas {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .formulas h4 {
+            color: #856404;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+        }
+        
+        .formula {
+            font-family: 'Courier New', monospace;
+            background: white;
+            padding: 8px 12px;
+            border-radius: 5px;
+            margin: 5px 0;
+            font-size: 0.9rem;
+            border-left: 3px solid #ffc107;
+        }
+        
+        /* Resources */
+        .resources {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .resource-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: bold;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .resource-btn:hover {
+            transform: scale(1.05);
+        }
+        
+        .practice-btn {
+            background: var(--success);
+            color: white;
+        }
+        
+        .video-btn {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .game-btn {
+            background: var(--secondary);
+            color: white;
+        }
+        
+        /* Exam Info */
+        .exam-info {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .exam-info h3 {
+            margin-bottom: 10px;
+        }
+        
+        /* Footer */
+        footer {
+            background: var(--dark);
+            color: white;
+            text-align: center;
+            padding: 30px;
+            margin-top: 50px;
+        }
+        
+        /* Mobile */
+        @media (max-width: 600px) {
+            .hero h1 { font-size: 1.8rem; }
+            .hero .info { gap: 10px; }
+            .chapter { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <h1>📚 中三數學 2025-26</h1>
+        <p class="subtitle">中華聖潔會靈風中學 | 數學科</p>
+        <div class="info">
+            <div class="info-item">📅 9月 - 12月</div>
+            <div class="info-item">📖 5個章節</div>
+            <div class="info-item">⏱️ 52節課</div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <!-- Exam Info -->
+        <div class="exam-info">
+            <h3>📅 重要日期</h3>
+            <p><strong>第一學期考試：</strong> 12/11 - 21/11</p>
+            <p><strong>溫習時段：</strong> 3/11 - 10/11</p>
+        </div>
+        
+        <!-- Chapter 1 -->
+        <div class="chapter">
+            <div class="chapter-header">
+                <div class="chapter-num">1</div>
+                <div>
+                    <h2>續多項式的因式分解</h2>
+                    <p class="dates">📅 3/9 - 19/9 | 15節課</p>
+                </div>
+            </div>
+            
+            <div class="lessons">
+                <h3>📖 課題內容</h3>
+                <div class="topics">
+                    <span class="topic-tag">1.1 以併項法作因式分解</span>
+                    <span class="topic-tag">1.2 以十字相乘法作因式分解</span>
+                    <span class="topic-tag">A. 二次多項式 x² + bx + c</span>
+                    <span class="topic-tag">B. 二次多項式 ax² + bx + c</span>
+                    <span class="topic-tag">C. 二元二次多項式的因式分解</span>
+                </div>
+            </div>
+            
+            <div class="formulas">
+                <h4>💡 重要公式</h4>
+                <div class="formula">十字相乘法：(x + m)(x + n) = x² + (m+n)x + mn</div>
+                <div class="formula">a²-b² = (a+b)(a-b)</div>
+                <div class="formula">a³-b³ = (a-b)(a²+ab+b²)</div>
+            </div>
+            
+            <div class="resources">
+                <a href="#" class="resource-btn practice-btn">📝 練習題</a>
+                <a href="#" class="resource-btn game-btn">🎮 相關遊戲</a>
+            </div>
+        </div>
+        
+        <!-- Chapter 2 -->
+        <div class="chapter">
+            <div class="chapter-header">
+                <div class="chapter-num">2</div>
+                <div>
+                    <h2>整數指數定律</h2>
+                    <p class="dates">📅 22/9 - 3/10 | 11節課</p>
+                </div>
+            </div>
+            
+            <div class="lessons">
+                <h3>📖 課題內容</h3>
+                <div class="topics">
+                    <span class="topic-tag">2.1 正整數指數定律</span>
+                    <span class="topic-tag">2.2 零和負整數指數</span>
+                    <span class="topic-tag">2.3 科學記數法</span>
+                    <span class="topic-tag">2.4 不同進制的記數法</span>
+                </div>
+            </div>
+            
+            <div class="formulas">
+                <h4>💡 重要公式</h4>
+                <div class="formula">aᵐ × aⁿ = aᵐ⁺ⁿ</div>
+                <div class="formula">aᵐ ÷ aⁿ = aᵐ⁻ⁿ</div>
+                <div class="formula">(aᵐ)ⁿ = aᵐⁿ</div>
+                <div class="formula">a⁰ = 1 (a ≠ 0)</div>
+                <div class="formula">a⁻ⁿ = 1/aⁿ</div>
+            </div>
+            
+            <div class="resources">
+                <a href="#" class="resource-btn practice-btn">📝 練習題</a>
+                <a href="#" class="resource-btn game-btn">🎮 相關遊戲</a>
+            </div>
+        </div>
+        
+        <!-- Chapter 3 -->
+        <div class="chapter">
+            <div class="chapter-header">
+                <div class="chapter-num">3</div>
+                <div>
+                    <h2>百分法 (二)</h2>
+                    <p class="dates">📅 6/10 - 17/10 | 11節課</p>
+                </div>
+            </div>
+            
+            <div class="lessons">
+                <h3>📖 課題內容</h3>
+                <div class="topics">
+                    <span class="topic-tag">3.1 不同形式的百分變化</span>
+                    <span class="topic-tag">3.2 增長與衰減</span>
+                    <span class="topic-tag">3.3 單利息</span>
+                    <span class="topic-tag">3.4 複利息</span>
+                </div>
+            </div>
+            
+            <div class="formulas">
+                <h4>💡 重要公式</h4>
+                <div class="formula">新值 = 原值 × (1 + 百份比/100)</div>
+                <div class="formula">單利息 = 本金 × 利率 × 時間</div>
+                <div class="formula">複利息 = 本金 × (1 + 利率)ⁿ</div>
+                <div class="formula">增長率 = (新值-原值)/原值 × 100%</div>
+            </div>
+            
+            <div class="resources">
+                <a href="#" class="resource-btn practice-btn">📝 練習題</a>
+                <a href="#" class="resource-btn game-btn">🎮 相關遊戲</a>
+            </div>
+        </div>
+        
+        <!-- Chapter 5 -->
+        <div class="chapter">
+            <div class="chapter-header">
+                <div class="chapter-num">5</div>
+                <div>
+                    <h2>四邊形</h2>
+                    <p class="dates">📅 21/10 - 31/10 | 10節課</p>
+                </div>
+            </div>
+            
+            <div class="lessons">
+                <h3>📖 課題內容</h3>
+                <div class="topics">
+                    <span class="topic-tag">5.1 平行四邊形的性質</span>
+                    <span class="topic-tag">5.2 特殊四邊形 (長方形、菱形、正方形、梯形)</span>
+                    <span class="topic-tag">5.3 與平行四邊形有關的證明</span>
+                    <span class="topic-tag">5.4 中點定理</span>
+                    <span class="topic-tag">5.5 截線定理</span>
+                </div>
+            </div>
+            
+            <div class="formulas">
+                <h4>💡 重要定理</h4>
+                <div class="formula">平行四邊形對邊相等、對角相等</div>
+                <div class="formula">長方形：四個角都是90°</div>
+                <div class="formula">菱形：四邊相等，對角線互相垂直</div>
+                <div class="formula">中點定理：三角形兩邊中點連線平行於第三邊</div>
+            </div>
+            
+            <div class="resources">
+                <a href="#" class="resource-btn practice-btn">📝 練習題</a>
+                <a href="#" class="resource-btn game-btn">🎮 相關遊戲</a>
+            </div>
+        </div>
+        
+        <!-- Chapter 6 -->
+        <div class="chapter">
+            <div class="chapter-header">
+                <div class="chapter-num">6</div>
+                <div>
+                    <h2>三角形的心</h2>
+                    <p class="dates">📅 26/11 - 5/12 | 5節課</p>
+                </div>
+            </div>
+            
+            <div class="lessons">
+                <h3>📖 課題內容</h3>
+                <div class="topics">
+                    <span class="topic-tag">6.1 角平分線和垂直平分線的性質</span>
+                    <span class="topic-tag">6.2 三角形內重要的直線</span>
+                    <span class="topic-tag">6.3 三角形的心的概念</span>
+                </div>
+            </div>
+            
+            <div class="formulas">
+                <h4>💡 三角形的心</h4>
+                <div class="formula">❤️ 內心：三角形內切圓圓心，三條角平分線交點</div>
+                <div class="formula">💚 外心：三條垂直平分線交點，外接圓圓心</div>
+                <div class="formula">💙 形心(重心)：三條中線交點</div>
+                <div class="formula">❤️ 垂心：三條高線交點</div>
+            </div>
+            
+            <div class="resources">
+                <a href="#" class="resource-btn practice-btn">📝 練習題</a>
+                <a href="#" class="resource-btn game-btn">🎮 相關遊戲</a>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>🌟 中華聖潔會靈風中學 | 數學科</p>
+        <p>2025-26 年度</p>
+    </footer>
+</body>
+</html>

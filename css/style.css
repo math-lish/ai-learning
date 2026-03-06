@@ -1,249 +1,256 @@
-/* 教學遊戲庫 - 主頁樣式 */
 :root {
     --primary: #4A90E2;
     --secondary: #F39C12;
     --success: #2ECC71;
     --danger: #E74C3C;
-    --purple: #9B59B6;
-    --dark: #2C3E50;
-    --light: #ECF0F1;
-    --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --bg: #F5F7FA;
+    --text: #333;
 }
 
 * {
+    box-sizing: border-box;
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
 }
 
 body {
-    font-family: 'Noto Sans TC', 'Segoe UI', sans-serif;
-    background: #f8f9fa;
-    color: var(--dark);
-    line-height: 1.6;
+    font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
 }
 
-/* Hero */
-.hero {
-    background: var(--gradient);
-    color: white;
-    padding: 60px 20px;
-    text-align: center;
-}
-
-.hero h1 {
-    font-size: 3rem;
-    margin-bottom: 10px;
-}
-
-.subtitle {
-    font-size: 1.5rem;
-    opacity: 0.9;
-    margin-bottom: 20px;
-}
-
-.tags {
-    display: flex;
-    justify-content: center;
-    gap: 15px;
-    flex-wrap: wrap;
-}
-
-.tag {
-    background: rgba(255,255,255,0.2);
-    padding: 8px 20px;
-    border-radius: 20px;
-    font-size: 1rem;
-}
-
-/* Main */
-main {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 40px 20px;
-}
-
-/* Category */
-.category {
-    margin-bottom: 50px;
-}
-
-.category-title {
-    font-size: 1.8rem;
-    margin-bottom: 20px;
-    padding-bottom: 10px;
-    border-bottom: 3px solid var(--primary);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.new-badge {
-    background: var(--danger);
-    color: white;
-    font-size: 0.7rem;
-    padding: 3px 8px;
-    border-radius: 10px;
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
-}
-
-.category.featured {
-    margin-bottom: 40px;
-}
-
-.featured-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 20px;
-    padding: 5px;
-}
-
-.featured-link {
-    display: flex;
-    align-items: center;
-    gap: 25px;
-    padding: 25px;
-    background: white;
-    border-radius: 15px;
-    text-decoration: none;
-    color: inherit;
-    transition: all 0.3s;
-}
-
-.featured-link:hover {
-    transform: scale(1.02);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-}
-
-.featured-icon {
-    font-size: 4rem;
-    flex-shrink: 0;
-}
-
-.featured-content h3 {
-    font-size: 1.5rem;
-    color: var(--dark);
-    margin-bottom: 5px;
-}
-
-.featured-content p {
-    color: #666;
-    margin-bottom: 10px;
-}
-
-.click-hint {
-    color: var(--primary);
-    font-weight: bold;
-}
-
-/* 成果分享標題 */
-.成果分享 {
-    text-align: center;
-    margin: 30px 0 20px;
+.screen {
+    min-height: 100vh;
     padding: 20px;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    border-radius: 15px;
 }
 
-.section-title {
-    font-size: 1.5rem;
-    color: var(--dark);
-    margin-bottom: 5px;
+.hidden {
+    display: none !important;
 }
 
-.section-desc {
-    color: #666;
-    font-size: 0.95rem;
-}
-
-.count {
-    font-size: 1rem;
-    color: #666;
-    font-weight: normal;
-}
-
-/* Games Grid */
-.games-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 20px;
-}
-
-/* Game Card */
-.game-card {
+/* 登入畫面 */
+.login-box {
+    max-width: 400px;
+    margin: 100px auto;
     background: white;
+    padding: 40px;
     border-radius: 15px;
-    padding: 25px;
-    text-decoration: none;
-    color: inherit;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
-    transition: all 0.3s ease;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
     text-align: center;
 }
 
-.game-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+.login-box h1 {
+    color: var(--primary);
+    margin-bottom: 10px;
 }
 
-.game-card.highlight {
-    border: 3px solid var(--secondary);
-    background: linear-gradient(135deg, #fff 0%, #fff9e6 100%);
+.login-box select,
+.login-box input {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
 }
 
-.game-icon {
-    font-size: 3rem;
-    margin-bottom: 15px;
-}
-
-.game-card h3 {
-    font-size: 1.2rem;
-    margin-bottom: 8px;
-    color: var(--dark);
-}
-
-.game-card p {
-    font-size: 0.9rem;
-    color: #666;
-}
-
-/* Footer */
-footer {
-    background: var(--dark);
+.login-box button {
+    width: 100%;
+    padding: 12px;
+    background: var(--primary);
     color: white;
-    text-align: center;
-    padding: 30px 20px;
-    margin-top: 40px;
-}
-
-.credit {
-    opacity: 0.6;
-    font-size: 0.9rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
     margin-top: 10px;
 }
 
-/* Mobile */
-@media (max-width: 768px) {
-    .hero h1 {
-        font-size: 2rem;
-    }
-    
-    .games-grid {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    }
-    
-    .game-card {
-        padding: 15px;
-    }
-    
-    .game-icon {
-        font-size: 2rem;
-    }
+.login-box button:hover {
+    background: #357ABD;
+}
+
+.error {
+    color: var(--danger);
+    font-size: 14px;
+    margin-top: 10px;
+}
+
+/* 排隊畫面 */
+.queue-info {
+    text-align: center;
+    margin-top: 100px;
+}
+
+.queue-info h2 {
+    color: var(--secondary);
+    font-size: 2rem;
+}
+
+.timer {
+    font-size: 1.5rem;
+    color: var(--danger);
+    margin: 20px 0;
+}
+
+.self-learn {
+    margin-top: 30px;
+    padding: 20px;
+    background: white;
+    border-radius: 10px;
+}
+
+/* 問題輸入畫面 */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.question-form {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+}
+
+.question-form textarea {
+    width: 100%;
+    height: 150px;
+    padding: 15px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+    resize: vertical;
+}
+
+.question-form input[type="file"] {
+    margin: 10px 0;
+}
+
+.question-form button {
+    width: 100%;
+    padding: 15px;
+    background: var(--success);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 18px;
+    cursor: pointer;
+    margin-top: 20px;
+}
+
+#photo-preview img {
+    max-width: 200px;
+    margin-top: 10px;
+    border-radius: 8px;
+}
+
+.stats {
+    margin-top: 20px;
+    padding: 15px;
+    background: #e8f4f8;
+    border-radius: 8px;
+    text-align: center;
+}
+
+/* AI 回覆畫面 */
+.timer-banner {
+    background: var(--danger);
+    color: white;
+    text-align: center;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-weight: bold;
+}
+
+.student-question,
+.ai-answer {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 15px;
+}
+
+.student-question {
+    border-left: 4px solid var(--secondary);
+}
+
+.ai-answer {
+    border-left: 4px solid var(--primary);
+}
+
+.ai-answer h4 {
+    color: var(--primary);
+    margin-bottom: 10px;
+}
+
+#ai-response {
+    line-height: 1.8;
+    white-space: pre-wrap;
+}
+
+.actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.actions button {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.actions button:first-child {
+    background: var(--secondary);
+    color: white;
+}
+
+.actions button:last-child {
+    background: var(--success);
+    color: white;
+}
+
+/* 自學畫面 */
+.selflearn-content {
+    text-align: center;
+    margin-top: 50px;
+}
+
+.selflearn-options grid;
+    grid-template-columns: repeat {
+    display:(3, 1fr);
+    gap: 15px;
+    margin: 30px 0;
+}
+
+.selflearn-options button {
+    padding: 30px;
+    background: white;
+    border: 2px solid var(--primary);
+    border-radius: 12px;
+    font-size: 18px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.selflearn-options button:hover {
+    background: var(--primary);
+    color: white;
+}
+
+.queue-status {
+    margin-top: 30px;
+    padding: 15px;
+    background: white;
+    border-radius: 10px;
 }

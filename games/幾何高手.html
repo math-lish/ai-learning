@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>幾何高手 - 圓柱與球體體積挑戰</title>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['(', ')']]
+            },
+            svg: {
+                fontCache: 'global'
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 10px;
+        }
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+        }
+        h1 { color: #2c3e50; margin-bottom: 5px; font-size: 1.8rem; }
+        
+        /* 記分板 */
+        .stats-container {
+            display: flex;
+            justify-content: space-between;
+            background-color: #f8f9fa;
+            padding: 10px 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border: 1px solid #e9ecef;
+        }
+        .stat-item { font-size: 1.1rem; font-weight: bold; }
+        .stat-score { color: #e74c3c; }
+        .stat-count { color: #2980b9; }
+        
+        /* 模式標籤 */
+        .mode-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: white;
+        }
+        .badge-pi { background-color: #8e44ad; }
+        .badge-sig { background-color: #d35400; }
+        .badge-unit { background-color: #27ae60; }
+        .badge-no-unit { background-color: #7f8c8d; }
+        
+        /* 圖片容器 */
+        .diagram-container {
+            margin: 10px auto 20px auto;
+            width: 220px;
+            height: 220px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        /* 題目區塊 */
+        .question-box {
+            background-color: #e8f4fd;
+            border-left: 5px solid #3498db;
+            padding: 15px 20px;
+            margin-bottom: 25px;
+            border-radius: 4px;
+            font-size: 1.2rem;
+            text-align: left;
+        }
+        
+        /* 選項區塊 */
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .option-label {
+            background-color: #fff;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+        .option-label:hover {
+            border-color: #3498db;
+            background-color: #f7fbff;
+            transform: translateY(-2px);
+        }
+        .option-label.selected {
+            border-color: #3498db;
+            background-color: #e8f4fd;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+        
+        input[type="radio"] { display: none; }
+        
+        /* 按鈕 */
+        .btn {
+            background-color: #2ecc71;
+            color: white;
+            padding: 12px 35px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: transform 0.1s, background-color 0.2s;
+        }
+        .btn:hover { background-color: #27ae60; transform: scale(1.05); }
+        .btn-next { background-color: #3498db; margin-left: 10px; display: none; }
+        .btn-next:hover { background-color: #2980b9; }
+        
+        /* 結果 */
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .result-correct { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .result-incorrect { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #4A90E2;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-link">← 返回遊戲首頁</a>
+    
+    <div class="container">
+        <h1>📐 幾何高手挑戰賽</h1>
+        
+        <div class="stats-container">
+            <div class="stat-item">得分：<span id="score-display">0</span></div>
+            <div class="stat-item">第 <span id="question-count-display">1</span> 題</div>
+        </div>
+        
+        <div class="mode-container">
+            <div id="mode-ans-badge" class="badge badge-pi"></div>
+            <div id="mode-unit-badge" class="badge badge-unit"></div>
+        </div>
+        
+        <div class="diagram-container">
+            <svg id="cylinder-svg" width="200" height="220" viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="grad-cyl" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" style="stop-color:#f0f8ff;stop-opacity:1" />
+                        <stop offset="50%" style="stop-color:#ffffff;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#dbeafe;stop-opacity:1" />
+                    </linearGradient>
+                </defs>
+                <line x1="170" y1="50" x2="170" y2="170" stroke="#333" stroke-width="2" />
+                <line x1="165" y1="50" x2="175" y2="50" stroke="#333" stroke-width="2" />
+                <line x1="165" y1="170" x2="175" y2="170" stroke="#333" stroke-width="2" />
+                <text x="178" y="115" font-family="serif" font-style="italic" font-size="20" fill="#d35400">h</text>
+                <path d="M40,50 L40,170 A60,20 0 0 0 160,170 L160,50" fill="url(#grad-cyl)" stroke="#2c3e50" stroke-width="2" />
+                <path d="M40,170 A60,20 0 0 1 160,170" fill="none" stroke="#2c3e50" stroke-width="2" stroke-dasharray="5,5" />
+                <ellipse cx="100" cy="50" rx="60" ry="20" fill="#e8f4fd" stroke="#2c3e50" stroke-width="2" />
+                <line x1="100" y1="50" x2="160" y2="50" stroke="#c0392b" stroke-width="2" />
+                <circle cx="100" cy="50" r="3" fill="#c0392b" />
+                <text x="125" y="45" font-family="serif" font-style="italic" font-size="20" fill="#c0392b">r</text>
+            </svg>
+            
+            <svg id="sphere-svg" width="220" height="220" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg" style="display:none;">
+                <defs>
+                    <radialGradient id="grad-sphere" cx="30%" cy="30%" r="70%" fx="30%" fy="30%">
+                        <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#8ecae6;stop-opacity:1" />
+                    </radialGradient>
+                </defs>
+                <circle cx="110" cy="110" r="90" fill="url(#grad-sphere)" stroke="#2c3e50" stroke-width="2" />
+                <ellipse cx="110" cy="110" rx="90" ry="30" fill="none" stroke="#2c3e50" stroke-width="1.5" stroke-dasharray="5,5" />
+                <line x1="110" y1="110" x2="200" y2="110" stroke="#c0392b" stroke-width="2" />
+                <circle cx="110" cy="110" r="3" fill="#c0392b" />
+                <text x="150" y="100" font-family="serif" font-style="italic" font-size="24" fill="#c0392b">r</text>
+            </svg>
+        </div>
+        
+        <div class="question-box" id="question-text">載入中...</div>
+        
+        <div class="options-grid" id="options-group"></div>
+        
+        <div>
+            <button class="btn" id="submit-btn" onclick="checkAnswer()">提交答案</button>
+            <button class="btn btn-next" id="next-btn" onclick="nextQuestion()">下一題</button>
+        </div>
+        
+        <div id="result"></div>
+    </div>
+    
+    <script>
+        // 單位庫
+        const unitPool = ['cm', 'm', 'mm', null];
+        
+        // 題型庫
+        const calculationTypes = [
+            { shape: 'cylinder', name: '圓柱體體積', symbol: 'V', unitPower: 3, formula: (r, h) => r * r * h },
+            { shape: 'cylinder', name: '圓柱體曲面面積', symbol: 'A_lat', unitPower: 2, formula: (r, h) => 2 * r * h },
+            { shape: 'cylinder', name: '圓柱體總表面面積', symbol: 'A_total', unitPower: 2, formula: (r, h) => 2 * r * r + 2 * r * h },
+            { shape: 'sphere', name: '球體體積', symbol: 'V', unitPower: 3, formula: (r, h) => (4/3) * Math.pow(r, 3) }
+        ];
+        
+        let state = { r: 0, h: 0, type: null, unit: null, hasUnit: false, mode: 'pi', correctCoeff: 0, correctValue: 0, isAnswered: false, score: 0, questionCount: 0 };
+        
+        function toSigFigs(num, precision) { return parseFloat(num.toPrecision(precision)); }
+        
+        window.onload = function() { nextQuestion(); };
+        
+        function nextQuestion() {
+            state.questionCount++;
+            updateStatsUI();
+            state.isAnswered = false;
+            document.getElementById('result').innerHTML = '';
+            document.getElementById('result').className = '';
+            document.getElementById('submit-btn').style.display = 'inline-block';
+            document.getElementById('next-btn').style.display = 'none';
+            
+            // 1. 隨機決定模式與單位
+            state.mode = Math.random() < 0.5 ? 'pi' : 'sigfig';
+            const randomUnit = unitPool[Math.floor(Math.random() * unitPool.length)];
+            state.unit = randomUnit;
+            state.hasUnit = (randomUnit !== null);
+            
+            // 2. 隨機選題型
+            state.type = calculationTypes[Math.floor(Math.random() * calculationTypes.length)];
+            
+            // 3. 切換圖形顯示
+            const cylSvg = document.getElementById('cylinder-svg');
+            const sphSvg = document.getElementById('sphere-svg');
+            if (state.type.shape === 'sphere') {
+                cylSvg.style.display = 'none';
+                sphSvg.style.display = 'block';
+            } else {
+                sphSvg.style.display = 'none';
+                cylSvg.style.display = 'block';
+            }
+            
+            // 4. 生成參數
+            if (state.type.shape === 'sphere' && state.type.name === '球體體積' && state.mode === 'pi') {
+                const multipliers = [3, 6, 9];
+                state.r = multipliers[Math.floor(Math.random() * multipliers.length)];
+            } else {
+                state.r = Math.floor(Math.random() * 8) + 2;
+            }
+            state.h = Math.floor(Math.random() * 8) + 2;
+            
+            // 5. 更新 UI 標籤
+            updateBadges();
+            
+            // 6. 計算答案
+            const coeff = state.type.formula(state.r, state.h);
+            state.correctCoeff = coeff;
+            state.correctValue = toSigFigs(coeff * Math.PI, 3);
+            
+            // 7. 顯示題目文字
+            const unitStr = state.hasUnit ? `, ${state.unit}` : '';
+            let paramsLatex = '';
+            
+            if (state.type.shape === 'sphere') {
+                paramsLatex = `$r = ${state.r} ${unitStr}$`;
+            } else {
+                paramsLatex = `$r = ${state.r} ${unitStr}, h = ${state.h} ${unitStr}$`;
+            }
+            
+            let instructions = state.mode === 'pi' ? '答案以 $π$ 表示' : '答案取 <strong>3 位有效數字</strong>';
+            
+            const questionHtml = `
+                <div>
+                    圖中${state.type.shape === 'sphere' ? '球體' : '圓柱體'}的參數為：<br>
+                    ${paramsLatex}
+                    <br><br>
+                    請計算其<strong>${state.type.name}</strong> ($${state.type.symbol}$)：<br>
+                    <span style="font-size: 0.9em; color: #666">(${instructions})</span>
+                </div>
+            `;
+            document.getElementById('question-text').innerHTML = questionHtml;
+            
+            generateOptions();
+            renderMath();
+        }
+        
+        function updateBadges() {
+            const ansBadge = document.getElementById('mode-ans-badge');
+            const unitBadge = document.getElementById('mode-unit-badge');
+            
+            if (state.mode === 'pi') {
+                ansBadge.textContent = '答案：保留 π';
+                ansBadge.className = 'badge badge-pi';
+            } else {
+                ansBadge.textContent = '答案：3 位有效數字';
+                ansBadge.className = 'badge badge-sig';
+            }
+            
+            if (state.hasUnit) {
+                unitBadge.textContent = `單位：${state.unit}`;
+                unitBadge.className = 'badge badge-unit';
+            } else {
+                unitBadge.textContent = '單位：無';
+                unitBadge.className = 'badge badge-no-unit';
+            }
+        }
+        
+        function getResultUnitSuffix() {
+            if (!state.hasUnit) return '';
+            return `, ${state.unit}^${state.type.unitPower}`;
+        }
+        
+        function generateOptions() {
+            let optionsSet = new Set();
+            const suffix = getResultUnitSuffix();
+            
+            if (state.mode === 'pi') {
+                const correct = state.correctCoeff;
+                optionsSet.add(correct);
+                while (optionsSet.size < 4) {
+                    let fake;
+                    if (Number.isInteger(correct)) {
+                        let offset = Math.floor(Math.random() * 40) - 20;
+                        fake = correct + offset;
+                    } else {
+                        fake = correct + (Math.random() * 10 - 5);
+                        fake = parseFloat(fake.toFixed(2));
+                    }
+                    if (fake > 0 && fake !== correct) optionsSet.add(fake);
+                }
+            } else {
+                const correct = state.correctValue;
+                optionsSet.add(correct);
+                while (optionsSet.size < 4) {
+                    let fakeVal;
+                    if (Math.random() < 0.5) {
+                        let percent = 1 + (Math.random() * 0.6 - 0.3);
+                        fakeVal = toSigFigs(state.correctCoeff * Math.PI * percent, 3);
+                    } else {
+                        const multipliers = [0.5, 1.5, 2.0, 4.0, 0.75, 3.14];
+                        let mult = multipliers[Math.floor(Math.random() * multipliers.length)];
+                        fakeVal = toSigFigs(state.correctCoeff * Math.PI * mult, 3);
+                    }
+                    if (fakeVal > 0 && fakeVal !== correct) optionsSet.add(fakeVal);
+                }
+            }
+            
+            let optionsArr = Array.from(optionsSet).sort(() => Math.random() - 0.5);
+            const container = document.getElementById('options-group');
+            container.innerHTML = '';
+            
+            optionsArr.forEach((val) => {
+                const label = document.createElement('label');
+                label.className = 'option-label';
+                label.onclick = () => selectOption(label);
+                
+                let displayMath;
+                if (state.mode === 'pi') {
+                    const displayVal = Number.isInteger(val) ? val : parseFloat(val.toFixed(2));
+                    displayMath = `$${displayVal}π ${suffix}$`;
+                } else {
+                    displayMath = `$${val} ${suffix}$`;
+                }
+                
+                label.innerHTML = `<input type="radio" name="ans" value="${val}"><span>${displayMath}</span>`;
+                container.appendChild(label);
+            });
+        }
+        
+        function selectOption(element) {
+            if (state.isAnswered) return;
+            document.querySelectorAll('.option-label').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+            element.querySelector('input').checked = true;
+        }
+        
+        function checkAnswer() {
+            if (state.isAnswered) return;
+            const selected = document.querySelector('input[name="ans"]:checked');
+            const resultBox = document.getElementById('result');
+            
+            if (!selected) {
+                resultBox.textContent = '請先選擇一個答案！';
+                return;
+            }
+            
+            state.isAnswered = true;
+            const userVal = parseFloat(selected.value);
+            const suffix = getResultUnitSuffix();
+            
+            let isCorrect = false;
+            let fullAnswerLatex = '';
+            
+            if (state.mode === 'pi') {
+                isCorrect = Math.abs(userVal - state.correctCoeff) < 0.001;
+                const displayCoeff = Number.isInteger(state.correctCoeff) ? state.correctCoeff : state.correctCoeff.toFixed(2);
+                fullAnswerLatex = `$${state.type.symbol} = ${displayCoeff}π ${suffix}$`;
+            } else {
+                isCorrect = (userVal === state.correctValue);
+                fullAnswerLatex = `$${state.type.symbol} ≈ ${state.correctValue} ${suffix}$`;
+            }
+            
+            if (isCorrect) {
+                state.score++;
+                resultBox.className = 'result-correct';
+                resultBox.innerHTML = `<span>🎉 答對了！ (Score +1) ${fullAnswerLatex}</span>`;
+            } else {
+                state.score--;
+                resultBox.className = 'result-incorrect';
+                resultBox.innerHTML = `<span>❌ 答錯了。 (Score -1) 正確答案是： ${fullAnswerLatex}</span>`;
+            }
+            
+            updateStatsUI();
+            document.getElementById('submit-btn').style.display = 'none';
+            document.getElementById('next-btn').style.display = 'inline-block';
+            renderMath();
+        }
+        
+        function updateStatsUI() {
+            document.getElementById('score-display').textContent = state.score;
+            document.getElementById('question-count-display').textContent = state.questionCount;
+        }
+        
+        function renderMath() {
+            if (window.MathJax) {
+                MathJax.typesetPromise([document.body]).catch((err) => console.log(err));
+            }
+        }
+    </script>
+</body>
+</html>

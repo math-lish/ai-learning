@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>多項式星際大戰 (教學優化版)</title>
+    <style>
+        body { 
+            margin: 0; overflow: hidden; background-color: #1a1a2e; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            color: white; touch-action: none; 
+        }
+
+        #game-container {
+            position: relative; width: 100vw; height: 100vh;
+            display: flex; flex-direction: column;
+        }
+
+        #ui-layer { 
+            position: absolute; top: 10px; left: 0; width: 100%; 
+            display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;
+            pointer-events: none; font-size: 14px; font-weight: bold; z-index: 10;
+        }
+
+        .stat-box { 
+            background: rgba(0, 0, 0, 0.6); padding: 5px 8px; border-radius: 8px; 
+            border: 1px solid #4ecca3; white-space: nowrap;
+        }
+
+        @keyframes flashRed { 0% { border-color: #4ecca3; } 50% { border-color: #e94560; background: rgba(233, 69, 96, 0.3); } 100% { border-color: #4ecca3; } }
+        .danger-flash { animation: flashRed 1s ease-in-out; }
+        
+        canvas { display: block; background: radial-gradient(circle, #252545 0%, #16213e 100%); }
+
+        /* Start Screen */
+        #start-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(26, 26, 46, 0.95);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 300; text-align: center;
+        }
+        #start-btn {
+            padding: 15px 40px; font-size: 22px; background: #e94560; color: white;
+            border: none; border-radius: 50px; cursor: pointer; margin-top: 20px;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+
+        /* Controls */
+        #controls {
+            position: absolute; bottom: 20px; width: 100%; height: 80px;
+            display: flex; justify-content: space-between; padding: 0 20px;
+            box-sizing: border-box; pointer-events: auto; z-index: 20;
+        }
+        .control-btn {
+            width: 80px; height: 80px; background: rgba(255, 255, 255, 0.15);
+            border: 2px solid #4ecca3; border-radius: 50%; color: white;
+            font-size: 30px; display: flex; justify-content: center; align-items: center;
+        }
+        .control-btn:active { background: rgba(78, 204, 163, 0.5); }
+
+        /* Modal & Keyboard */
+        #math-modal { 
+            display: none; position: absolute; top: 5%; left: 50%; transform: translateX(-50%); 
+            background: rgba(22, 33, 62, 0.98); padding: 15px; border-radius: 15px; 
+            border: 2px solid #e94560; text-align: center; width: 95%; max-width: 450px;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8); z-index: 100; 
+        }
+
+        .term-display { font-size: 20px; margin: 5px 0 10px 0; background: #0f3460; padding: 8px; border-radius: 5px; min-height: 24px; letter-spacing: 1px;}
+        
+        #answer-display {
+            width: 90%; height: 45px; background: #1a1a2e; border: 2px solid #4ecca3;
+            margin: 0 auto 10px auto; border-radius: 8px; font-size: 24px; color: white;
+            display: flex; align-items: center; justify-content: center; overflow-x: auto;
+            white-space: nowrap; padding: 0 10px; font-family: 'Segoe UI', sans-serif;
+            transition: background 0.2s;
+        }
+        #answer-display:empty:before { content: "輸入算式"; color: #555; font-size: 16px; }
+
+        #virtual-keyboard {
+            display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 5px;
+        }
+        .key-btn {
+            background: #333; color: white; padding: 12px 0; border-radius: 5px; font-size: 18px;
+            border: 1px solid #555; cursor: pointer; user-select: none;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .key-btn:active { background: #555; transform: translateY(2px); }
+        .key-var { background: #252a45; border-color: #6a75aa; color: #aab6ff; font-weight: bold; font-family: 'Times New Roman', serif; font-style: italic;}
+        .key-op { background: #3a2525; border-color: #aa6a6a; color: #ffaaba; font-weight: bold; }
+        .key-del { background: #b93b4f; }
+        
+        /* Confirm Button Styles */
+        .key-confirm { 
+            grid-column: span 5; background: #e94560; color: white; font-weight: bold; font-size: 20px; margin-top: 5px; transition: 0.3s;
+        }
+        /* Style for the 'Next' button state */
+        .key-next {
+            background: #4ecca3 !important; color: #1a1a2e !important;
+        }
+
+        #feedback-msg { min-height: 30px; font-size: 1.1em; margin: 10px 0; font-weight: bold; line-height: 1.4; white-space: pre-wrap;}
+        #attempts-display { font-size: 0.8em; color: #ffcc00; margin-bottom: 5px; }
+
+        /* Game Over Screen */
+        #game-over { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); flex-direction: column; justify-content: center; align-items: center; z-index: 200; text-align: center; }
+        #game-over h1 { color: #e94560; margin-bottom: 10px;}
+        
+        #id-container {
+            margin: 20px 0; padding: 15px; background: #222; border: 1px solid #444; border-radius: 10px; width: 80%; max-width: 300px;
+        }
+        #game-id-display {
+            display: block; font-family: monospace; font-size: 1.4em; color: #4ecca3; letter-spacing: 2px; margin: 10px 0; user-select: text;
+        }
+        .copy-btn {
+            padding: 5px 15px; font-size: 0.9em; background: #444; color: white; border: 1px solid #666; border-radius: 4px; cursor: pointer;
+        }
+        .copy-btn:active { background: #666; }
+
+        #home-btn { background: #3b82f6; color: white; padding: 15px 40px; font-size: 20px; border: none; border-radius: 10px; margin-top: 10px; cursor: pointer; transition: 0.2s;}
+        #home-btn:hover { background: #2563eb; }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <div id="start-screen">
+            <h1 style="color:#4ecca3;">多項式星際大戰</h1>
+            <p>每10秒隕石變快！<br>答對修復船體，答錯扣減碎片數HP</p>
+            <button id="start-btn" onclick="startGame()">點擊開始任務</button>
+        </div>
+
+        <div id="ui-layer">
+            <div class="stat-box">❤️ <span id="hp-display">20</span></div>
+            <div class="stat-box">⏱️ <span id="timer-display">120</span>s</div>
+            <div class="stat-box">🧮 <span id="next-calc-display">10</span>s</div>
+            <div class="stat-box" id="density-box">⚠️ 等級 <span id="density-display">1</span></div>
+        </div>
+
+        <canvas id="gameCanvas"></canvas>
+
+        <div id="controls">
+            <div id="btn-left" class="control-btn">◀</div>
+            <div id="btn-right" class="control-btn">▶</div>
+        </div>
+    </div>
+
+    <div id="math-modal">
+        <h3 style="margin: 0 0 5px 0; color: #e94560;">合併運算</h3>
+        <p style="margin: 0; font-size: 0.9em;">請手動輸入以下項目的總和：</p>
+        <div id="collected-terms" class="term-display"></div>
+        <div id="attempts-display"></div>
+        <div id="answer-display"></div>
+
+        <div id="virtual-keyboard">
+            <div class="key-btn" onclick="typeKey('1')">1</div>
+            <div class="key-btn" onclick="typeKey('2')">2</div>
+            <div class="key-btn" onclick="typeKey('3')">3</div>
+            <div class="key-btn key-op" onclick="typeKey('+')">+</div>
+            <div class="key-btn key-var" onclick="typeKey('x')">x</div>
+            
+            <div class="key-btn" onclick="typeKey('4')">4</div>
+            <div class="key-btn" onclick="typeKey('5')">5</div>
+            <div class="key-btn" onclick="typeKey('6')">6</div>
+            <div class="key-btn key-op" onclick="typeKey('-')">-</div>
+            <div class="key-btn key-var" onclick="typeKey('y')">y</div>
+
+            <div class="key-btn" onclick="typeKey('7')">7</div>
+            <div class="key-btn" onclick="typeKey('8')">8</div>
+            <div class="key-btn" onclick="typeKey('9')">9</div>
+            <div class="key-btn key-var" onclick="typeKey('x²')">x²</div>
+            <div class="key-btn key-var" onclick="typeKey('xy')">xy</div>
+
+            <div class="key-btn" style="visibility: hidden;"></div>
+            <div class="key-btn" onclick="typeKey('0')">0</div>
+            <div class="key-btn" style="visibility: hidden;"></div>
+            <div class="key-btn key-del" onclick="typeKey('DEL')" style="grid-column: span 2;">⌫</div>
+
+            <div id="confirm-btn" class="key-btn key-confirm" onclick="submitAnswer()">確認修復</div>
+        </div>
+        <div id="feedback-msg"></div>
+    </div>
+
+    <div id="game-over">
+        <h1 id="end-title">遊戲結束</h1>
+        <p id="end-reason" style="font-size: 18px; color: #ddd; margin: 0;"></p>
+        
+        <div id="id-container">
+            <p style="margin:0; font-size:0.9em; color:#aaa;">📝 戰績代碼 (請截圖或複製)</p>
+            <span id="game-id-display">LOADING...</span>
+            <button class="copy-btn" onclick="copyGameID()">📋 複製代碼</button>
+            <div id="copy-msg" style="height:20px; font-size:0.8em; color:#4ecca3; margin-top:5px;"></div>
+        </div>
+        
+        <button id="home-btn" onclick="resetGame()">🏠 回到首頁</button>
+    </div>
+
+<script>
+    // --- Encryption Logic ---
+    const XOR_KEY = 98765432101234n; 
+
+    function generateGameID() {
+        const now = new Date();
+        const pad = (n) => n.toString().padStart(2, '0');
+        const timeStr = now.getFullYear().toString() +
+                        pad(now.getMonth() + 1) +
+                        pad(now.getDate()) +
+                        pad(now.getHours()) +
+                        pad(now.getMinutes()) +
+                        pad(now.getSeconds());
+
+        const reversedStr = timeStr.split('').reverse().join('');
+        const rawVal = BigInt(reversedStr);
+        const encryptedVal = rawVal ^ XOR_KEY;
+        const bodyCode = encryptedVal.toString(36).toUpperCase();
+        const checksum = (encryptedVal % 36n).toString(36).toUpperCase();
+        return bodyCode + checksum;
+    }
+
+    function copyGameID() {
+        const idText = document.getElementById('game-id-display').innerText;
+        navigator.clipboard.writeText(idText).then(() => {
+            document.getElementById('copy-msg').innerText = "已複製到剪貼簿！";
+            setTimeout(() => document.getElementById('copy-msg').innerText = "", 2000);
+        });
+    }
+
+    // --- Global Init ---
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Config
+    const TOTAL_TIME = 120;
+    const CALC_INTERVAL = 10;
+    const MIN_SPAWN_INTERVAL = 0.25; 
+    const variableTypes = ["", "x", "y", "xy", "x²"]; 
+
+    // State
+    let gameLoopId;
+    let lastTime = 0;
+    let isPaused = true;
+    let gameStarted = false;
+    let hp = 20;
+    
+    // Time Accumulators
+    let totalTimeLeft = TOTAL_TIME;
+    let calcTimer = CALC_INTERVAL;
+    let spawnTimer = 0;
+    let difficultyTimer = 0;
+    let currentSpawnInterval = 1.0; 
+    
+    let attemptsLeft = 2;
+    let currentInput = "";
+    
+    // Smooth speed: Pixels per Second
+    let ship = { x: 0, y: 0, width: 50, height: 50, speedPxPerSec: 450 }; 
+    let rocks = []; 
+    let collectedTerms = []; 
+    let rightPressed = false;
+    let leftPressed = false;
+
+    // --- Class ---
+    class Rock {
+        constructor() {
+            this.width = 50; this.height = 50;
+            this.x = Math.random() * (canvas.width - this.width);
+            this.y = -60;
+            // Delta Time speed logic
+            this.speed = 120 + Math.random() * 150; 
+            
+            if (collectedTerms.length > 0 && Math.random() < 0.8) {
+                const randomExisting = collectedTerms[Math.floor(Math.random() * collectedTerms.length)];
+                this.variable = randomExisting.v;
+            } else {
+                this.variable = variableTypes[Math.floor(Math.random() * variableTypes.length)];
+            }
+            this.coeff = Math.floor(Math.random() * 19) - 9; 
+            if (this.coeff === 0) this.coeff = 1; 
+            
+            this.text = this.formatTerm(this.coeff, this.variable);
+            this.color = this.coeff > 0 ? '#4ecca3' : '#e94560'; 
+        }
+        formatTerm(c, v) {
+            if (c === -1 && v !== "") return "-" + v;
+            if (c === 1 && v !== "") return v;
+            return c + v;
+        }
+        draw() {
+            ctx.fillStyle = "#333"; ctx.beginPath();
+            ctx.arc(this.x + this.width/2, this.y + this.height/2, 22, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = this.color; ctx.lineWidth = 3; ctx.stroke();
+            ctx.fillStyle = "#fff"; ctx.font = "bold 20px Arial"; ctx.textAlign = "center";
+            ctx.fillText(this.text, this.x + this.width/2, this.y + this.height/2 + 6);
+        }
+        update(dt) { 
+            this.y += this.speed * dt; 
+        }
+    }
+
+    // --- Core Functions ---
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        ship.y = canvas.height - 180;
+        if (ship.x > canvas.width) ship.x = canvas.width / 2;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+    ship.x = canvas.width / 2 - 25;
+
+    const setupTouch = (id, dir) => {
+        const btn = document.getElementById(id);
+        const setPress = (val) => dir === 'L' ? leftPressed = val : rightPressed = val;
+        btn.addEventListener('touchstart', (e) => { e.preventDefault(); setPress(true); }, {passive: false});
+        btn.addEventListener('touchend', (e) => { e.preventDefault(); setPress(false); }, {passive: false});
+        btn.addEventListener('mousedown', () => setPress(true));
+        btn.addEventListener('mouseup', () => setPress(false));
+    };
+    setupTouch('btn-left', 'L');
+    setupTouch('btn-right', 'R');
+
+    // ** Soft Reset Function **
+    function resetGame() {
+        gameStarted = false;
+        isPaused = true;
+        hp = 20;
+        
+        totalTimeLeft = TOTAL_TIME;
+        calcTimer = CALC_INTERVAL;
+        difficultyTimer = 0;
+        currentSpawnInterval = 1.0;
+        spawnTimer = 0;
+        
+        collectedTerms = [];
+        rocks = [];
+        currentInput = "";
+        lastTime = 0;
+
+        document.getElementById('hp-display').innerText = hp;
+        document.getElementById('timer-display').innerText = Math.ceil(totalTimeLeft);
+        document.getElementById('next-calc-display').innerText = Math.ceil(calcTimer);
+        document.getElementById('density-display').innerText = "1";
+        document.getElementById('density-box').classList.remove('danger-flash');
+        document.getElementById('answer-display').innerText = "";
+        document.getElementById('feedback-msg').innerText = "";
+        
+        document.getElementById('game-over').style.display = 'none';
+        document.getElementById('math-modal').style.display = 'none';
+        document.getElementById('start-screen').style.display = 'flex';
+        
+        // Reset button state just in case
+        resetConfirmButton();
+
+        ship.x = canvas.width / 2 - 25;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        if (gameLoopId) cancelAnimationFrame(gameLoopId);
+    }
+
+    function startGame() {
+        document.getElementById('start-screen').style.display = 'none';
+        gameStarted = true;
+        isPaused = false;
+        lastTime = performance.now();
+        gameLoopId = requestAnimationFrame(gameLoop);
+    }
+
+    // --- Game Loop (Delta Time) ---
+    function gameLoop(timestamp) {
+        if (isPaused || !gameStarted) return;
+
+        const dt = (timestamp - lastTime) / 1000;
+        lastTime = timestamp;
+
+        if (dt > 0.1) {
+            gameLoopId = requestAnimationFrame(gameLoop);
+            return; 
+        }
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        updateLogic(dt);
+        
+        rocks.forEach(r => { r.update(dt); r.draw(); });
+        
+        ctx.font="50px Arial"; ctx.fillText("🚀",ship.x-5,ship.y+40); 
+        
+        gameLoopId = requestAnimationFrame(gameLoop);
+    }
+
+    function updateLogic(dt) {
+        spawnTimer += dt;
+        if (spawnTimer > currentSpawnInterval) {
+            rocks.push(new Rock());
+            spawnTimer = 0;
+        }
+
+        if(rightPressed && ship.x < canvas.width - ship.width) ship.x += ship.speedPxPerSec * dt;
+        if(leftPressed && ship.x > 0) ship.x -= ship.speedPxPerSec * dt;
+
+        for (let i = 0; i < rocks.length; i++) {
+            let r = rocks[i];
+            if (ship.x < r.x + r.width * 0.8 && ship.x + ship.width > r.x + r.width * 0.2 &&
+                ship.y < r.y + r.height && ship.height + ship.y > r.y) {
+                collectedTerms.push({ c: r.coeff, v: r.variable, text: r.text });
+                rocks.splice(i, 1); i--;
+            } else if (r.y > canvas.height) { rocks.splice(i, 1); i--; }
+        }
+
+        totalTimeLeft -= dt;
+        calcTimer -= dt;
+        difficultyTimer += dt;
+
+        if (difficultyTimer >= 10) {
+            increaseDifficulty();
+            difficultyTimer = 0;
+        }
+
+        document.getElementById('timer-display').innerText = Math.ceil(Math.max(0, totalTimeLeft));
+        document.getElementById('next-calc-display').innerText = Math.ceil(Math.max(0, calcTimer));
+
+        if (calcTimer <= 0) triggerCalculationPhase();
+        if (totalTimeLeft <= 0) endGame(true);
+    }
+
+    function increaseDifficulty() {
+        if (currentSpawnInterval > MIN_SPAWN_INTERVAL) {
+            currentSpawnInterval = Math.max(MIN_SPAWN_INTERVAL, currentSpawnInterval - 0.1);
+            let level = Math.floor((1.0 - currentSpawnInterval) * 10) + 1;
+            const densityBox = document.getElementById('density-box');
+            const densityNum = document.getElementById('density-display');
+            if (densityNum) densityNum.innerText = level;
+            if (densityBox) {
+                densityBox.classList.remove('danger-flash');
+                void densityBox.offsetWidth; 
+                densityBox.classList.add('danger-flash');
+            }
+        }
+    }
+
+    // --- Math & UI Logic ---
+    function triggerCalculationPhase() {
+        isPaused = true;
+        calcTimer = CALC_INTERVAL; 
+        attemptsLeft = 2;
+        currentInput = "";
+        
+        const modal = document.getElementById('math-modal');
+        const termDisplay = document.getElementById('collected-terms');
+        const ansDisplay = document.getElementById('answer-display');
+        const feedback = document.getElementById('feedback-msg');
+        
+        // Reset UI state
+        resetConfirmButton();
+        feedback.innerText = "";
+        feedback.style.color = "white";
+        ansDisplay.innerText = "";
+        ansDisplay.style.background = "#1a1a2e";
+        document.getElementById('attempts-display').innerText = "剩餘嘗試次數: 2";
+
+        if (collectedTerms.length === 0) {
+            termDisplay.innerText = "未收集到碎片，跳過。";
+            setTimeout(() => {
+                resumeGame();
+            }, 800);
+            return;
+        }
+
+        termDisplay.innerText = collectedTerms.map(t => (t.c > 0 ? `+${t.text}` : t.text)).join(" ");
+        if (termDisplay.innerText.startsWith('+')) termDisplay.innerText = termDisplay.innerText.substring(1);
+        
+        modal.style.display = "block";
+    }
+
+    // Resets the button to "Confirm" state
+    function resetConfirmButton() {
+        const btn = document.getElementById('confirm-btn');
+        btn.innerText = "確認修復";
+        btn.classList.remove('key-next');
+        btn.onclick = submitAnswer;
+    }
+
+    // Sets the button to "Continue" state
+    function setContinueButton() {
+        const btn = document.getElementById('confirm-btn');
+        btn.innerText = "🟢 繼續 (Next)";
+        btn.classList.add('key-next');
+        // Click to close modal
+        btn.onclick = function() {
+            finalizeRound(0); // Immediate close
+        };
+    }
+
+    function resumeGame() {
+        document.getElementById('math-modal').style.display = "none";
+        isPaused = false;
+        leftPressed = false; rightPressed = false;
+        lastTime = performance.now();
+        gameLoopId = requestAnimationFrame(gameLoop);
+    }
+
+    window.typeKey = function(key) {
+        // Prevent typing if we are in "Read Error" mode (button is Next)
+        const btn = document.getElementById('confirm-btn');
+        if (btn.classList.contains('key-next')) return;
+
+        const display = document.getElementById('answer-display');
+        display.style.background = "#1a1a2e"; 
+        if (key === 'DEL') currentInput = currentInput.slice(0, -1);
+        else if(currentInput.length < 20) currentInput += key;
+        display.innerText = currentInput;
+    }
+
+    function parsePolynomialString(str) {
+        str = str.replace(/\s+/g, '');
+        if (str === "" || str === "0") return {}; 
+        if (str[0] !== '+' && str[0] !== '-') str = '+' + str;
+
+        const regex = /([+-])(\d*)([a-z\u00B20-9]*)/g;
+        let match, parsedMap = {};
+        
+        while ((match = regex.exec(str)) !== null) {
+            if (match[0] === "") continue;
+            let sign = match[1] === '-' ? -1 : 1;
+            let numStr = match[2];
+            let variable = match[3];
+            let coeff = (numStr === "") ? 1 : parseInt(numStr);
+            coeff *= sign;
+            if (!parsedMap[variable]) parsedMap[variable] = 0;
+            parsedMap[variable] += coeff;
+        }
+        return parsedMap;
+    }
+
+    window.submitAnswer = function() {
+        let trueMap = {};
+        variableTypes.forEach(v => trueMap[v] = 0);
+        collectedTerms.forEach(item => trueMap[item.v] += item.c);
+
+        let userMap = parsePolynomialString(currentInput);
+        let correct = true;
+        
+        variableTypes.forEach(v => {
+            if (trueMap[v] !== (userMap[v] || 0)) correct = false;
+        });
+
+        for (let key in userMap) {
+            if (!variableTypes.includes(key) && userMap[key] !== 0) correct = false; 
+        }
+
+        let termsInResult = 0;
+        let answerString = "";
+        const sortOrder = ["x²", "xy", "x", "y", ""];
+        let sortedTypes = variableTypes.slice().sort((a, b) => sortOrder.indexOf(a) - sortOrder.indexOf(b));
+
+        sortedTypes.forEach(type => {
+            let val = trueMap[type];
+            if (val !== 0) {
+                termsInResult++;
+                let sign = val > 0 ? "+" : "";
+                answerString += `${sign}${val}${type} `;
+            }
+        });
+        if (answerString === "") answerString = "0";
+        if (answerString.startsWith("+")) answerString = answerString.substring(1);
+
+        const feedback = document.getElementById('feedback-msg');
+        const display = document.getElementById('answer-display');
+
+        if (correct) {
+            // Success: Auto continue quickly
+            if (termsInResult > 0) {
+                hp += termsInResult;
+                feedback.innerText = `✅ 正確！HP +${termsInResult}`;
+            } else {
+                feedback.innerText = `✅ 正確！(無增減)`;
+            }
+            feedback.style.color = "#4ecca3";
+            display.style.background = "rgba(78, 204, 163, 0.2)"; 
+            finalizeRound(800); 
+        } else {
+            attemptsLeft--;
+            if (attemptsLeft > 0) {
+                // Retry: Just warn
+                feedback.style.color = "#ffcc00";
+                feedback.innerText = "❌ 錯誤，請檢查算式。";
+                display.style.background = "rgba(255, 204, 0, 0.2)"; 
+                document.getElementById('attempts-display').innerText = `剩餘嘗試次數: ${attemptsLeft}`;
+            } else {
+                // FAIL: STOP AND WAIT
+                let penalty = collectedTerms.length; 
+                hp -= penalty;
+                
+                feedback.style.color = "#e94560";
+                feedback.innerText = `❌ 失敗\n正確答案: ${answerString}\n(扣除收集數 HP -${penalty})`;
+                display.style.background = "rgba(233, 69, 96, 0.3)";
+                
+                // ** Key Change: Enable "Next" button instead of auto-close **
+                setContinueButton();
+            }
+        }
+    };
+
+    function finalizeRound(delay) {
+        document.getElementById('hp-display').innerText = hp;
+        collectedTerms = [];
+        setTimeout(() => {
+            if (hp <= 0) endGame(false);
+            else {
+                resumeGame();
+            }
+        }, delay); 
+    }
+
+    function endGame(win) {
+        isPaused = true;
+        document.getElementById('math-modal').style.display = "none";
+        document.getElementById('game-over').style.display = "flex";
+        
+        const title = document.getElementById('end-title');
+        const reason = document.getElementById('end-reason');
+        const idDisplay = document.getElementById('game-id-display');
+
+        const gameID = generateGameID();
+        idDisplay.innerText = gameID;
+
+        if (win) {
+            title.innerText = "任務完成！"; title.style.color = "#4ecca3";
+            reason.innerText = `最終 HP: ${hp}`;
+        } else {
+            title.innerText = "任務失敗"; title.style.color = "#e94560";
+            reason.innerText = "船體已解體";
+        }
+    }
+</script>
+</body>
+</html>

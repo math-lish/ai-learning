@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+ <title>幾何獵人：複合戰線 (完美版)</title>
+ <style>
+ :root {
+ --hunter-blue: #3498db;
+ --target-red: #e74c3c;
+ --tech-bg: #f0f3f6;
+ --text-dark: #2c3e50;
+ }
+
+ * {
+ box-sizing: border-box;
+ touch-action: manipulation;
+ -webkit-tap-highlight-color: transparent;
+ user-select: none;
+ -webkit-user-select: none;
+ }
+
+ html, body {
+ margin: 0;
+ padding: 0;
+ width: 100%;
+ height: 100%;
+ overflow: hidden;
+ position: fixed; 
+ background-color: var(--tech-bg);
+ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+ }
+
+ .app-container {
+ display: flex;
+ flex-direction: column;
+ height: 100dvh;
+ width: 100%;
+ max-width: 600px;
+ margin: 0 auto;
+ background: #f4f6f9;
+ }
+
+ .dashboard {
+ flex: 0 0 auto;
+ padding: 10px 15px;
+ display: flex;
+ justify-content: space-between;
+ align-items: center;
+ background: white;
+ box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+ z-index: 10;
+ }
+ .game-title { font-weight: 800; font-size: 1rem; color: var(--text-dark); }
+ .score-display { font-weight: bold; color: var(--hunter-blue); font-size: 1rem; }
+ .highlight-red { color: var(--target-red); }
+
+ .battle-zone {
+ flex: 1;
+ display: flex;
+ flex-direction: column;
+ justify-content: center;
+ align-items: center;
+ padding: 5px 10px;
+ position: relative;
+ }
+
+ .scope-container {
+ position: relative;
+ background: white;
+ border-radius: 12px;
+ box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+ padding: 5px;
+ border: 2px solid #dce4ec;
+ width: 100%;
+ height: auto;
+ max-height: 55vh;
+ aspect-ratio: 4/3;
+ display: flex;
+ justify-content: center;
+ align-items: center;
+ }
+
+ canvas {
+ width: 100% !important;
+ height: 100% !important;
+ border-radius: 8px;
+ object-fit: contain;
+ }
+ 
+ .mission-text {
+ font-size: 1rem;
+ margin: 8px 0 0 0;
+ text-align: center;
+ font-weight: bold;
+ display: flex;
+ justify-content: center;
+ align-items: center;
+ white-space: nowrap;
+ }
+
+ .badge {
+ display: inline-block;
+ padding: 2px 8px;
+ border-radius: 12px;
+ color: white;
+ font-size: 0.9rem;
+ margin-left: 5px;
+ }
+ .bg-blue { background: var(--hunter-blue); }
+ .bg-red { background: var(--target-red); }
+
+ .control-panel {
+ flex: 0 0 auto;
+ background: white;
+ border-top-left-radius: 15px;
+ border-top-right-radius: 15px;
+ padding: 10px;
+ box-shadow: 0 -5px 20px rgba(0,0,0,0.05);
+ display: flex;
+ flex-direction: column;
+ align-items: center;
+ width: 100%;
+ }
+
+ .input-screen {
+ width: 100%;
+ height: 40px;
+ background: #2c3e50;
+ border-radius: 6px;
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ font-size: 1.5rem;
+ font-weight: bold;
+ color: #2ecc71;
+ margin-bottom: 8px;
+ font-family: 'Courier New', monospace;
+ letter-spacing: 2px;
+ }
+ .input-screen.placeholder { color: #5d6d7e; letter-spacing: normal; font-size: 1.2rem; }
+
+ .tactical-numpad {
+ display: grid;
+ grid-template-columns: repeat(6, 1fr);
+ gap: 5px;
+ width: 100%;
+ }
+
+ .key {
+ background: #f8f9fa;
+ border: 1px solid #e9ecef;
+ border-radius: 6px;
+ padding: 12px 0;
+ font-size: 1.2rem;
+ font-weight: 600;
+ color: var(--text-dark);
+ box-shadow: 0 2px 0 #cbd3da;
+ cursor: pointer;
+ display: flex;
+ justify-content: center;
+ align-items: center;
+ }
+ 
+ .key:active {
+ transform: translateY(2px);
+ box-shadow: none;
+ background: #e2e6ea;
+ }
+
+ .key-fire {
+ background-color: var(--hunter-blue);
+ color: white;
+ border-color: #2980b9;
+ box-shadow: 0 2px 0 #2980b9;
+ font-size: 1rem;
+ }
+ .key-fire.red-mode {
+ background-color: var(--target-red);
+ border-color: #c0392b;
+ box-shadow: 0 2px 0 #c0392b;
+ }
+
+ .key-del { color: var(--target-red); background: #fff5f5; font-size: 1rem; }
+
+ .shake { animation: shake 0.4s; }
+ @keyframes shake {
+ 0%, 100% { transform: translateX(0); }
+ 25% { transform: translateX(-8px); }
+ 75% { transform: translateX(8px); }
+ }
+ </style>
+</head>
+<body>
+
+<div class="app-container">
+ <div class="dashboard">
+ <div class="game-title">🎯 幾何獵人</div>
+ <div class="score-display">戰績: <span id="score">0</span></div>
+ </div>
+
+ <div class="battle-zone" id="battle-zone">
+ <div class="scope-container" id="scope">
+ <canvas id="geoCanvas" width="800" height="600"></canvas>
+ </div>
+
+ <div class="mission-text" id="mission-text">
+ 初始化...
+ </div>
+ </div>
+
+ <div class="control-panel">
+ <div class="input-screen placeholder" id="input-screen">READY</div>
+
+ <div class="tactical-numpad">
+ <button class="key" onclick="press(1)">1</button>
+ <button class="key" onclick="press(2)">2</button>
+ <button class="key" onclick="press(3)">3</button>
+ <button class="key" onclick="press(4)">4</button>
+ <button class="key" onclick="press(5)">5</button>
+ <button class="key" onclick="press(6)">6</button>
+ <button class="key" onclick="press(7)">7</button>
+ <button class="key" onclick="press(8)">8</button>
+ <button class="key" onclick="press(9)">9</button>
+ <button class="key" onclick="press(0)">0</button>
+ <button class="key key-del" onclick="press('del')">清除</button>
+ <button class="key key-fire" id="fire-btn" onclick="fire()">確認</button>
+ </div>
+ </div>
+</div>
+
+<script>
+ const canvas = document.getElementById('geoCanvas');
+ const ctx = canvas.getContext('2d');
+ const inputScreen = document.getElementById('input-screen');
+ const missionText = document.getElementById('mission-text');
+ const scoreEl = document.getElementById('score');
+ const battleZone = document.getElementById('battle-zone');
+ const scope = document.getElementById('scope');
+ const fireBtn = document.getElementById('fire-btn');
+
+ let currentVal = "";
+ let score = 0;
+ let currentMission = 'area';
+ let correctAnswer = 0;
+
+ let lShape = { outerW: 0, outerH: 0, cutW: 0, cutH: 0 };
+
+ setTimeout(nextMission, 500);
+
+ function press(num) {
+ if (num === 'del') {
+ currentVal = "";
+ } else {
+ if (currentVal === "SUCCESS" || currentVal === "MISS") currentVal = "";
+ if (currentVal.length < 6 && currentVal !== 'READY') { 
+ currentVal += num;
+ } else if (currentVal === 'READY') {
+ currentVal = num.toString();
+ }
+ }
+ updateInputScreen();
+ }
+
+ function updateInputScreen() {
+ if (currentVal === "" || currentVal === "READY") {
+ inputScreen.innerText = "READY";
+ inputScreen.classList.add('placeholder');
+ } else {
+ inputScreen.innerText = currentVal;
+ inputScreen.classList.remove('placeholder');
+ }
+ }
+
+ function fire() {
+ if (currentVal === "" || currentVal === "READY") return;
+ 
+ let userAns = parseInt(currentVal);
+ if (userAns === correctAnswer) {
+ score += 100;
+ scoreEl.innerText = score;
+ 
+ inputScreen.style.color = "#2ecc71";
+ inputScreen.innerText = "SUCCESS";
+ scope.style.borderColor = "#2ecc71";
+ 
+ setTimeout(() => {
+ scope.style.borderColor = "#dce4ec";
+ currentVal = "";
+ updateInputScreen();
+ nextMission();
+ }, 800);
+ } else {
+ battleZone.classList.add('shake');
+ setTimeout(() => battleZone.classList.remove('shake'), 400);
+ inputScreen.style.color = "#e74c3c";
+ inputScreen.innerText = "MISS";
+ setTimeout(() => {
+ inputScreen.style.color = "#2ecc71";
+ currentVal = "";
+ updateInputScreen();
+ }, 800);
+ }
+ }
+
+ function nextMission() {
+ currentMission = Math.random() > 0.5 ? 'area' : 'perimeter';
+
+ if (currentMission === 'area') {
+ missionText.innerHTML = `任務：計算 <span class="badge bg-blue">面積</span>`;
+ fireBtn.classList.remove('red-mode');
+ fireBtn.innerText = "確認";
+ scoreEl.classList.remove('highlight-red');
+ } else {
+ missionText.innerHTML = `任務：計算 <span class="badge bg-red">周界</span>`;
+ fireBtn.classList.add('red-mode');
+ fireBtn.innerText = "確認";
+ scoreEl.classList.add('highlight-red');
+ }
+
+ let minDim = 8, maxDim = 15;
+ lShape.outerW = Math.floor(Math.random() * (maxDim - minDim + 1)) + minDim;
+ lShape.outerH = Math.floor(Math.random() * (maxDim - minDim + 1)) + minDim;
+ lShape.cutW = Math.floor(Math.random() * (lShape.outerW - 4)) + 2;
+ lShape.cutH = Math.floor(Math.random() * (lShape.outerH - 4)) + 2;
+
+ if (currentMission === 'area') {
+ correctAnswer = (lShape.outerW * lShape.outerH) - (lShape.cutW * lShape.cutH);
+ } else {
+ correctAnswer = 2 * (lShape.outerW + lShape.outerH);
+ }
+
+ drawLShape();
+ }
+
+ function drawLShape() {
+ let cvsW = canvas.width;
+ let cvsH = canvas.height;
+ ctx.clearRect(0, 0, cvsW, cvsH);
+ 
+ // 1. 增加 Padding: 由 100 增至 180 (上下左右各留 90px)，確保數字不會被切掉
+ let padding = 180; 
+ let scale = Math.min((cvsW - padding)/lShape.outerW, (cvsH - padding)/lShape.outerH);
+ 
+ let drawW = lShape.outerW * scale;
+ let drawH = lShape.outerH * scale;
+ let drawCutW = lShape.cutW * scale;
+ let drawCutH = lShape.cutH * scale;
+
+ let startX = (cvsW - drawW) / 2;
+ let startY = (cvsH - drawH) / 2;
+
+ // 繪製圖形
+ ctx.beginPath();
+ ctx.moveTo(startX, startY);
+ ctx.lineTo(startX, startY + drawH);
+ ctx.lineTo(startX + drawW, startY + drawH);
+ ctx.lineTo(startX + drawW, startY + drawCutH);
+ ctx.lineTo(startX + drawW - drawCutW, startY + drawCutH);
+ ctx.lineTo(startX + drawW - drawCutW, startY);
+ ctx.closePath();
+
+ if (currentMission === 'area') {
+ ctx.fillStyle = 'rgba(52, 152, 219, 0.2)';
+ ctx.fill();
+ ctx.strokeStyle = '#3498db';
+ ctx.lineWidth = 6;
+ ctx.stroke();
+ drawMissionMark("A", "#3498db", cvsW/2, cvsH/2);
+ } else {
+ ctx.fillStyle = 'transparent';
+ ctx.fill();
+ ctx.strokeStyle = '#e74c3c';
+ ctx.lineWidth = 8;
+ ctx.setLineDash([20, 10]);
+ ctx.stroke();
+ ctx.setLineDash([]);
+ drawMissionMark("P", "#e74c3c", cvsW/2, cvsH/2);
+ }
+
+ // 2. 增加 Offset: 標籤距離圖形 60px，避免壓到邊框
+ let labelOffset = 60;
+
+ // 左側 (總高)
+ drawLabel(lShape.outerH, startX - labelOffset, startY + drawH / 2);
+
+ // 底部 (總寬)
+ drawLabel(lShape.outerW, startX + drawW / 2, startY + drawH + labelOffset);
+
+ // 上方 (短邊)
+ let topShortSideVal = lShape.outerW - lShape.cutW;
+ let topSegmentCenter = startX + (drawW - drawCutW) / 2;
+ drawLabel(topShortSideVal, topSegmentCenter, startY - labelOffset);
+
+ // 右側 (短邊)
+ let rightShortSideVal = lShape.outerH - lShape.cutH;
+ let rightSegmentCenterY = startY + drawCutH + (drawH - drawCutH) / 2;
+ drawLabel(rightShortSideVal, startX + drawW + labelOffset, rightSegmentCenterY);
+ }
+
+ function drawLabel(text, x, y) {
+ ctx.font = 'bold 36px Arial';
+ ctx.textAlign = 'center';
+ ctx.textBaseline = 'middle';
+ 
+ let metrics = ctx.measureText(text);
+ // 3. 增加文字背景框的大小，確保完全遮蓋背後的線條
+ let bgW = metrics.width + 40; 
+ let bgH = 54;
+ 
+ ctx.fillStyle = '#ffffff';
+ // 讓背景框也有陰影，增加立體感與可讀性
+ ctx.shadowColor = "rgba(0,0,0,0.2)";
+ ctx.shadowBlur = 8;
+ ctx.fillRect(x - bgW/2, y - bgH/2, bgW, bgH);
+ ctx.shadowBlur = 0;
+ 
+ ctx.fillStyle = '#2c3e50';
+ ctx.fillText(text, x, y);
+ }
+
+ function drawMissionMark(text, color, x, y) {
+ ctx.font = '900 120px Arial';
+ ctx.textAlign = 'center';
+ ctx.textBaseline = 'middle';
+ ctx.fillStyle = color;
+ ctx.globalAlpha = 0.15;
+ ctx.fillText(text, x, y);
+ ctx.globalAlpha = 1.0;
+ }
+</script>
+
+</body>
+</html>

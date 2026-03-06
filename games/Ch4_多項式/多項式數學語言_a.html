@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>多項式特攻隊 v12.9 (修復版)</title>
+    <style>
+        :root {
+            --primary: #00d2ff;
+            --secondary: #3b82f6;
+            --accent: #f43f5e;
+            --bg-color: #0f172a;
+            --text-color: #f1f5f9;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --header-h: 50px;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* --- Header --- */
+        header {
+            background: rgba(30, 41, 59, 0.95);
+            padding: 0 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #334155;
+            height: var(--header-h);
+            flex-shrink: 0;
+        }
+
+        .energy-wrapper {
+            flex-grow: 1;
+            margin: 0 15px;
+            background: #334155;
+            height: 10px;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .energy-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            transition: width 0.4s cubic-bezier(0.4, 1, 0.7, 1);
+        }
+
+        .damage-effect { animation: flashRed 0.3s ease; }
+        @keyframes flashRed {
+            0%, 100% { background-color: #334155; }
+            50% { background-color: #ef4444; }
+        }
+
+        .level-badge {
+            font-size: 0.8rem;
+            font-weight: bold;
+            background: var(--accent);
+            padding: 3px 8px;
+            border-radius: 10px;
+        }
+
+        /* --- Game Structure --- */
+        #game-area {
+            flex-grow: 1;
+            position: relative;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+        }
+
+        .screen {
+            width: 100%;
+            min-height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .q-zone {
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed #334155;
+            margin-bottom: 10px;
+        }
+
+        .mid-bar-slot {
+            flex-shrink: 0;
+            margin-bottom: 15px;
+            min-height: 70px; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+        }
+
+        .a-zone {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+        }
+
+        h3 { margin: 5px 0; color: var(--primary); font-size: 1.2rem; text-align: center; }
+        p { color: #94a3b8; text-align: center; margin: 0 0 10px 0; font-size: 0.9rem; line-height: 1.3; }
+
+        .display-card {
+            font-family: 'Courier New', monospace;
+            font-size: 1.8rem;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #475569;
+            margin-bottom: 10px;
+            text-align: center;
+            width: 100%;
+            font-weight: bold;
+            color: #fbbf24;
+        }
+
+        /* --- Control Bar --- */
+        #feedback-bar {
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(30, 41, 59, 0.95);
+            padding: 8px 12px;
+            border-radius: 12px;
+            border: 1px solid #475569;
+            transition: all 0.2s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            white-space: nowrap;
+        }
+        
+        .fb-msg { 
+            font-weight: bold; 
+            font-size: 1rem; 
+            margin-bottom: 0;
+            text-align: left;
+            flex-grow: 1;
+            padding-right: 10px;
+            min-height: auto;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .fb-msg.correct { color: var(--success); }
+        .fb-msg.retry { color: var(--warning); }
+        .fb-msg.wrong { color: var(--accent); }
+        
+        .fb-btn {
+            width: auto;
+            min-width: 80px;
+            padding: 8px 12px; 
+            border-radius: 8px; border: none;
+            font-size: 0.95rem; font-weight: bold; cursor: pointer;
+            box-shadow: 0 3px 0 rgba(0,0,0,0.3);
+            display: flex; justify-content: center; align-items: center;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .fb-btn:active { transform: translateY(2px); box-shadow: none; }
+        
+        .btn-disabled { background: #475569; color: #94a3b8; cursor: not-allowed; box-shadow: none; }
+        .btn-confirm { background: var(--secondary); color: white; }
+        .btn-retry { background: var(--warning); color: #0f172a; }
+        .btn-next { background: var(--success); color: white; }
+        .btn-wrong { background: #ef4444; color: white; }
+
+        #l3-btns {
+            display: flex; 
+            gap: 8px;
+            width: auto !important;
+            flex-shrink: 0;
+        }
+        .btn-compact {
+            padding: 8px 10px;
+            min-width: 60px;
+        }
+
+        /* --- Level 1 Options --- */
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            width: 100%;
+            max-width: 400px;
+        }
+        .option-btn {
+            background: #334155;
+            color: white;
+            border: 2px solid #475569;
+            padding: 18px;
+            border-radius: 10px;
+            font-size: 1.4rem;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .option-btn.selected {
+            background: #1e40af; 
+            border-color: #60a5fa;
+            transform: scale(1.02);
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+        }
+        .option-btn.wrong { background: #7f1d1d; border-color: #ef4444; opacity: 0.6; }
+        .option-btn.correct { background: #064e3b !important; border-color: #10b981 !important; transform: scale(1.02); }
+        .option-btn:disabled { cursor: default; }
+
+        /* --- Level 2 Inputs --- */
+        .input-box {
+            width: 100%; max-width: 300px;
+            background: #fff; color: #000;
+            font-size: 1.8rem; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            border: 4px solid var(--primary); font-weight: bold;
+            height: 50px; margin-top: 5px;
+            transition: border-color 0.3s, background-color 0.3s;
+        }
+        .input-box.correct { border-color: #10b981; background-color: #d1fae5; color: #065f46; }
+        .input-box.wrong { border-color: #ef4444; background-color: #fee2e2; color: #991b1b; }
+
+        .numpad-compact {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 6px;
+            width: 100%; max-width: 400px;
+        }
+        .key {
+            background: #334155; color: white; font-size: 1.3rem;
+            padding: 12px 0; border-radius: 6px; text-align: center;
+            box-shadow: 0 2px 0 #1e293b;
+        }
+        .key:active { background: #475569; transform: translateY(2px); box-shadow: none; }
+        .key-del { background: var(--accent); }
+
+        /* --- Level 3 Sorting --- */
+        .poly-wrapper {
+            background: rgba(15, 23, 42, 0.6);
+            border: 2px dashed #475569;
+            padding: 10px; border-radius: 8px;
+            margin-bottom: 10px; width: 100%; text-align: center;
+        }
+        .poly-text { font-family: 'Courier New', monospace; font-size: 1.4rem; color: #fbbf24; font-weight: bold; }
+        .drop-area {
+            min-height: 70px; width: 100%;
+            border-bottom: 3px solid #334155;
+            display: flex; flex-wrap: wrap; gap: 6px;
+            justify-content: center; align-items: center;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px 8px 0 0; padding: 8px;
+        }
+        .drop-correct { background: rgba(16, 185, 129, 0.2); border-color: #10b981; }
+        .drop-wrong { background: rgba(244, 63, 94, 0.2); border-color: #f43f5e; }
+        
+        .sort-list { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; width: 100%; }
+        .sort-item {
+            background: #334155; padding: 12px 18px; border-radius: 8px;
+            font-size: 1.2rem; text-align: center; border: 1px solid #475569;
+            font-family: 'Courier New', monospace;
+        }
+
+        .hidden { display: none !important; }
+        
+        /* ID Display Styling */
+        .id-box {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid #475569;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        .btn-copy {
+            background: #475569; color: white; border: none;
+            padding: 5px 15px; border-radius: 5px; font-size: 0.9rem; cursor: pointer;
+        }
+        .btn-copy:active { transform: translateY(1px); }
+
+        .btn-start {
+            background: var(--secondary); color: white; border: none;
+            padding: 15px 40px; font-size: 1.2rem; border-radius: 12px;
+            font-weight: bold; box-shadow: 0 4px 0 #1d4ed8; margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div style="font-weight: bold;">🚀 空間數戰</div>
+    <div class="energy-wrapper">
+        <div id="energy-bar" class="energy-fill"></div>
+    </div>
+    <div id="badge" class="level-badge hidden">LV 1</div>
+</header>
+
+<div id="game-area">
+    
+    <div id="screen-start" class="screen" style="justify-content: center; align-items: center;">
+        <div style="font-size: 4rem; margin-bottom: 20px;">🛸</div>
+        <h2>緊急任務：修復飛船</h2>
+        <p>規則：<br>1. 首答正確 <span style="color:#10b981">+15%</span><br>2. 答錯 <span style="color:#f43f5e">-20%</span>，補答正確 +10%</p>
+        <button class="btn-start" onclick="game.start()">點擊開始</button>
+        <p id="error-msg" style="color:red; font-size:0.8rem; margin-top:20px; display:none;">您的瀏覽器版本過舊，不支援加密功能。</p>
+    </div>
+
+    <div id="screen-lvl1" class="screen hidden">
+        <div class="q-zone">
+            <h3 style="color:#fbbf24">LV1：尋找同類項</h3>
+            <p>點擊答案後，按確認</p>
+            <div class="display-card" id="l1-target">...</div>
+        </div>
+        <div class="mid-bar-slot" id="slot-l1"></div>
+        <div class="a-zone">
+            <div class="options-grid" id="l1-options"></div>
+        </div>
+    </div>
+
+    <div id="screen-lvl2" class="screen hidden">
+        <div class="q-zone">
+            <h3 style="color:#a78bfa">LV2：系統分析</h3>
+            <p>注意缺項 (係數為 0)</p>
+            <div class="display-card" id="l2-poly" style="color:#fff; margin-bottom:5px;">...</div>
+            <div id="l2-q" style="font-size:1.1rem; font-weight:bold; color:#e2e8f0; margin: 5px 0;">...</div>
+            <div class="input-box" id="l2-input"></div>
+        </div>
+        <div class="mid-bar-slot" id="slot-l2"></div>
+        <div class="a-zone">
+            <div class="numpad-compact" id="l2-pad">
+                <div class="key" onclick="game.pad(1)">1</div>
+                <div class="key" onclick="game.pad(2)">2</div>
+                <div class="key" onclick="game.pad(3)">3</div>
+                <div class="key" onclick="game.pad(4)">4</div>
+                <div class="key" onclick="game.pad(5)">5</div>
+                <div class="key" onclick="game.pad('-')">-</div>
+                <div class="key" onclick="game.pad(6)">6</div>
+                <div class="key" onclick="game.pad(7)">7</div>
+                <div class="key" onclick="game.pad(8)">8</div>
+                <div class="key" onclick="game.pad(9)">9</div>
+                <div class="key" onclick="game.pad(0)">0</div>
+                <div class="key key-del" onclick="game.pad('del')">⌫</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="screen-lvl3" class="screen hidden">
+        <div class="q-zone">
+            <h3 style="color:#34d399">LV3：導航序列</h3>
+            <p id="l3-instr">按 降冪法 排列</p>
+            <div class="poly-wrapper">
+                <div class="poly-text" id="l3-scrambled">...</div>
+            </div>
+            <div class="drop-area" id="l3-drop"></div>
+        </div>
+        <div class="mid-bar-slot" id="slot-l3"></div>
+        <div class="a-zone">
+            <div class="sort-list" id="l3-options"></div>
+        </div>
+    </div>
+
+    <div id="screen-win" class="screen hidden" style="justify-content: center; align-items: center;">
+        <div style="font-size: 4rem; margin-bottom: 20px;">🚀</div>
+        <h2>任務完成！</h2>
+        <p>飛船能量已滿 (100%)。<br>多項式導航系統修復完畢！</p>
+        
+        <div class="id-box">
+            <div style="font-size:0.9rem; color:#94a3b8;">任務代碼 (ID)</div>
+            <div id="final-game-id" style="font-family:monospace; font-size:1.5rem; color:#fbbf24; margin:5px 0; letter-spacing:2px;">LOADING...</div>
+            <button class="btn-copy" onclick="game.copyID()">複製代碼</button>
+        </div>
+
+        <button class="btn-start" onclick="game.goHome()">回到首頁</button>
+    </div>
+
+</div>
+
+<div id="feedback-bar" class="hidden">
+    <div id="fb-text" class="fb-msg">請作答</div>
+    <button id="fb-btn" class="fb-btn">確認</button>
+    
+    <div id="l3-btns" class="hidden">
+        <button class="fb-btn btn-compact" style="background:#475569; color:white;" onclick="game.resetL3(false)">重置</button>
+        <button class="fb-btn btn-compact" style="background:var(--secondary); color:white;" onclick="game.checkL3()">確認</button>
+    </div>
+</div>
+
+<script>
+    // 檢查瀏覽器支援度
+    try {
+        BigInt("1");
+    } catch (e) {
+        document.getElementById('error-msg').style.display = 'block';
+        alert("錯誤：您的裝置版本過舊，無法執行加密運算，請更換瀏覽器或裝置。");
+    }
+
+    const ui = {
+        bar: document.getElementById('feedback-bar'),
+        txt: document.getElementById('fb-text'),
+        btn: document.getElementById('fb-btn'),
+        l3btns: document.getElementById('l3-btns'),
+
+        attachTo: (slotId) => {
+            const slot = document.getElementById(slotId);
+            ui.bar.classList.remove('hidden');
+            slot.appendChild(ui.bar);
+        },
+
+        setMode: (mode, msg, onClick) => {
+            ui.l3btns.classList.add('hidden'); 
+            ui.btn.classList.remove('hidden'); 
+
+            ui.txt.innerText = msg || "";
+            ui.txt.className = "fb-msg";
+            ui.btn.className = "fb-btn"; 
+            ui.btn.onclick = onClick;
+            ui.btn.disabled = false;
+
+            if(mode === 'disabled') {
+                ui.btn.classList.add('btn-disabled');
+                ui.btn.innerText = "確認";
+                ui.btn.disabled = true;
+                ui.txt.style.color = "#94a3b8";
+            } else if (mode === 'confirm') {
+                ui.btn.classList.add('btn-confirm');
+                ui.btn.innerText = "確認";
+            } else if (mode === 'correct') {
+                ui.btn.innerText = "下一題";
+                ui.btn.classList.add('btn-next');
+                ui.txt.classList.add('correct');
+            } else if (mode === 'retry') {
+                ui.btn.innerText = "再試一次";
+                ui.btn.classList.add('btn-retry');
+                ui.txt.classList.add('retry');
+            } else if (mode === 'fail') {
+                ui.btn.innerText = "下一題";
+                ui.btn.classList.add('btn-wrong');
+                ui.txt.classList.add('wrong');
+            }
+        },
+
+        setL3Init: () => {
+            ui.bar.classList.remove('hidden');
+            ui.l3btns.classList.remove('hidden');
+            ui.btn.classList.add('hidden');
+            ui.txt.innerText = "點擊排列";
+            ui.txt.style.color = "#94a3b8";
+        }
+    };
+
+    const game = {
+        level: 1,
+        energy: 0,
+        data: {}, 
+        inputBuffer: "",
+        l1Selection: null, 
+        l3Seq: [],
+        isRetry: false, 
+
+        GAIN: 15, RETRY_GAIN: 10, LOSS: 20,
+
+        // 加密金鑰 (使用 BigInt 構造函數以相容舊版 Parser)
+        getKey: () => {
+            try { return BigInt("98765432101234"); } 
+            catch(e) { return null; }
+        },
+
+        start: () => {
+            game.updateEnergy(0);
+            game.setLevel(1);
+        },
+
+        goHome: () => {
+            game.updateEnergy(0);
+            game.level = 1;
+            ui.bar.classList.add('hidden');
+            document.querySelectorAll('.screen').forEach(el => el.classList.add('hidden'));
+            document.getElementById('screen-start').classList.remove('hidden');
+            document.getElementById('badge').classList.add('hidden');
+        },
+
+        setLevel: (lvl) => {
+            game.level = lvl;
+            game.isRetry = false;
+            
+            if(lvl <= 3) {
+                game.updateEnergy(0);
+            }
+
+            document.querySelectorAll('.screen').forEach(el => el.classList.add('hidden'));
+            document.getElementById('badge').classList.remove('hidden');
+            document.getElementById('badge').innerText = "LV " + lvl;
+            
+            if(lvl === 1) {
+                document.getElementById('screen-lvl1').classList.remove('hidden');
+                ui.attachTo('slot-l1');
+                game.initL1();
+            } else if (lvl === 2) {
+                document.getElementById('screen-lvl2').classList.remove('hidden');
+                ui.attachTo('slot-l2');
+                game.initL2();
+            } else if (lvl === 3) {
+                document.getElementById('screen-lvl3').classList.remove('hidden');
+                ui.attachTo('slot-l3');
+                game.initL3();
+            } else {
+                document.getElementById('screen-win').classList.remove('hidden');
+                game.updateEnergy(100);
+                ui.bar.classList.add('hidden');
+                // 生成並顯示 ID
+                document.getElementById('final-game-id').innerText = game.generateID();
+            }
+        },
+
+        updateEnergy: (val) => {
+            game.energy = Math.max(0, Math.min(100, val));
+            document.getElementById('energy-bar').style.width = game.energy + "%";
+        },
+
+        flashDamage: () => {
+            const bar = document.querySelector('.energy-wrapper');
+            bar.classList.add('damage-effect');
+            setTimeout(() => bar.classList.remove('damage-effect'), 300);
+        },
+
+        nextQ: () => {
+            if(game.energy >= 100) {
+                game.setLevel(game.level + 1);
+            } else {
+                if(game.level === 1) game.initL1();
+                else if(game.level === 2) game.initL2();
+                else if(game.level === 3) game.initL3();
+            }
+        },
+
+        // --- ID Generation Logic ---
+        generateID: () => {
+            try {
+                const now = new Date();
+                const pad = (n) => n.toString().padStart(2, '0');
+                // 格式: YYYYMMDDHHMMSS
+                const timeStr = now.getFullYear().toString() +
+                                pad(now.getMonth() + 1) +
+                                pad(now.getDate()) +
+                                pad(now.getHours()) +
+                                pad(now.getMinutes()) +
+                                pad(now.getSeconds());
+
+                const reversedStr = timeStr.split('').reverse().join('');
+                const rawVal = BigInt(reversedStr);
+                const key = game.getKey();
+                const encryptedVal = rawVal ^ key;
+                const bodyCode = encryptedVal.toString(36).toUpperCase();
+                const checksumChar = (encryptedVal % BigInt(36)).toString(36).toUpperCase();
+
+                return bodyCode + checksumChar;
+            } catch (e) {
+                return "ERROR-OLD-DEVICE";
+            }
+        },
+
+        copyID: () => {
+            const text = document.getElementById('final-game-id').innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.querySelector('.btn-copy');
+                const originalText = btn.innerText;
+                btn.innerText = "已複製!";
+                setTimeout(() => btn.innerText = originalText, 1500);
+            });
+        },
+
+        // --- LV1 ---
+        initL1: () => {
+            game.isRetry = false;
+            game.l1Selection = null;
+            ui.setMode('disabled', "請點選答案");
+            
+            let targetType = game.rInt(0, 2); 
+            let targetC = game.rInt(-9, 9); if(targetC===0) targetC=1;
+            let targetStr = game.fmtTerm(targetC, targetType);
+            
+            document.getElementById('l1-target').innerText = targetStr;
+            game.data = { type: targetType };
+
+            let options = [];
+            let usedTypes = [targetType]; 
+
+            let correctC = game.rInt(-9, 9); if(correctC===0) correctC=1;
+            let correctStr = game.fmtTerm(correctC, targetType);
+            options.push({ str: correctStr, type: targetType, correct: true });
+
+            while(options.length < 3) {
+                let dType;
+                do { dType = game.rInt(0, 4); } while(usedTypes.includes(dType));
+                usedTypes.push(dType);
+
+                let dC = game.rInt(-9, 9); if(dC===0) dC=1;
+                let dStr = "";
+
+                if(dType <= 2) dStr = game.fmtTerm(dC, dType);
+                else if(dType === 3) dStr = (dC==1?"":dC==-1?"-":dC) + "xy";
+                else dStr = (dC==1?"":dC==-1?"-":dC) + "y";
+
+                options.push({ str: dStr, type: dType, correct: false });
+            }
+
+            options.sort(() => Math.random() - 0.5);
+
+            let html = "";
+            options.forEach((opt, idx) => {
+                html += `<button id="l1-btn-${idx}" class="option-btn" data-correct="${opt.correct}" onclick="game.selectL1(this, ${opt.correct})">${opt.str}</button>`;
+            });
+            document.getElementById('l1-options').innerHTML = html;
+        },
+        selectL1: (el, isCorrect) => {
+            document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+            el.classList.add('selected');
+            game.l1Selection = { el: el, correct: isCorrect };
+            ui.setMode('confirm', "確認選擇？", game.checkL1);
+        },
+        checkL1: () => {
+            if(!game.l1Selection) return;
+            const { el, correct } = game.l1Selection;
+            const allBtns = document.querySelectorAll('.option-btn');
+
+            if(correct) {
+                el.classList.remove('selected');
+                el.classList.add('correct');
+                allBtns.forEach(b => b.disabled = true);
+                let pts = game.isRetry ? game.RETRY_GAIN : game.GAIN;
+                game.updateEnergy(game.energy + pts);
+                ui.setMode('correct', `正確！能量 +${pts}%`, game.nextQ);
+            } else {
+                el.classList.remove('selected');
+                el.classList.add('wrong');
+                
+                allBtns.forEach(b => b.disabled = true); 
+                
+                if(!game.isRetry) {
+                    game.updateEnergy(game.energy - game.LOSS);
+                    game.flashDamage();
+                    game.isRetry = true;
+                    game.l1Selection = null;
+                    
+                    ui.setMode('retry', "錯誤！請比較變數部分", () => {
+                        allBtns.forEach(b => {
+                            b.disabled = false;
+                            b.classList.remove('wrong');
+                        });
+                        ui.setMode('disabled', "請點選答案");
+                    });
+                } else {
+                    ui.setMode('fail', "正確答案已標示 (綠色)", game.nextQ);
+                    allBtns.forEach(b => {
+                        if(b.dataset.correct === "true") {
+                            b.classList.add('correct');
+                        }
+                    });
+                }
+            }
+        },
+
+        // --- LV2 ---
+        pad: (val) => {
+            if(document.getElementById('l2-input').classList.contains('correct') ||
+               (document.getElementById('l2-input').classList.contains('wrong') && game.isRetry)) return;
+            if(document.getElementById('l2-input').classList.contains('wrong')) return;
+
+            if(val === 'del') game.inputBuffer = game.inputBuffer.slice(0, -1);
+            else if(game.inputBuffer.length < 5) game.inputBuffer += val;
+            
+            document.getElementById('l2-input').innerText = game.inputBuffer;
+
+            if(game.inputBuffer.length > 0 && game.inputBuffer !== "-") {
+                 ui.setMode('confirm', "確認輸入？", game.checkL2);
+            } else {
+                 ui.setMode('disabled', "請輸入答案");
+            }
+        },
+        initL2: () => {
+            game.isRetry = false;
+            game.inputBuffer = "";
+            const ib = document.getElementById('l2-input');
+            ib.innerText = "";
+            ib.className = "input-box"; 
+            
+            ui.setMode('disabled', "請輸入答案");
+            
+            let a = game.rInt(-5, 5); 
+            let b = game.rInt(-9, 9);
+            let c = game.rInt(-9, 9);
+            if(a===0 && b===0 && c===0) c=1;
+            let str = "";
+            if(a!==0) str += (a==1?"":a==-1?"-":a) + "x²";
+            if(b!==0) {
+                if(str!=="" && b>0) str+=" + "; if(b<0) str+=" - ";
+                str += (Math.abs(b)==1?"":Math.abs(b)) + "x";
+            }
+            if(c!==0) {
+                if(str!=="" && c>0) str+=" + "; if(c<0) str+=" - ";
+                str += Math.abs(c);
+            } else if (str === "") str = "0";
+
+            document.getElementById('l2-poly').innerText = str;
+
+            const qs = ['degree', 'const', 'coeff_x2', 'coeff_x', 'terms'];
+            let type = qs[game.rInt(0, qs.length-1)];
+            let qText = "", ans = 0;
+            
+            if(type==='degree') { qText="次數 (Degree)？"; ans=(a!=0?2:b!=0?1:0); }
+            else if(type==='const') { qText="常數項 (Constant)？"; ans=c; }
+            else if(type==='coeff_x2') { qText="x² 的係數 (Coefficient)？"; ans=a; }
+            else if(type==='coeff_x') { qText="x 的係數 (Coefficient)？"; ans=b; }
+            else if(type==='terms') { qText="有多少項 (Terms)？"; ans=[a,b,c].filter(x=>x!=0).length; }
+
+            document.getElementById('l2-q').innerText = qText;
+            game.data = { ans: ans };
+        },
+        checkL2: () => {
+            if(game.inputBuffer === "" || game.inputBuffer === "-") return;
+            let val = parseInt(game.inputBuffer);
+            const ib = document.getElementById('l2-input');
+
+            if(val === game.data.ans) {
+                let pts = game.isRetry ? game.RETRY_GAIN : game.GAIN;
+                game.updateEnergy(game.energy + pts);
+                ib.classList.add('correct');
+                ui.setMode('correct', `正確！能量 +${pts}%`, game.nextQ);
+            } else {
+                ib.classList.add('wrong');
+                if(!game.isRetry) {
+                    game.updateEnergy(game.energy - game.LOSS);
+                    game.flashDamage();
+                    game.isRetry = true;
+                    ui.setMode('retry', "錯誤！注意正負號或缺項", () => {
+                        ib.classList.remove('wrong');
+                        game.inputBuffer = "";
+                        ib.innerText = "";
+                        ui.setMode('disabled', "請輸入答案");
+                    });
+                } else {
+                    ui.setMode('fail', `錯誤。答案是 ${game.data.ans}`, game.nextQ);
+                }
+            }
+        },
+
+        // --- LV3 ---
+        initL3: () => {
+            game.isRetry = false;
+            game.l3Seq = [];
+            document.getElementById('l3-drop').className = "drop-area";
+            document.getElementById('l3-drop').innerHTML = "";
+            ui.setL3Init();
+
+            let t = [];
+            [0, 1, 2].forEach(p => {
+                let c = game.rInt(-9, 9); while(c===0) c=game.rInt(-9,9);
+                t.push({p:p, c:c});
+            });
+
+            let scramble = [...t].sort(() => Math.random() - 0.5);
+            let polyStr = "";
+            scramble.forEach((item, i) => {
+                let abs = Math.abs(item.c);
+                let sign = (i===0 && item.c>0) ? "" : (item.c<0?" - ":" + ");
+                if (i===0 && item.c<0) sign = "-";
+                let v = item.p==0?"":item.p==1?"x":"x²";
+                let n = (abs==1 && item.p>0) ? "" : abs;
+                polyStr += sign + n + v;
+            });
+            document.getElementById('l3-scrambled').innerText = polyStr;
+
+            let isDesc = Math.random() > 0.5;
+            
+            document.getElementById('l3-instr').innerHTML = `請將上方多項式依 <b style="color:${isDesc?'#f43f5e':'#3b82f6'}">${isDesc?"降冪 (Descending)":"升冪 (Ascending)"}</b> 排列`;
+            
+            let sorted = [...t].sort((a,b) => isDesc ? b.p - a.p : a.p - b.p);
+            let ansStr = "";
+            sorted.forEach((item, i) => {
+                let abs = Math.abs(item.c);
+                let sign = (i===0 && item.c>0) ? "" : (item.c<0?" - ":" + ");
+                if (i===0 && item.c<0) sign = "-";
+                let v = item.p==0?"":item.p==1?"x":"x²";
+                let n = (abs==1 && item.p>0) ? "" : abs;
+                ansStr += sign + n + v;
+            });
+            game.data = { correctSeq: sorted, ansStr: ansStr };
+
+            let html = "";
+            scramble.forEach((item, idx) => {
+                let abs = Math.abs(item.c);
+                let n = (abs==1 && item.p>0) ? "" : abs;
+                let v = item.p==0?"":item.p==1?"x":"x²";
+                let str = (item.c > 0 ? "+" : "-") + n + v;
+                html += `<div class="sort-item" id="sitem-${idx}" onclick="game.pickL3(${idx}, '${str}', ${item.p})">${str}</div>`;
+            });
+            document.getElementById('l3-options').innerHTML = html;
+        },
+        pickL3: (idx, txt, p) => {
+            let el = document.getElementById(`sitem-${idx}`);
+            if(el.style.opacity === '0.2') return;
+            game.l3Seq.push(p);
+            let tag = document.createElement("div");
+            tag.className = "sort-item"; 
+            tag.style.padding = "8px 12px"; tag.style.fontSize = "1.1rem";
+            tag.innerText = txt;
+            document.getElementById('l3-drop').appendChild(tag);
+            el.style.opacity = '0.2';
+        },
+        resetL3: (clearRetry) => { 
+            game.l3Seq = [];
+            document.getElementById('l3-drop').innerHTML = "";
+            document.getElementById('l3-drop').className = "drop-area";
+            document.querySelectorAll('.sort-item').forEach(el => el.style.opacity = '1');
+            if(clearRetry) game.isRetry = false;
+            ui.setL3Init();
+        },
+        checkL3: () => {
+            if(game.l3Seq.length < 3) return; 
+            
+            let ok = true;
+            for(let i=0; i<3; i++) { if(game.l3Seq[i] !== game.data.correctSeq[i].p) ok = false; }
+            
+            let da = document.getElementById('l3-drop');
+            
+            if(ok) {
+                da.classList.add('drop-correct');
+                let pts = game.isRetry ? game.RETRY_GAIN : game.GAIN;
+                game.updateEnergy(game.energy + pts);
+                ui.setMode('correct', `正確！能量 +${pts}%`, game.nextQ);
+            } else {
+                da.classList.add('drop-wrong');
+                if(!game.isRetry) {
+                    game.updateEnergy(game.energy - game.LOSS);
+                    game.flashDamage();
+                    game.isRetry = true;
+                    ui.setMode('retry', "順序錯誤，請再試一次", () => {
+                        game.resetL3(false);
+                    });
+                } else {
+                    ui.setMode('fail', `答案: ${game.data.ansStr}`, game.nextQ);
+                }
+            }
+        },
+
+        rInt: (min, max) => Math.floor(Math.random() * (max - min + 1)) + min,
+        fmtTerm: (c, type) => {
+            let str = "";
+            if(type === 0) str = (c==1?"":c==-1?"-":c) + "x²";
+            else if(type === 1) str = (c==1?"":c==-1?"-":c) + "x";
+            else str = c;
+            return str;
+        }
+    };
+</script>
+</body>
+</html>

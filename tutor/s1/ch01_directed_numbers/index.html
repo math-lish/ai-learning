@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ch1 正數與負數 - 教學網站</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang HK", sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        .container { max-width: 1000px; margin: 0 auto; padding: 20px; }
+        
+        /* Header */
+        header {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .back-link {
+            display: inline-block;
+            color: #2a5298;
+            text-decoration: none;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        h1 { color: #1e3c72; font-size: 1.8rem; }
+        .subtitle { color: #666; margin-top: 5px; }
+        
+        /* Tab Navigation */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .tab {
+            padding: 12px 24px;
+            background: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            color: #666;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+        .tab:hover, .tab.active {
+            background: #ffd700;
+            color: #333;
+        }
+        
+        /* Content Sections */
+        .section {
+            display: none;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .section.active { display: block; }
+        
+        h2 { color: #1e3c72; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #eee; }
+        h3 { color: #2a5298; margin: 20px 0 10px; }
+        p { line-height: 1.8; margin-bottom: 15px; }
+        
+        /* Teaching Content */
+        .concept-box {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e6f7ff 100%);
+            border-left: 4px solid #1890ff;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .example-box {
+            background: #fffbe6;
+            border-left: 4px solid #faad14;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .example-title { font-weight: bold; color: #d48806; margin-bottom: 10px; }
+        
+        /* Number Line */
+        .number-line {
+            position: relative;
+            height: 80px;
+            margin: 30px 0;
+            background: #f5f5f5;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .number-line::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 5%;
+            right: 5%;
+            height: 3px;
+            background: #333;
+        }
+        .number {
+            position: absolute;
+            top: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+        }
+        .number-dot {
+            width: 12px;
+            height: 12px;
+            background: #ff6b6b;
+            border-radius: 50%;
+            margin: 0 auto 5px;
+        }
+        
+        /* Practice */
+        .practice-question {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 15px 0;
+        }
+        .practice-question label { display: block; margin: 10px 0; font-weight: bold; }
+        .practice-question input {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            width: 150px;
+            font-size: 1rem;
+        }
+        .practice-question button {
+            padding: 10px 20px;
+            background: #4ade80;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-left: 10px;
+        }
+        .feedback {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            display: none;
+        }
+        .feedback.correct { background: #d1fae5; color: #065f46; display: block; }
+        .feedback.wrong { background: #fee2e2; color: #991b1b; display: block; }
+        
+        /* Quiz */
+        .quiz-question {
+            background: #f0f9ff;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .quiz-option {
+            padding: 15px;
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .quiz-option:hover { border-color: #1890ff; }
+        .quiz-option.selected { border-color: #1890ff; background: #e6f7ff; }
+        .quiz-option.correct { border-color: #4ade80; background: #d1fae5; }
+        .quiz-option.wrong { border-color: #ff6b6b; background: #fee2e2; }
+        
+        .quiz-submit {
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        
+        .quiz-result {
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(135deg, #fffbe6, #fff7e6);
+            border-radius: 20px;
+            margin-top: 20px;
+            display: none;
+        }
+        .quiz-result.show { display: block; }
+        .score { font-size: 3rem; font-weight: bold; color: #d48806; }
+        
+        /* Games */
+        .game-link {
+            display: block;
+            padding: 20px;
+            background: linear-gradient(135deg, #f0f9ff, #e6f7ff);
+            border-radius: 15px;
+            margin: 15px 0;
+            text-decoration: none;
+            color: #333;
+            transition: all 0.3s;
+        }
+        .game-link:hover {
+            transform: translateX(10px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        .game-icon { font-size: 2rem; margin-right: 15px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="../index.html" class="back-link">← 返回課題列表</a>
+            <h1>📕 Ch1 正數與負數</h1>
+            <p class="subtitle">認識正數、負數及數線運算</p>
+        </header>
+        
+        <!-- Tab Navigation -->
+        <div class="tabs">
+            <a href="#" class="tab active" onclick="showTab('teaching')">📖 教學講解</a>
+            <a href="#" class="tab" onclick="showTab('practice')">✏️ 練習</a>
+            <a href="#" class="tab" onclick="showTab('games')">🎮 遊戲</a>
+            <a href="#" class="tab" onclick="showTab('quiz')">📝 測驗</a>
+        </div>
+        
+        <!-- Teaching Section -->
+        <div id="teaching" class="section active">
+            <h2>📖 教學講解</h2>
+            
+            <h3>咩係正數同負數？</h3>
+            <div class="concept-box">
+                <p><strong>正數 (Positive Numbers)</strong>：大過0既數，前面有「+」號或者唔寫符號。例如：+5, 3, 7.2</p>
+                <p><strong>負數 (Negative Numbers)</strong>：細過0既數，前面有「-」號。例如：-5, -3, -7.2</p>
+                <p><strong>0</strong> 既唔係正數亦都唔係負數，佢係正負數既分界線！</p>
+            </div>
+            
+            <h3>數線 (Number Line)</h3>
+            <div class="number-line">
+                <div class="number" style="left: 10%;">
+                    <div class="number-dot"></div>
+                    <span>-4</span>
+                </div>
+                <div class="number" style="left: 25%;">
+                    <div class="number-dot"></div>
+                    <span>-2</span>
+                </div>
+                <div class="number" style="left: 40%;">
+                    <div class="number-dot"></div>
+                    <span>0</span>
+                </div>
+                <div class="number" style="left: 55%;">
+                    <div class="number-dot" style="background: #4ade80;"></div>
+                    <span>2</span>
+                </div>
+                <div class="number" style="left: 70%;">
+                    <div class="number-dot" style="background: #4ade80;"></div>
+                    <span>4</span>
+                </div>
+                <div class="number" style="left: 85%;">
+                    <div class="number-dot" style="background: #4ade80;"></div>
+                    <span>6</span>
+                </div>
+            </div>
+            
+            <h3>重要規則</h3>
+            <div class="concept-box">
+                <p><strong>1. 相反數 (Opposite Numbers)</strong></p>
+                <p>+5 同 -5 係相反數，佢地既絕對值相同，但符號相反。</p>
+                <p><strong>2. 絕對值 (Absolute Value)</strong></p>
+                <p>|+5| = 5 |-5| = 5 （絕對值永遠係正數或零）</p>
+            </div>
+            
+            <h3>加法運算</h3>
+            <div class="example-box">
+                <div class="example-title">📝 例題 1：同號相加</div>
+                <p>(+3) + (+5) = +8</p>
+                <p>(-3) + (-5) = -8</p>
+                <p><em>同號就保留符號，把絕對值相加</em></p>
+            </div>
+            
+            <div class="example-box">
+                <div class="example-title">📝 例題 2：異號相加</div>
+                <p>(+5) + (-3) = +2 （|5| > |3|，答案取較大絕對值既符號）</p>
+                <p>(+3) + (-5) = -2 （|5| > |3|，答案取較大絕對值既符號）</p>
+            </div>
+            
+            <h3>減法運算</h3>
+            <div class="example-box">
+                <div class="example-title">📝 例題 3：減負數</div>
+                <p>5 - (-3) = 5 + 3 = 8</p>
+                <p><em>減去一個負數等於加上佢既相反數！</em></p>
+            </div>
+        </div>
+        
+        <!-- Practice Section -->
+        <div id="practice" class="section">
+            <h2>✏️ 互動練習</h2>
+            
+            <div class="practice-question">
+                <label>問題 1：(-7) + (-3) = ?</label>
+                <input type="number" id="q1" placeholder="輸入答案">
+                <button onclick="checkAnswer(1, -10)">檢查</button>
+                <div id="feedback1" class="feedback"></div>
+            </div>
+            
+            <div class="practice-question">
+                <label>問題 2：(+8) + (-5) = ?</label>
+                <input type="number" id="q2" placeholder="輸入答案">
+                <button onclick="checkAnswer(2, 3)">檢查</button>
+                <div id="feedback2" class="feedback"></div>
+            </div>
+            
+            <div class="practice-question">
+                <label>問題 3：6 - (-4) = ?</label>
+                <input type="number" id="q3" placeholder="輸入答案">
+                <button onclick="checkAnswer(3, 10)">檢查</button>
+                <div id="feedback3" class="feedback"></div>
+            </div>
+            
+            <div class="practice-question">
+                <label>問題 4：|-12| = ?</label>
+                <input type="number" id="q4" placeholder="輸入答案">
+                <button onclick="checkAnswer(4, 12)">檢查</button>
+                <div id="feedback4" class="feedback"></div>
+            </div>
+            
+            <div class="practice-question">
+                <label>問題 5：(-5) 既相反數係咩？</label>
+                <input type="number" id="q5" placeholder="輸入答案">
+                <button onclick="checkAnswer(5, 5)">檢查</button>
+                <div id="feedback5" class="feedback"></div>
+            </div>
+        </div>
+        
+        <!-- Games Section -->
+        <div id="games" class="section">
+            <h2>🎮 趣味遊戲</h2>
+            
+            <a href="https://math-lish.github.io/zach-teaching/games/Ch1_有向數/有向數.html" target="_blank" class="game-link">
+                <span class="game-icon">🎯</span>
+                <strong>有向數練習</strong> - 互動練習正負數運算
+            </a>
+        </div>
+        
+        <!-- Quiz Section -->
+        <div id="quiz" class="section">
+            <h2>📝 測驗 - 挑戰開始！</h2>
+            
+            <div class="quiz-question">
+                <p><strong>問題 1：</strong>(-4) + (+6) 等於幾多？</p>
+                <div class="quiz-options">
+                    <div class="quiz-option" data-correct="true" onclick="selectOption(this, 1)">+2</div>
+                    <div class="quiz-option" onclick="selectOption(this, 1)">-2</div>
+                    <div class="quiz-option" onclick="selectOption(this, 1)">+10</div>
+                    <div class="quiz-option" onclick="selectOption(this, 1)">-10</div>
+                </div>
+            </div>
+            
+            <div class="quiz-question">
+                <p><strong>問題 2：</strong>邊個數既絕對值最大？</p>
+                <div class="quiz-options">
+                    <div class="quiz-option" onclick="selectOption(this, 2)">-5</div>
+                    <div class="quiz-option" data-correct="true" onclick="selectOption(this, 2)">-8</div>
+                    <div class="quiz-option" onclick="selectOption(this, 2)">+3</div>
+                    <div class="quiz-option" onclick="selectOption(this, 2)">+6</div>
+                </div>
+            </div>
+            
+            <div class="quiz-question">
+                <p><strong>問題 3：</strong>7 - (-2) = ?</p>
+                <div class="quiz-options">
+                    <div class="quiz-option" onclick="selectOption(this, 3)">-5</div>
+                    <div class="quiz-option" onclick="selectOption(this, 3)">5</div>
+                    <div class="quiz-option" data-correct="true" onclick="selectOption(this, 3)">9</div>
+                    <div class="quiz-option" onclick="selectOption(this, 3)">-9</div>
+                </div>
+            </div>
+            
+            <div class="quiz-question">
+                <p><strong>問題 4：</strong>(-3) + (-7) + (+5) = ?</p>
+                <div class="quiz-options">
+                    <div class="quiz-option" onclick="selectOption(this, 4)">-5</div>
+                    <div class="quiz-option" data-correct="true" onclick="selectOption(this, 4)">-5</div>
+                    <div class="quiz-option" onclick="selectOption(this, 4)">+5</div>
+                    <div class="quiz-option" onclick="selectOption(this, 4)">+15</div>
+                </div>
+            </div>
+            
+            <div class="quiz-question">
+                <p><strong>問題 5：</strong>邊個陳述係正確？</p>
+                <div class="quiz-options">
+                    <div class="quiz-option" onclick="selectOption(this, 5)">0係正數</div>
+                    <div class="quiz-option" onclick="selectOption(this, 5)">|-7| = -7</div>
+                    <div class="quiz-option" data-correct="true" onclick="selectOption(this, 5)">+5 同 -5 係相反數</div>
+                    <div class="quiz-option" onclick="selectOption(this, 5)">負數一定細過正數</div>
+                </div>
+            </div>
+            
+            <button class="quiz-submit" onclick="submitQuiz()">提交答案</button>
+            
+            <div id="quizResult" class="quiz-result">
+                <div class="score"><span id="scoreValue">0</span>/5</div>
+                <p id="resultMessage"></p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Tab navigation
+        function showTab(tabId) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        // Practice answers
+        function checkAnswer(qNum, correctAnswer) {
+            const input = document.getElementById('q' + qNum);
+            const feedback = document.getElementById('feedback' + qNum);
+            const userAnswer = parseFloat(input.value);
+            
+            if (userAnswer === correctAnswer) {
+                feedback.className = 'feedback correct';
+                feedback.textContent = '✅ 正確！好叻呀！';
+            } else {
+                feedback.className = 'feedback wrong';
+                feedback.textContent = '❌ 錯誤，正確答案係 ' + correctAnswer + '。再試過！';
+            }
+        }
+        
+        // Quiz selection
+        let selectedAnswers = {};
+        
+        function selectOption(element, qNum) {
+            const parent = element.closest('.quiz-question');
+            parent.querySelectorAll('.quiz-option').forEach(opt => opt.classList.remove('selected'));
+            element.classList.add('selected');
+            selectedAnswers[qNum] = element.dataset.correct === 'true';
+        }
+        
+        // Submit quiz
+        function submitQuiz() {
+            let score = 0;
+            for (let key in selectedAnswers) {
+                if (selectedAnswers[key]) score++;
+            }
+            
+            const result = document.getElementById('quizResult');
+            const scoreValue = document.getElementById('scoreValue');
+            const message = document.getElementById('resultMessage');
+            
+            scoreValue.textContent = score;
+            result.classList.add('show');
+            
+            if (score >= 4) {
+                message.textContent = '🎉 太勁啦！你已經掌握呢課題既基本概念！';
+            } else if (score >= 2) {
+                message.textContent = '👍 做得好！再溫多啲就可以滿分！';
+            } else {
+                message.textContent = '💪 加油呀！睇多啲教學部分再試過！';
+            }
+        }
+    </script>
+</body>
+</html>

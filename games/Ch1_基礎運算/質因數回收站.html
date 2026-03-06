@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>質因數回收站 (數值傷害完全版)</title>
+    <style>
+        /* --- CSS 樣式 --- */
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f0f0;
+            margin: 0; padding: 0;
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh; text-align: center;
+            overflow: hidden; user-select: none; -webkit-user-select: none;
+        }
+
+        #game-container {
+            position: relative; 
+            background-color: #ffffff;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            width: min(95vw, 600px, calc(100vh - 150px)); 
+            margin: 0 auto;
+        }
+
+        .header-row {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 10px; padding: 0 5px;
+            border-bottom: 2px solid #eee; padding-bottom: 5px;
+        }
+
+        h1 { color: #333; font-size: 1.2em; margin: 0; }
+        
+        .status-bar {
+            display: flex; gap: 15px; font-weight: bold; color: #555; font-size: 1.1em;
+        }
+        
+        #health-display { color: #e53935; transition: transform 0.2s; }
+        .health-shake { animation: shake 0.3s; }
+        
+        #decomposition-display {
+            min-height: 40px; background-color: #333; color: white;
+            padding: 5px 10px; margin-bottom: 10px; border-radius: 4px;
+            font-size: 1.2em; text-align: left;
+            overflow-x: auto; white-space: nowrap; line-height: 1.5;
+        }
+        #decomposition-display::-webkit-scrollbar { height: 4px; }
+        #decomposition-display::-webkit-scrollbar-thumb { background: #666; border-radius: 2px; }
+
+        .factor-item { display: inline-block; transition: color 0.3s ease; }
+        .factor-item sup { font-size: 0.7em; vertical-align: super; }
+        .factor-item.uncollected { color: #FFA07A; font-weight: bold; } 
+        .factor-item.collected { color: #7FFF00; font-weight: bold; } 
+        .factor-item.current-composite { color: #FFD700; margin-left: 5px; } 
+
+        #game-area {
+            position: relative; width: 100%; padding-top: 100%; 
+            border: 2px solid #ccc; background-color: #eee;
+            margin: 0 auto; overflow: hidden; touch-action: none;
+        }
+
+        #damage-flash {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: red; opacity: 0; pointer-events: none; z-index: 100;
+            transition: opacity 0.1s;
+        }
+
+        .number-box {
+            position: absolute; width: 50px; height: 50px; 
+            line-height: 50px; border-radius: 50%; 
+            background-color: #2196F3; color: white;
+            font-size: 1.2em; font-weight: bold; text-align: center;
+            cursor: pointer; transform: translate(-50%, -50%); 
+            transition: transform 0.1s; z-index: 10; 
+            -webkit-tap-highlight-color: transparent;
+        }
+        .number-box.is-overdue {
+            background-color: #b71c1c !important;
+            box-shadow: 0 0 10px #ff0000;
+            animation: shake 0.5s infinite;
+        }
+
+        @keyframes shake {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            25% { transform: translate(-52%, -50%) rotate(-5deg); }
+            75% { transform: translate(-48%, -50%) rotate(5deg); }
+            100% { transform: translate(-50%, -50%) rotate(0deg); }
+        }
+
+        .effect-layer {
+            position: absolute; width: 50px; height: 50px; 
+            border-radius: 50%; transform: translate(-50%, -50%);
+            pointer-events: none; z-index: 9;
+        }
+
+        @keyframes float-up {
+            0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            100% { transform: translate(-50%, -100px) scale(1.5); opacity: 0; }
+        }
+        .float-text {
+            position: absolute; font-weight: bold; font-size: 1.5em;
+            pointer-events: none; z-index: 200;
+            animation: float-up 0.8s ease-out forwards;
+            text-shadow: 1px 1px 2px black;
+        }
+        .text-heal { color: #4CAF50; }
+        .text-dmg { color: #ff1744; font-size: 1.8em; }
+
+        #difficulty-notification {
+            position: absolute; bottom: 20px; left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.8); color: #fff;
+            padding: 8px 16px; border-radius: 20px; font-size: 1em;
+            opacity: 0; pointer-events: none; transition: opacity 0.5s;
+            z-index: 2000; max-width: 90%; white-space: nowrap;
+        }
+        .show-notification { opacity: 1 !important; }
+
+        @keyframes breathing-glow {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 5px rgba(33, 150, 243, 0.1); }
+            50% { transform: translate(-50%, -50%) scale(1.4); box-shadow: 0 0 15px rgba(33, 150, 243, 0.4); }
+        }
+        .effect-breathing-infinite { animation: breathing-glow 2s infinite ease-in-out; }
+
+        @keyframes factor-spawn {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); } 
+            100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+        .factor-spawn { animation: factor-spawn 0.3s forwards; }
+
+        @keyframes parent-split-burst {
+            0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+        }
+        .effect-layer.parent-splitting-effect { animation: parent-split-burst 0.3s forwards; }
+
+        .hidden { display: none !important; }
+        
+        #message-overlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background-color: rgba(0, 0, 0, 0.7); 
+            display: flex; justify-content: center; align-items: center; z-index: 1000; 
+        }
+        #message-box { 
+            background-color: white; padding: 30px; border-radius: 12px; 
+            box-shadow: 0 0 25px rgba(0, 0, 0, 0.5); text-align: center; 
+            max-width: 90%; width: 500px; 
+        }
+        #restart-button { 
+            padding: 12px 30px; font-size: 1.2em; 
+            background-color: #4CAF50; color: white; border: none; 
+            border-radius: 5px; cursor: pointer; margin-top: 20px; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        #restart-button:hover { background-color: #43A047; }
+        
+        .equation-review {
+            font-size: 1.1em; color: #333; background: #e8f5e9;
+            padding: 15px; border-radius: 8px; margin: 20px 0;
+            font-family: 'Courier New', Courier, monospace;
+            white-space: nowrap; overflow-x: auto; width: 100%;
+            border: 1px solid #c8e6c9;
+        }
+        .equation-review::-webkit-scrollbar { height: 6px; }
+        .equation-review::-webkit-scrollbar-thumb { background: #81C784; border-radius: 3px; }
+
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <div class="header-row">
+            <h1>質因數回收站</h1>
+            <div class="status-bar">
+                <span id="health-display">❤️ 1</span>
+                <span>⏱️ <span id="time-display">0</span>s</span>
+            </div>
+        </div>
+
+        <div id="decomposition-display"></div>
+        
+        <div id="game-area">
+            <div id="damage-flash"></div>
+            <div id="difficulty-notification"></div>
+        </div>
+        
+        <div id="message-overlay" class="hidden">
+            <div id="message-box">
+                <h2 id="final-message">遊戲標題</h2>
+                <div id="final-score"></div>
+                <button id="restart-button">開始遊戲</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* --- 遊戲參數 --- */
+        const INITIAL_DECOMPOSE_TIME = 3.0;
+        const INITIAL_PRIME_RECYCLE_LIMIT = 3.0; 
+        const UPDATE_INTERVAL = 10;
+        const SPAWN_INCREASE_STEP = 1;
+        const BOX_SIZE = 50; 
+        const DECOMPOSITION_SPREAD = 100; 
+
+        /* --- 狀態變數 --- */
+        let numbers = []; 
+        let gameTime = 0;
+        let isRunning = false;
+        let decomposeInterval; 
+        let startTime; 
+        let pauseTimeStart = 0; 
+        
+        let currentHealth = 1;
+        let currentDecomposeTime; 
+        let currentRecycleLimit; 
+        let lastDifficultyUpdateScore = 0;
+        let currentBaseSpawnCount = 1;
+
+        let numberToDecompose = 0;
+        let currentNumberSequence = []; 
+
+        const gameArea = document.getElementById('game-area');
+        const timeDisplay = document.getElementById('time-display');
+        const healthDisplay = document.getElementById('health-display');
+        const messageOverlay = document.getElementById('message-overlay');
+        const restartButton = document.getElementById('restart-button');
+        const difficultyNotification = document.getElementById('difficulty-notification');
+        const decompositionDisplay = document.getElementById('decomposition-display');
+        const damageFlash = document.getElementById('damage-flash');
+
+        /* --- 輔助函數 --- */
+        function isPrime(num) {
+            if (num <= 1) return false;
+            for (let i = 2; i <= Math.sqrt(num); i++) if (num % i === 0) return false;
+            return true;
+        }
+
+        function findFactors(n) {
+            if (n <= 3 || isPrime(n)) return null;
+            for (let i = 2; i <= Math.floor(Math.sqrt(n)); i++) {
+                if (n % i === 0) return [i, n / i];
+            }
+            return null;
+        }
+
+        function getPrimeFactorization(n) {
+            let temp = n;
+            const factors = [];
+            for (let i = 2; i * i <= temp; i++) {
+                while (temp % i === 0) {
+                    factors.push(i);
+                    temp /= i;
+                }
+            }
+            if (temp > 1) factors.push(temp);
+            return factors;
+        }
+
+        function getRandomInt(min, max) {
+            if (min > max) [min, max] = [max, min];
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function showTemporaryMessage(message) {
+            difficultyNotification.textContent = message;
+            difficultyNotification.classList.add('show-notification');
+            setTimeout(() => difficultyNotification.classList.remove('show-notification'), 2000);
+        }
+
+        function createFloatText(text, x, y, type) {
+            const el = document.createElement('div');
+            el.className = `float-text ${type}`;
+            el.textContent = text;
+            el.style.left = `${x}px`;
+            el.style.top = `${y}px`;
+            gameArea.appendChild(el);
+            setTimeout(() => el.remove(), 800);
+        }
+
+        function flashScreen() {
+            damageFlash.style.opacity = 0.5;
+            setTimeout(() => damageFlash.style.opacity = 0, 100);
+            healthDisplay.classList.add('health-shake');
+            setTimeout(() => healthDisplay.classList.remove('health-shake'), 300);
+        }
+
+        /* --- 遊戲邏輯 --- */
+
+        function updateDifficulty() {
+            currentBaseSpawnCount += SPAWN_INCREASE_STEP;
+            showTemporaryMessage(`難度提升！數量變為 ${currentBaseSpawnCount} 個`); 
+        }
+
+        function updateHealth(amount, x = null, y = null) {
+            currentHealth += amount;
+            healthDisplay.textContent = `❤️ ${currentHealth}`;
+            
+            if (x === null) {
+                x = gameArea.clientWidth / 2;
+                y = gameArea.clientHeight / 2;
+            }
+            const text = amount > 0 ? `+${amount}` : `${amount}`;
+            const type = amount > 0 ? 'text-heal' : 'text-dmg';
+            createFloatText(text, x, y, type);
+
+            if (amount < 0) {
+                flashScreen();
+            }
+
+            if (currentHealth <= 0) {
+                endGame("生命值歸零！", "#e53935");
+            }
+        }
+
+        function updateDecompositionDisplay() {
+            if (numberToDecompose === 0) {
+                decompositionDisplay.textContent = "";
+                return;
+            }
+
+            const N = numberToDecompose;
+            const currentProduct = numbers.reduce((acc, num) => acc * num.value, 1);
+            let productCheck = currentProduct;
+            const factorsToDisplay = [];
+            
+            for (const factor of currentNumberSequence) {
+                if (productCheck % factor === 0) {
+                    productCheck /= factor;
+                } else {
+                    factorsToDisplay.push({ val: factor, status: 'collected' });
+                }
+            }
+            numbers.filter(n => isPrime(n.value)).map(n => n.value).forEach(p => {
+                factorsToDisplay.push({ val: p, status: 'uncollected' });
+            });
+
+            let finalOutput = `${N} = `;
+            if (factorsToDisplay.length > 0) {
+                factorsToDisplay.sort((a, b) => a.val - b.val);
+                let currentGroup = null;
+                const groups = [];
+                for (const item of factorsToDisplay) {
+                    if (currentGroup && currentGroup.val === item.val && currentGroup.status === item.status) {
+                        currentGroup.count++;
+                    } else {
+                        if (currentGroup) groups.push(currentGroup);
+                        currentGroup = { val: item.val, status: item.status, count: 1 };
+                    }
+                }
+                if (currentGroup) groups.push(currentGroup);
+                finalOutput += groups.map(g => {
+                    const content = g.count > 1 ? `${g.val}<sup>${g.count}</sup>` : `${g.val}`;
+                    return `<span class="factor-item ${g.status}">${content}</span>`;
+                }).join(' x ');
+            }
+            const activeComposites = numbers.filter(n => !isPrime(n.value)).map(n => n.value).sort((a,b)=>a-b);
+            if (activeComposites.length > 0) {
+                if (factorsToDisplay.length > 0) finalOutput += ' x ';
+                finalOutput += activeComposites.map(c => `<span class="factor-item current-composite">${c}</span>`).join(' x ');
+            }
+            decompositionDisplay.innerHTML = finalOutput;
+
+            if (numbers.length === 0 && isRunning) {
+                setTimeout(() => {
+                    if (isRunning && numbers.length === 0) {
+                        const reward = currentNumberSequence.length;
+                        updateHealth(reward);
+                        showWaveReview(N);
+                    }
+                }, 500);
+            }
+        }
+
+        function showWaveReview(targetNum) {
+            isRunning = false;
+            clearInterval(decomposeInterval);
+            pauseTimeStart = Date.now();
+
+            const counts = {};
+            currentNumberSequence.forEach(n => counts[n] = (counts[n] || 0) + 1);
+            const equation = Object.keys(counts).sort((a,b)=>a-b).map(base => {
+                const power = counts[base];
+                return power > 1 ? `${base}<sup>${power}</sup>` : `${base}`;
+            }).join(' x ');
+
+            document.getElementById('final-message').textContent = '波段完成！';
+            document.getElementById('final-message').style.color = '#4CAF50';
+            document.getElementById('final-score').innerHTML = `
+                <p>生命值 +${currentNumberSequence.length}</p>
+                <div class="equation-review">${targetNum} = ${equation}</div>
+                <p style="color: #666; font-size: 0.9em;">
+                    下波難度：數量 ${currentBaseSpawnCount} 個
+                </p>
+            `;
+            
+            restartButton.textContent = '繼續下一波';
+            restartButton.onclick = resumeGame;
+            messageOverlay.classList.remove('hidden');
+        }
+
+        function resumeGame() {
+            messageOverlay.classList.add('hidden');
+            startTime += (Date.now() - pauseTimeStart);
+            isRunning = true;
+            generateNewNumbers(false);
+            clearInterval(decomposeInterval);
+            decomposeInterval = setInterval(gameLoop, 100);
+        }
+
+        function addNumber(value, initialX = null, initialY = null, isInitialComposite = false) {
+            const maxX = gameArea.clientWidth;
+            const halfBox = BOX_SIZE / 2;
+            const x = initialX !== null ? initialX : getRandomInt(halfBox, maxX - halfBox); 
+            const y = initialY !== null ? initialY : getRandomInt(halfBox, maxX - halfBox);
+
+            let spawnTime = Date.now();
+            if (isInitialComposite) spawnTime += 300;
+
+            const numberObj = {
+                id: Date.now() + Math.random(), 
+                value: value, x: x, y: y,
+                spawnTime: spawnTime,
+                isOverdue: false,      
+                lastDamageTime: 0      
+            };
+            numbers.push(numberObj);
+            return numberObj; 
+        }
+
+        function generateNewNumbers(isInitial = false) {
+            const count = isInitial ? 1 : currentBaseSpawnCount;
+            let totalVal = 1;
+            let newFactors = [];
+
+            for (let i = 0; i < count; i++) {
+                let currentMin = 4;
+                let currentMax;
+                if (i === 0) {
+                    currentMin = Math.max(4, Math.floor(gameTime / 2)); 
+                    currentMax = Math.max(10, gameTime + 15); 
+                } else {
+                    const divisor = i + 1;
+                    const limit = Math.floor(gameTime / divisor);
+                    currentMax = Math.max(4, limit);
+                    currentMin = 4;
+                }
+                if (currentMin > currentMax) currentMin = currentMax;
+
+                let newVal;
+                do { newVal = getRandomInt(currentMin, currentMax); } while (isPrime(newVal));
+                
+                const isMainNumber = (isInitial && i === 0);
+                addNumber(newVal, null, null, isMainNumber); 
+                
+                totalVal *= newVal;
+                newFactors = newFactors.concat(getPrimeFactorization(newVal));
+            }
+            numberToDecompose = totalVal;
+            currentNumberSequence = newFactors.sort((a,b) => a-b);
+            updateDecompositionDisplay();
+        }
+
+        function gameLoop() {
+            if (!isRunning) return;
+            
+            gameTime = Math.floor((Date.now() - startTime) / 1000);
+            timeDisplay.textContent = gameTime;
+
+            if (gameTime > 0 && gameTime % UPDATE_INTERVAL === 0 && gameTime > lastDifficultyUpdateScore) {
+                updateDifficulty();
+                lastDifficultyUpdateScore = gameTime;
+            }
+
+            const DECOMPOSE_THRESHOLD = currentDecomposeTime * 1000;
+            const PRIME_LIMIT_MS = currentRecycleLimit * 1000;
+            const numbersToKeep = [];
+            
+            for (const numObj of numbers) {
+                const age = Date.now() - numObj.spawnTime;
+                
+                // 1. 合成數分解邏輯
+                if (!isPrime(numObj.value) && age >= DECOMPOSE_THRESHOLD) {
+                    const factors = findFactors(numObj.value);
+                    if (factors) {
+                        const el = document.getElementById(`box-${numObj.id}`); 
+                        const ef = document.getElementById(`effect-${numObj.id}`);
+                        if (el) el.remove();
+                        if (ef) {
+                            ef.classList.add('parent-splitting-effect');
+                            setTimeout(() => ef.remove(), 300);
+                        }
+
+                        const angle = Math.random() * 2 * Math.PI;
+                        const spread = DECOMPOSITION_SPREAD / 2;
+                        const maxX = gameArea.clientWidth - 25;
+                        const limit = (v) => Math.max(25, Math.min(maxX, v));
+
+                        const tx1 = limit(numObj.x - Math.cos(angle) * spread);
+                        const ty1 = limit(numObj.y - Math.sin(angle) * spread);
+                        const tx2 = limit(numObj.x + Math.cos(angle) * spread);
+                        const ty2 = limit(numObj.y + Math.sin(angle) * spread);
+
+                        const f1 = { id: Date.now() + Math.random(), value: factors[0], spawnTime: Date.now(), x: numObj.x, y: numObj.y, targetX: tx1, targetY: ty1, isNewFactor: true, isOverdue: false, lastDamageTime: 0 };
+                        const f2 = { id: Date.now() + Math.random(), value: factors[1], spawnTime: Date.now(), x: numObj.x, y: numObj.y, targetX: tx2, targetY: ty2, isNewFactor: true, isOverdue: false, lastDamageTime: 0 };
+                        
+                        numbersToKeep.push(f1, f2);
+                    } else {
+                        numbersToKeep.push(numObj);
+                    }
+                } 
+                // 2. 質因數過期扣血邏輯
+                else if (isPrime(numObj.value)) {
+                    numbersToKeep.push(numObj);
+                    
+                    if (age >= PRIME_LIMIT_MS) {
+                        if (!numObj.isOverdue) {
+                            numObj.isOverdue = true;
+                            numObj.lastDamageTime = Date.now(); 
+                        }
+                        
+                        // 每 1000ms 造成一次傷害
+                        if (Date.now() - numObj.lastDamageTime >= 1000) {
+                            // 扣除質數數值
+                            updateHealth(-numObj.value, numObj.x, numObj.y);
+                            numObj.lastDamageTime = Date.now();
+                        }
+                    }
+                }
+                else {
+                    numbersToKeep.push(numObj);
+                }
+            }
+            
+            numbers = numbersToKeep;
+            
+            if (!isRunning) return;
+
+            if (numbers.length > 0) {
+                updateDecompositionDisplay();
+                renderNumbers();
+            } else {
+                updateDecompositionDisplay();
+            }
+        }
+
+        function handlePlayerClick(event) {
+            if (!isRunning) return;
+            const clickedBox = event.target.closest('.number-box');
+            if (!clickedBox) return;
+            
+            const numValue = parseInt(clickedBox.textContent);
+            
+            if (isPrime(numValue)) {
+                // 回收質數
+                const clickedId = parseFloat(clickedBox.dataset.id);
+                numbers = numbers.filter(n => n.id !== clickedId);
+                
+                clickedBox.remove(); 
+                const ef = document.getElementById(`effect-${clickedId}`);
+                if (ef) {
+                    ef.classList.add('collecting-effect');
+                    setTimeout(() => ef.remove(), 300);
+                }
+                
+                const rect = clickedBox.getBoundingClientRect();
+                const parent = gameArea.getBoundingClientRect();
+                createFloatText("回收", rect.left - parent.left + 25, rect.top - parent.top + 25, 'text-heal');
+
+                updateDecompositionDisplay();
+                renderNumbers();
+                
+            } else {
+                // 誤點合成數 -> 扣血 (修正處：扣除該數值)
+                const rect = clickedBox.getBoundingClientRect();
+                const parent = gameArea.getBoundingClientRect();
+                updateHealth(-numValue, rect.left - parent.left + 25, rect.top - parent.top + 25);
+                
+                clickedBox.classList.add('failed-number'); 
+                setTimeout(() => clickedBox.classList.remove('failed-number'), 500);
+            }
+        }
+
+        function renderNumbers() {
+            Array.from(gameArea.children).forEach(el => {
+                if (el.classList.contains('number-box')) {
+                    const id = parseFloat(el.dataset.id);
+                    if (!numbers.some(n => n.id === id)) el.remove();
+                }
+            });
+
+            for (const numObj of numbers) {
+                let box = document.getElementById(`box-${numObj.id}`);
+                let effectLayer = document.getElementById(`effect-${numObj.id}`);
+                const isNew = !box;
+
+                if (isNew) {
+                    box = document.createElement('div');
+                    box.className = 'number-box';
+                    box.dataset.id = numObj.id; 
+                    box.id = `box-${numObj.id}`;
+                    
+                    box.addEventListener('touchstart', (e) => { e.preventDefault(); handlePlayerClick(e); }, { passive: false });
+                    box.addEventListener('click', handlePlayerClick);
+                    
+                    gameArea.appendChild(box);
+
+                    effectLayer = document.createElement('div');
+                    effectLayer.className = 'effect-layer'; 
+                    effectLayer.dataset.id = numObj.id; 
+                    effectLayer.id = `effect-${numObj.id}`;
+                    gameArea.insertBefore(effectLayer, box);
+                }
+                
+                box.textContent = numObj.value;
+                box.style.left = `${numObj.x}px`; 
+                box.style.top = `${numObj.y}px`;
+                if (effectLayer) {
+                    effectLayer.style.left = `${numObj.x}px`;
+                    effectLayer.style.top = `${numObj.y}px`;
+                }
+
+                if (numObj.isOverdue) {
+                    if (!box.classList.contains('is-overdue')) box.classList.add('is-overdue');
+                }
+
+                if (numObj.isNewFactor && numObj.targetX !== undefined) {
+                    if (isNew) {
+                         box.classList.add('factor-spawn');
+                    }
+                    requestAnimationFrame(() => {
+                        box.style.left = `${numObj.targetX}px`;
+                        box.style.top = `${numObj.targetY}px`;
+                        if (effectLayer) {
+                            effectLayer.style.left = `${numObj.targetX}px`;
+                            effectLayer.style.top = `${numObj.targetY}px`;
+                        }
+                        numObj.x = numObj.targetX;
+                        numObj.y = numObj.targetY;
+                        numObj.isNewFactor = false; 
+                        delete numObj.targetX; delete numObj.targetY;
+                        setTimeout(() => box.classList.remove('factor-spawn'), 350); 
+                    });
+                } 
+
+                if (effectLayer && isNew) { 
+                    const age = Date.now() - numObj.spawnTime;
+                    const decomposeThresholdMs = currentDecomposeTime * 1000;
+                    
+                    effectLayer.style.animation = 'none';
+                    if (isPrime(numObj.value)) {
+                        effectLayer.classList.add('effect-breathing-infinite');
+                    } else {
+                        if (age < decomposeThresholdMs) {
+                            effectLayer.style.animationName = 'breathing-glow';
+                            effectLayer.style.animationDuration = `${currentDecomposeTime}s`;
+                            effectLayer.style.animationFillMode = 'forwards';
+                        }
+                    }
+                }
+            }
+        }
+        
+        function endGame(message, color) {
+            isRunning = false;
+            clearInterval(decomposeInterval);
+            
+            const counts = {};
+            currentNumberSequence.forEach(n => counts[n] = (counts[n] || 0) + 1);
+            const equation = Object.keys(counts).sort((a,b)=>a-b).map(base => {
+                const power = counts[base];
+                return power > 1 ? `${base}<sup>${power}</sup>` : `${base}`;
+            }).join(' x ');
+
+            document.getElementById('final-message').textContent = message;
+            document.getElementById('final-message').style.color = color;
+            document.getElementById('final-score').innerHTML = `
+                <p>堅持時間：${gameTime} 秒</p>
+                <div class="equation-review">${numberToDecompose} = ${equation}</div>
+            `;
+            
+            restartButton.textContent = '重新開始';
+            restartButton.onclick = startGame;
+            messageOverlay.classList.remove('hidden');
+            decompositionDisplay.textContent = "遊戲結束";
+        }
+
+        function startGame() {
+            numbers = [];
+            gameTime = 0;
+            currentHealth = 1; 
+            isRunning = true;
+            startTime = Date.now(); 
+            
+            currentDecomposeTime = INITIAL_DECOMPOSE_TIME;
+            currentRecycleLimit = INITIAL_PRIME_RECYCLE_LIMIT;
+            lastDifficultyUpdateScore = 0;
+            currentBaseSpawnCount = 1; 
+            currentNumberSequence = [];
+            numberToDecompose = 0;
+
+            timeDisplay.textContent = gameTime;
+            healthDisplay.textContent = `❤️ ${currentHealth}`;
+            messageOverlay.classList.add('hidden');
+            gameArea.innerHTML = '<div id="damage-flash"></div><div id="difficulty-notification"></div>';
+            
+            setTimeout(() => {
+                generateNewNumbers(true); 
+                clearInterval(decomposeInterval);
+                decomposeInterval = setInterval(gameLoop, 100); 
+                renderNumbers();
+            }, 100);
+        }
+
+        function setupGame() {
+            document.getElementById('final-message').textContent = '質因數回收站';
+            document.getElementById('final-score').innerHTML = `
+                <p style="text-align: left; margin-top: 15px; font-size: 1.1em;">
+                    <strong>數值傷害版規則：</strong>
+                    <ol style="padding-left: 20px; text-align: left; line-height: 1.6;">
+                        <li>初始生命 <strong>1</strong> 點。</li>
+                        <li><strong>波段完成</strong>時，依質因數數量恢復生命。</li>
+                        <li><strong>誤點</strong>合成數：<span style="color:red">扣除該數值</span>。</li>
+                        <li>質因數<strong>過期</strong>：變紅並<span style="color:red">每秒扣除該數值</span>！</li>
+                    </ol>
+                </p>
+            `;
+            document.getElementById('final-message').style.color = '#333';
+            restartButton.textContent = '開始遊戲';
+            restartButton.onclick = startGame;
+            messageOverlay.classList.remove('hidden');
+            gameArea.innerHTML = ''; 
+            timeDisplay.textContent = '0';
+            decompositionDisplay.textContent = "等待開始...";
+        }
+
+        document.addEventListener('DOMContentLoaded', setupGame);
+    </script>
+</body>
+</html>

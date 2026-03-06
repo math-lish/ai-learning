@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>有向數智能練習 (v33.0 穩定修復版)</title>
+    
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <style>
+        :root {
+            --primary: #4a90e2;
+            --secondary: #f8f9fa;
+            --success: #27ae60;
+            --wrong: #e74c3c;
+            --selected: #34495e;
+            --text: #2c3e50;
+            --level-bg: #8e44ad;
+            --ultimate-bg: #2c3e50;
+            --sky-blue: #87CEEB;
+            --hint-btn-bg: #f39c12;
+            
+            --tick-active: #e67e22;
+            --tick-final: #2ecc71;
+            --start-line-color: #95a5a6;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f0f2f5;
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            touch-action: manipulation; 
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .container {
+            background: white;
+            padding: 1rem;
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            width: 95%;
+            max-width: 600px;
+            text-align: center;
+            position: relative;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            height: 98vh;
+            max-height: 950px;
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+            background: #f8f9fa;
+            padding: 8px 12px;
+            border-radius: 10px;
+            flex-shrink: 0;
+        }
+
+        .level-badge {
+            background: var(--level-bg); color: white; padding: 4px 8px; border-radius: 8px; font-size: 0.8rem; font-weight: bold; margin-right: 5px;
+        }
+        .level-badge.ultimate {
+            background: var(--ultimate-bg); border: 2px solid #f1c40f; color: #f1c40f; animation: pulse 2s infinite;
+        }
+
+        .question-card {
+            background: var(--primary); color: white; padding: 15px 10px;
+            border-radius: 15px; margin-bottom: 10px; flex-shrink: 0;
+            box-shadow: 0 4px 6px rgba(74, 144, 226, 0.3);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            min-height: 90px; position: relative;
+        }
+        
+        .q-label { 
+            align-self: flex-start; font-size: 0.7rem; opacity: 0.8; text-transform: uppercase; letter-spacing: 1px;
+            margin-bottom: 5px; margin-left: 10px;
+        }
+        
+        .q-content { 
+            font-size: 2.4rem; font-weight: bold; letter-spacing: 1px; line-height: 1.2; width: 100%; overflow-x: auto;
+        }
+
+        /* 互動區 */
+        .interaction-area { 
+            flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; width: 100%; justify-content: flex-start;
+        }
+        .mjx-chtml { font-size: 115% !important; }
+
+        /* MC & Calc UI */
+        .mc-container, .calc-container { width: 100%; display: none; flex-direction: column; }
+        .mc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+        .mc-grid.single-col { grid-template-columns: 1fr; }
+        
+        .btn {
+            padding: 10px; border: 2px solid #bdc3c7; border-radius: 12px; 
+            background: white; color: var(--text); font-size: 1.3rem; font-weight: bold;
+            display: flex; justify-content: center; align-items: center; min-height: 60px;
+            touch-action: manipulation; transition: all 0.1s;
+        }
+        .btn:active { transform: scale(0.98); background: #ecf0f1; }
+        .btn.disabled { pointer-events: none; opacity: 0.8; }
+        .btn.selected-style { 
+            background-color: var(--selected); color: white; border-color: var(--selected); 
+            transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.2); opacity: 1 !important;
+        }
+        .btn.correct-style { background-color: var(--success); color: white; border-color: var(--success); opacity: 1 !important; }
+        .btn.wrong-style { background-color: var(--wrong); color: white; border-color: var(--wrong); opacity: 1 !important; }
+
+        .mc-confirm-area { margin-top: 10px; width: 100%; flex-shrink: 0; }
+        .btn-confirm {
+            background: var(--primary); color: white; width: 100%; padding: 14px; font-size: 1.2rem;
+            border-radius: 12px; border: none; font-weight: bold; cursor: pointer; box-shadow: 0 4px 0 #2980b9;
+        }
+        .btn-confirm:active { transform: translateY(4px); box-shadow: none; }
+        .btn-confirm:disabled { background: #bdc3c7; box-shadow: none; cursor: not-allowed; transform: none; }
+
+        /* 回饋區 */
+        .feedback-box {
+            margin-top: 10px; padding: 12px; background: #f1f2f6; border-radius: 10px;
+            display: none; width: 100%; box-sizing: border-box; flex-shrink: 0; border: 1px solid #ddd;
+        }
+        .fb-text { font-size: 1.2rem; font-weight: bold; margin-bottom: 5px; }
+        .fb-ans { font-size: 1.1rem; color: #333; margin-bottom: 10px; }
+        .text-green { color: var(--success); }
+        .text-red { color: var(--wrong); }
+        
+        .btn-next-inline {
+            background: var(--text); color: white; width: 100%; padding: 12px;
+            border-radius: 10px; font-size: 1.1rem; border: none; font-weight: bold; cursor: pointer;
+            margin-top: 5px;
+        }
+
+        /* 提示按鈕 */
+        .btn-toggle-hint {
+            background: var(--hint-btn-bg); color: white; width: 100%; padding: 10px;
+            border-radius: 10px; font-size: 1rem; border: none; font-weight: bold; cursor: pointer;
+            margin-bottom: 10px; box-shadow: 0 2px 0 #d35400; display: none;
+        }
+        .btn-toggle-hint:active { transform: scale(0.98); }
+
+        .input-display {
+            width: 100%; padding: 15px; font-size: 2.2rem; text-align: center;
+            border: 2px solid #bdc3c7; border-radius: 12px; margin-bottom: 10px;
+            background: #fafafa; font-weight: bold; color: var(--text);
+        }
+
+        .keypad-wrapper { margin-top: auto; padding-top: 10px; width: 100%; }
+        .keypad-wrapper.hidden { display: none; }
+        .keypad { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 8px; }
+        .btn-key { 
+            background: #ecf0f1; color: var(--text); 
+            font-size: 1.6rem; padding: 18px 0; 
+            border-radius: 10px; border: none; box-shadow: 0 3px 0 #bdc3c7; 
+        }
+        .btn-key:active { transform: translateY(3px); box-shadow: none; }
+        .btn-del { background: #e67e22; color: white; box-shadow: 0 3px 0 #d35400; }
+        .btn-enter { background: var(--primary); color: white; width: 100%; padding: 16px; font-size: 1.3rem; border-radius: 10px; border: none; font-weight: bold; box-shadow: 0 4px 0 #2980b9; }
+        .btn-enter:active { transform: translateY(4px); box-shadow: none; }
+
+        .footer-controls { margin-top: 5px; border-top: 1px solid #eee; padding-top: 5px; flex-shrink: 0; }
+        .btn-text { background: none; border: none; color: #95a5a6; text-decoration: underline; padding: 10px; font-size: 0.9rem; }
+
+        /* Modal Styles */
+        .modal { display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 50; }
+        .modal-content { background: white; padding: 25px; border-radius: 20px; text-align: center; width: 85%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); position: relative; }
+        .modal input { width: 100%; padding: 15px; margin: 15px 0; border: 2px solid #eee; border-radius: 10px; text-align: center; font-size: 1.1rem; }
+        .short-code-box { font-family: 'Courier New', monospace; font-size: 1.3rem; font-weight: bold; background: #2c3e50; color: #f1c40f; padding: 15px; border-radius: 8px; margin: 15px 0; word-break: break-all; user-select: all; }
+
+        /* Hint Modal */
+        #hint-modal .modal-content { width: 90%; max-width: 500px; padding: 15px; background: #fff; }
+        #hint-modal-title { font-size: 2rem; color: var(--primary); margin: 5px 0 15px 0; font-weight: bold; }
+
+        #visual-aid-container {
+            width: 100%; height: 350px; display: flex; flex-direction: column;
+            background: white; border: 2px solid #bdc3c7; border-radius: 10px;
+            overflow: hidden; margin-bottom: 10px;
+        }
+
+        .hint-controls { width: 100%; background: #ecf0f1; padding: 10px; display: flex; justify-content: center; gap: 10px; border-bottom: 1px solid #ccc; box-sizing: border-box; }
+        .hint-btn { background: #34495e; color: white; border: none; padding: 8px 15px; border-radius: 20px; font-size: 0.9rem; cursor: pointer; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: all 0.2s; }
+        .hint-btn:active { transform: scale(0.95); background: #2c3e50; }
+        #btn-hint-op { min-width: 140px; background: #e67e22; }
+        #hint-scene { width: 100%; height: 100%; position: relative; background: #fdfdfd; overflow: hidden; }
+
+        /* Elevator */
+        .elevator-shaft { position: relative; width: 60%; height: 100%; border-left: 6px solid #7f8c8d; margin: 0 auto; }
+        .tick-mark { position: absolute; left: 0; width: 12px; height: 2px; background: #bbb; transition: all 0.1s; }
+        .tick-mark.zero { width: 30px; height: 3px; background: #333; left: -15px; }
+        .tick-mark.start-line { width: 100%; height: 2px; background-color: var(--start-line-color); z-index: 0; opacity: 0.6; border-top: 1px dashed var(--start-line-color); background: none; }
+        .tick-label { position: absolute; left: -35px; font-size: 0.75rem; color: #777; transform: translateY(-50%); transition: all 0.1s; }
+        .tick-label.zero-label { font-weight: bold; color: #333; font-size: 0.9rem; left: -40px; }
+        .tick-mark.active { width: 25px; background: var(--tick-active); height: 4px; box-shadow: 0 0 5px var(--tick-active); }
+        .tick-label.active { color: var(--tick-active); font-weight: bold; font-size: 1.1rem; left: -45px; }
+        .tick-mark.final { width: 30px; background: var(--tick-final); height: 4px; box-shadow: 0 0 5px var(--tick-final); }
+        .tick-label.final { color: var(--tick-final); font-weight: bold; font-size: 1.3rem; left: -50px; }
+        .elevator-cab { position: absolute; left: 10px; width: 40px; height: 50px; background: linear-gradient(90deg, #bdc3c7 49%, #7f8c8d 50%, #bdc3c7 51%); border: 2px solid #7f8c8d; border-radius: 2px; z-index: 2; transition: bottom 1.5s ease-in-out; box-shadow: 3px 3px 6px rgba(0,0,0,0.3); }
+        .move-arrow { position: absolute; left: 60px; font-size: 1.2rem; font-weight: bold; transition: bottom 1.5s ease-in-out; white-space: nowrap; background: rgba(255,255,255,0.9); padding: 4px 8px; border-radius: 6px; border: 1px solid #ccc; }
+
+        /* Balloon */
+        .balloon-sky { position: relative; width: 100%; height: 100%; background: var(--sky-blue); overflow: hidden; display: flex; justify-content: center; }
+        .cloud { position: absolute; color: rgba(255,255,255,0.6); font-size: 3rem; }
+        .balloon-wrapper { position: absolute; bottom: 20%; width: 100px; height: 140px; z-index: 5; display: flex; flex-direction: column; align-items: center; transition: bottom 1.5s ease-in-out; }
+        .balloon-top { width: 90px; height: 100px; background: #e74c3c; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; box-shadow: inset -5px -5px 15px rgba(0,0,0,0.2); position: relative; z-index: 6; transition: transform 1.5s ease-in-out; display: flex; justify-content: center; align-items: center; color: rgba(255,255,255,0.3); font-size: 2rem; font-weight: bold; }
+        .balloon-basket { width: 36px; height: 28px; background: #d35400; border-radius: 4px; position: relative; z-index: 5; margin-top: 12px; }
+        .rope { width: 1px; height: 14px; background: #555; position: absolute; top: 98px; z-index: 4; }
+        .rope.l { left: 35px; } .rope.r { right: 35px; }
+        .item-icon { position: absolute; font-size: 1.8rem; transition: all 0.8s ease-in-out; z-index: 10; }
+        .tank-attached { top: 35px; left: 25px; } .tank-outside { top: 35px; left: -60px; opacity: 0; } 
+        .sand-attached { top: 0px; left: -12px; } .sand-outside { top: 60px; left: -12px; opacity: 0; } 
+        .fly-in { transform: translate(85px, 0); opacity: 1 !important; } .fly-out { transform: translate(-90px, -60px) rotate(-45deg); opacity: 0; }
+        .drop-down { transform: translateY(120px); opacity: 0; } .attach-up { transform: translateY(-60px); opacity: 1 !important; }
+        .balloon-label { position: absolute; left: 10px; bottom: 10px; font-size: 1rem; font-weight: bold; background: rgba(255,255,255,0.95); padding: 6px 12px; border-radius: 6px; white-space: nowrap; border: 1px solid #7f8c8d; box-shadow: 2px 2px 5px rgba(0,0,0,0.1); z-index: 20; color: #2c3e50; }
+
+        /* Other Visuals */
+        .visual-center { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; flex-direction: column; font-size: 2rem; font-weight: bold; color: var(--text); }
+        .sign-ball { width: 60px; height: 60px; border-radius: 50%; display: flex; justify-content: center; align-items: center; color: white; font-size: 2.5rem; margin: 0 20px; transition: all 0.8s ease-in-out; position: absolute; }
+        .sign-plus { background: var(--success); } .sign-minus { background: var(--wrong); }
+        .exp-container { display: flex; flex-direction: column; align-items: center; font-size: 1.5rem; transition: all 1s; }
+        .exp-expanded { color: var(--primary); margin-top: 20px; font-size: 1.8rem; font-weight: bold; }
+        .bodmas-step { padding: 10px 20px; margin: 5px; border: 2px solid #ddd; border-radius: 8px; color: #aaa; transition: all 0.5s; font-size: 1.2rem; }
+
+        .btn-close-hint { background: #95a5a6; color: white; width: 100%; padding: 12px; font-size: 1.1rem; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; margin-top: 5px; }
+        .btn-home { background: #34495e; color: white; width: 100%; padding: 12px; font-size: 1.1rem; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; }
+
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="status-bar">
+            <div><span class="level-badge" id="level-badge">LV 1</span> <span id="score-display">分數: 0</span></div>
+            <span id="streak-display">連對: 0</span>
+        </div>
+
+        <div class="question-card">
+            <div class="q-label" id="q-label">題目</div>
+            <div class="q-content" id="q-text">...</div>
+        </div>
+
+        <div class="interaction-area">
+            <div id="mc-container" class="mc-container">
+                <div id="mc-options-area" class="mc-grid"></div>
+                <div class="mc-confirm-area">
+                    <button id="btn-mc-confirm" class="btn-confirm" onclick="submitMC()" disabled>確認提交</button>
+                </div>
+                <div id="mc-feedback" class="feedback-box">
+                    <div id="mc-msg" class="fb-text">回答正確</div>
+                    <div id="mc-ans-display" class="fb-ans"></div>
+                    <button id="btn-toggle-hint-mc" class="btn-toggle-hint" onclick="showHintModal()">💡 查看圖像提示</button>
+                    <button class="btn-next-inline" onclick="nextQuestion()">下一題 ➜</button>
+                </div>
+            </div>
+
+            <div id="calc-container" class="calc-container">
+                <input type="text" class="input-display" id="user-input" readonly placeholder="?">
+                <div id="calc-feedback" class="feedback-box">
+                    <div id="calc-msg" class="fb-text">回答正確</div>
+                    <div id="calc-ans-display" class="fb-ans"></div>
+                    <button id="btn-toggle-hint-calc" class="btn-toggle-hint" onclick="showHintModal()">💡 查看圖像提示</button>
+                    <button class="btn-next-inline" onclick="nextQuestion()">下一題 ➜</button>
+                </div>
+                <div id="keypad-wrapper" class="keypad-wrapper">
+                    <div class="keypad">
+                        <button class="btn-key" onclick="typeKey('1')">1</button>
+                        <button class="btn-key" onclick="typeKey('2')">2</button>
+                        <button class="btn-key" onclick="typeKey('3')">3</button>
+                        <button class="btn-key" onclick="typeKey('4')">4</button>
+                        <button class="btn-key" onclick="typeKey('5')">5</button>
+                        <button class="btn-key" onclick="typeKey('-')">-</button>
+                        <button class="btn-key" onclick="typeKey('6')">6</button>
+                        <button class="btn-key" onclick="typeKey('7')">7</button>
+                        <button class="btn-key" onclick="typeKey('8')">8</button>
+                        <button class="btn-key" onclick="typeKey('9')">9</button>
+                        <button class="btn-key" onclick="typeKey('0')">0</button>
+                        <button class="btn-key btn-del" onclick="delKey()">⌫</button>
+                    </div>
+                    <button class="btn-enter" onclick="submitCalc()">確認答案</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-controls">
+            <button class="btn-text" onclick="showSaveModal()">暫停並取得密碼</button>
+        </div>
+    </div>
+
+    <div id="start-modal" class="modal">
+        <div class="modal-content">
+            <h2>有向數智能練習</h2>
+            <div style="text-align: left; font-size: 0.85rem; margin-bottom: 20px; color:#555; background:#f9f9f9; padding:10px; border-radius:10px;">
+                <div><b>Lv 1:</b> 加減運算 (填空)</div>
+                <div><b>Lv 2:</b> 加減觀念 (選擇)</div>
+                <div><b>Lv 3:</b> 乘除觀念 (選擇)</div>
+                <div><b>Lv 4:</b> 乘法運算 (填空)</div>
+                <div><b>Lv 5:</b> 除法分數 (Latex)</div>
+                <div><b>Lv 6:</b> 混合運算</div>
+                <div><b>Lv 7:</b> 指數運算 (填空)</div>
+                <div><b>Lv 8:</b> 四則運算法則</div>
+                <div style="color:#d35400; font-weight:bold;"><b>Lv 9:</b> 終極 (權重混合)</div>
+            </div>
+            <button class="btn btn-enter" onclick="initGame(true)">開始練習</button>
+            <div style="border-top:1px solid #eee; padding-top:15px; margin-top:15px;">
+                <button class="btn btn-key" style="font-size:1rem; width:100%; background:white; border:1px solid #ddd;" onclick="document.getElementById('passcode-area').style.display='block'; this.style.display='none'">我有舊密碼</button>
+                <div id="passcode-area" style="display:none;">
+                    <input type="text" id="passcode-input" placeholder="貼上密碼 (或輸入1-9跳關)">
+                    <button class="btn btn-key" style="background:#2c3e50; color:white; width:100%" onclick="loadGame()">載入進度</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="hint-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3 id="hint-modal-title">題目</h3>
+            <div id="visual-aid-container" style="display: flex;">
+                <div class="hint-controls">
+                    <button class="hint-btn" onclick="renderHintStep(1)">📍 起始位置</button>
+                    <button id="btn-hint-op" class="hint-btn" onclick="renderHintStep(2)">▶️ 運算</button>
+                </div>
+                <div id="hint-scene"></div>
+            </div>
+            <button class="btn-close-hint" onclick="closeHintModal()">關閉提示</button>
+        </div>
+    </div>
+
+    <div id="save-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h2>暫停與存檔</h2>
+            <p>點擊下方密碼即可複製：</p>
+            <div id="save-code-display" class="short-code-box" onclick="copyCode(this)">---</div>
+            <button class="btn btn-enter" onclick="copyCode(document.getElementById('save-code-display'))">複製密碼</button>
+            <button class="btn btn-key" style="background:white; border:1px solid #ddd; width:100%; margin-top:10px;" onclick="closeSaveModal()">關閉並繼續</button>
+            <button class="btn-home" onclick="goToHome()">🏠 回到首頁</button>
+        </div>
+    </div>
+
+    <script>
+        let state = { score: 0, streak: 0, level: 1, weights: [10, 10, 10, 10, 10, 10, 10] };
+        let currentQ = { type: '', correctAnswer: '', mcOptions: [], rawDisplay: '', weightIndex: -1, n1: 0, n2: 0, op: '', hintType: '' };
+        let selectedMCOption = null;
+        let animationFrameId = null;
+        let hintTimeout = null; // Global timeout tracker
+
+        function initGame(isNew) {
+            if (isNew) state = { score: 0, streak: 0, level: 1, weights: [10, 10, 10, 10, 10, 10, 10] };
+            document.getElementById('start-modal').style.display = 'none';
+            updateStats();
+            generateQuestion();
+        }
+        
+        function goToHome() {
+            document.getElementById('save-modal').style.display = 'none';
+            document.getElementById('start-modal').style.display = 'flex';
+            document.getElementById('passcode-input').value = '';
+        }
+
+        // --- Logic ---
+        function generateQuestion() {
+            document.getElementById('mc-feedback').style.display = 'none';
+            document.getElementById('calc-feedback').style.display = 'none';
+            document.getElementById('keypad-wrapper').classList.remove('hidden');
+            
+            document.getElementById('btn-toggle-hint-mc').style.display = 'none';
+            document.getElementById('btn-toggle-hint-calc').style.display = 'none';
+            
+            selectedMCOption = null;
+            document.getElementById('btn-mc-confirm').disabled = true;
+            document.getElementById('btn-mc-confirm').style.display = 'none';
+
+            const rNum = () => { let n = Math.floor(Math.random() * 20) - 10; return n === 0 ? 1 : n; };
+            let n1 = rNum(), n2 = rNum();
+
+            if (state.level === 2 || (state.level === 9 && Math.random() < 0.15) || (state.level === 6 && Math.random() < 0.2)) {
+                while (Math.abs(n1) === Math.abs(n2)) { n2 = rNum(); }
+            }
+
+            let modeIndex = -1; 
+            if (state.level === 9) { 
+                let totalW = state.weights.reduce((a, b) => a + b, 0);
+                let rand = Math.random() * totalW;
+                let sum = 0;
+                for(let i=0; i<7; i++) { 
+                    sum += state.weights[i]; 
+                    if (rand <= sum) { modeIndex = i; break; } 
+                }
+            } else {
+                if (state.level === 1) modeIndex = 0;
+                else if (state.level === 2) modeIndex = 1;
+                else if (state.level === 3) modeIndex = 2;
+                else if (state.level === 4) modeIndex = 3;
+                else if (state.level === 5) modeIndex = 4;
+                else if (state.level === 6) modeIndex = 99; 
+                else if (state.level === 7) modeIndex = 5;
+                else if (state.level === 8) modeIndex = 6;
+            }
+
+            currentQ.n1 = n1; currentQ.n2 = n2;
+
+            if (modeIndex === 0) setupQuestion('add_sub_calc', 0, n1, n2);
+            else if (modeIndex === 1) setupL2_AddSubMC(n1, n2, 1);
+            else if (modeIndex === 2) setupL3_MulDivMC(n1, n2, 2);
+            else if (modeIndex === 3) setupL4_MulCalc(3, n1, n2);
+            else if (modeIndex === 4) setupL5_DivFractionMC(rNum, 4);
+            else if (modeIndex === 5) setupL7_ExpCalc(5);
+            else if (modeIndex === 6) generateBODMAS(6);
+            else if (modeIndex === 99) { 
+                let r = Math.random();
+                if (r < 0.25) setupQuestion('add_sub_calc', 0, n1, n2);
+                else if (r < 0.5) setupL2_AddSubMC(n1, n2, 1);
+                else if (r < 0.75) setupL4_MulCalc(3, n1, n2);
+                else setupL5_DivFractionMC(rNum, 4); 
+            }
+        }
+
+        // --- Setup Functions ---
+        function generateExponentParams() {
+            let base = (Math.floor(Math.random() * 9) + 1) * (Math.random() < 0.5 ? 1 : -1);
+            let absBase = Math.abs(base);
+            let power = 2;
+            if (absBase >= 5) power = 2;
+            else if (absBase === 4) power = Math.floor(Math.random() * 2) + 2;
+            else if (absBase === 3) power = Math.floor(Math.random() * 3) + 2;
+            else if (absBase === 2) power = Math.floor(Math.random() * 3) + 3;
+            else if (absBase === 1) power = Math.floor(Math.random() * 9) + 2;
+            return { b: base, p: power };
+        }
+
+        function setupL3_MulDivMC(n1, n2, wIdx) {
+            let subType = Math.random();
+            if (subType < 0.5) { 
+                setupL3_MulMC(n1, n2, wIdx);
+            } else { 
+                setupL3_MulMC(n1, n2, wIdx); 
+                if(n2===0) n2=1;
+                currentQ.rawDisplay = `(${n1}) ÷ (${n2})`;
+                document.getElementById('q-label').innerText = "除法判斷";
+                document.getElementById('q-text').innerText = currentQ.rawDisplay;
+            }
+        }
+
+        function setupL4_MulCalc(wIdx, n1, n2) {
+            let raw = `(${n1})(${n2})`;
+            let ans = n1 * n2;
+            currentQ.hintType = 'sign_rule';
+            currentQ.sign1 = n1 > 0 ? 1 : -1; currentQ.sign2 = n2 > 0 ? 1 : -1;
+            prepareQ('calc', raw, ans, `乘法運算`, [], wIdx);
+        }
+
+        function setupL7_ExpCalc(wIdx) {
+            let params = generateExponentParams();
+            let raw, ans;
+            if (params.b < 0 && Math.random() < 0.5) {
+                let absB = Math.abs(params.b);
+                raw = `\\(-${absB}^{${params.p}}\\)`;
+                ans = -1 * Math.pow(absB, params.p);
+                currentQ.expType = 'no_bracket';
+            } else {
+                raw = `\\((${params.b})^{${params.p}}\\)`;
+                ans = Math.pow(params.b, params.p);
+                currentQ.expType = 'bracket';
+            }
+            currentQ.hintType = 'exponent'; currentQ.base = params.b; currentQ.power = params.p;
+            prepareQ('calc', raw, ans, `指數運算`, [], wIdx);
+        }
+
+        function setupQuestion(mode, wIdx, n1, n2) {
+            let raw, sim, ans;
+            if (mode === 'add_sub_calc') {
+                if (Math.random() < 0.5) { 
+                    raw = `(${n1}) + (${n2})`; sim = `${n1} ${n2 > 0 ? '+' : '-'} ${Math.abs(n2)}`; ans = n1 + n2; currentQ.op = 'add';
+                    currentQ.hintType = 'elevator';
+                    prepareQ('calc', sim, ans, `加法運算`, [], wIdx);
+                } else { 
+                    raw = `(${n1}) - (${n2})`; sim = `${n1} ${n2 > 0 ? '-' : '+'} ${Math.abs(n2)}`; ans = n1 - n2; currentQ.op = 'sub';
+                    currentQ.hintType = 'elevator';
+                    prepareQ('calc', sim, ans, `減法運算`, [], wIdx);
+                }
+            }
+        }
+        
+        function setupL2_AddSubMC(n1, n2, wIdx) {
+            let opType = Math.random() < 0.5 ? 'add' : 'sub'; currentQ.op = opType;
+            let raw = opType === 'add' ? `(${n1}) + (${n2})` : `(${n1}) - (${n2})`;
+            let realOp = opType === 'add' ? (n2 > 0 ? '+' : '-') : (n2 > 0 ? '-' : '+');
+            let correctOpt = `${n1}${realOp}${Math.abs(n2)}`.replace(/\s/g, ''); 
+            let a = Math.abs(n1), b = Math.abs(n2);
+            let opts = [`-${a}-${b}`, `-${a}+${b}`, `${a}-${b}`, `${a}+${b}`];
+            currentQ.hintType = 'balloon';
+            prepareQ('mc', raw, correctOpt, "拆括號", opts, wIdx);
+        }
+
+        function setupL3_MulMC(n1, n2, wIdx) {
+            let raw = `(${n1})(${n2})`; let ansVal = n1 * n2; let isPos = ansVal > 0;
+            let opts = ["正數", "負數", `-${Math.abs(n1)}-${Math.abs(n2)}`, `${Math.abs(n1)}+${Math.abs(n2)}`];
+            currentQ.hintType = 'sign_rule';
+            currentQ.sign1 = n1 > 0 ? 1 : -1; currentQ.sign2 = n2 > 0 ? 1 : -1;
+            prepareQ('mc', raw, isPos ? "正數" : "負數", "乘法判斷", opts, wIdx);
+        }
+
+        function setupL5_DivFractionMC(rNum, wIdx) {
+            let n1 = rNum(), n2 = rNum(); if(n2===0) n2=1;
+            let isTrivial = (n1 > 0 && n2 > 0 && getGCD(n1, n2) === 1);
+            let useFraction = Math.random() < 0.5; if (isTrivial) useFraction = false; 
+            let n2Str = n2 < 0 ? `(${n2})` : n2;
+            let raw = useFraction ? `\\(\\frac{${n1}}{${n2}}\\)` : `${n1} ÷ ${n2Str}`;
+            let correctOpt = toFractionLatex(n1, n2);
+            let wrongSignOpt = toFractionLatex(-n1, n2);
+            let recipOpt = toFractionLatex(n2, n1); let wrongRecipOpt = toFractionLatex(-n2, n1);
+            if (Math.abs(n1) === Math.abs(n2)) { recipOpt = toFractionLatex(n1*2, n2); wrongRecipOpt = toFractionLatex(n1*3, n2); }
+            let opts = [...new Set([correctOpt, wrongSignOpt, recipOpt, wrongRecipOpt])];
+            while(opts.length < 4) opts.push(toFractionLatex(Math.floor(Math.random()*10)+1, Math.floor(Math.random()*10)+1));
+            currentQ.hintType = 'sign_rule';
+            currentQ.sign1 = n1 > 0 ? 1 : -1; currentQ.sign2 = n2 > 0 ? 1 : -1;
+            prepareQ('mc', raw, correctOpt, "除法運算", opts, wIdx);
+        }
+
+        function generateBODMAS(wIdx) {
+            const r = () => Math.floor(Math.random() * 10) - 5 || 2;
+            let n1 = r(), n2 = r(), n3 = r();
+            let struct = Math.floor(Math.random() * 3);
+            let questionText = "", correctStep = "", wrongStep = "";
+            const fmt = (val) => val < 0 ? `(${val})` : val;
+            currentQ.hintType = 'bodmas';
+            if (struct === 0) { 
+                let op1 = n2 >=0 ? '+' : '-'; let n2abs = Math.abs(n2);
+                let termVal = (op1 === '+' ? 1 : -1) * n2abs * n3;
+                let midOp = termVal >= 0 ? '+' : '-';
+                questionText = `${n1} ${op1} ${n2abs}(${n3})`;
+                correctStep = `${n1} ${midOp} ${Math.abs(termVal)}`; 
+                let wVal = (op1 === '+') ? (n1 + n2abs) : (n1 - n2abs);
+                wrongStep = `${wVal}(${n3})`;
+                currentQ.bodmasHigh = `${n2abs}(${n3})`; 
+            } else if (struct === 1) { 
+                let n2str = n2 < 0 ? `${n2}` : n2; 
+                let op2 = n3 >= 0 ? '+' : '-'; let n3abs = Math.abs(n3); let resMul = n1 * n2;
+                questionText = `${n1}(${n2str}) ${op2} ${n3abs}`;
+                correctStep = `${resMul} ${op2} ${n3abs}`;
+                let wInner = (op2 === '+') ? (n2 + n3abs) : (n2 - n3abs);
+                wrongStep = `${n1}(${wInner})`;
+                currentQ.bodmasHigh = `${n1}(${n2str})`; 
+            } else { 
+                let op1 = n2 >= 0 ? '+' : '-'; let n2abs = Math.abs(n2);
+                let bracketVal = (n2 >= 0) ? (n1 + n2abs) : (n1 - n2abs);
+                questionText = `(${n1} ${op1} ${n2abs})(${n3})`;
+                correctStep = `${bracketVal}(${n3})`;
+                wrongStep = `${n1} ${op1} ${fmt(n2abs * n3)}`; 
+                currentQ.bodmasHigh = `(${n1} ${op1} ${n2abs})`; 
+            }
+            prepareQ('mc', questionText, correctStep, "第一步後全式", [correctStep, wrongStep], wIdx);
+        }
+
+        function prepareQ(type, raw, correct, label, opts=[], wIdx) {
+            currentQ.type = type; currentQ.rawDisplay = raw; currentQ.correctAnswer = correct.toString(); currentQ.weightIndex = wIdx;
+            document.getElementById('q-label').innerText = label;
+            const qTextBox = document.getElementById('q-text'); qTextBox.innerHTML = raw;
+            if (window.MathJax) MathJax.typesetPromise([qTextBox]);
+            if (type === 'mc') {
+                document.getElementById('mc-container').style.display = 'flex';
+                document.getElementById('calc-container').style.display = 'none';
+                document.getElementById('btn-mc-confirm').style.display = 'block';
+                const area = document.getElementById('mc-options-area'); area.innerHTML = '';
+                if (state.level === 8 || label === "第一步後全式") area.className = 'mc-grid single-col'; else area.className = 'mc-grid';
+                opts.sort(() => Math.random() - 0.5).forEach(opt => {
+                    let btn = document.createElement('button'); btn.className = 'btn'; btn.setAttribute('data-value', opt); btn.innerHTML = opt; 
+                    btn.onclick = (e) => selectMCOption(e.currentTarget, opt); area.appendChild(btn);
+                });
+                if (window.MathJax) MathJax.typesetPromise([area]);
+            } else {
+                document.getElementById('mc-container').style.display = 'none';
+                document.getElementById('calc-container').style.display = 'flex';
+                document.getElementById('user-input').value = '';
+                document.getElementById('btn-mc-confirm').style.display = 'none';
+            }
+        }
+
+        // --- Render Hints ---
+        function showHintModal() {
+            const titleEl = document.getElementById('hint-modal-title');
+            titleEl.innerHTML = currentQ.rawDisplay;
+            if (window.MathJax) MathJax.typesetPromise([titleEl]);
+            document.getElementById('hint-modal').style.display = 'flex';
+            let opBtnText = "▶️ 運算過程";
+            if (currentQ.hintType === 'balloon') {
+                let op = currentQ.op; let n2 = currentQ.n2;
+                if (op === 'add' && n2 > 0) opBtnText = "加入氫氣 (加正數)";
+                else if (op === 'sub' && n2 > 0) opBtnText = "放去氫氣 (減正數)";
+                else if (op === 'add' && n2 < 0) opBtnText = "加入沙包 (加負數)";
+                else if (op === 'sub' && n2 < 0) opBtnText = "掉棄沙包 (減負數)";
+            }
+            document.getElementById('btn-hint-op').innerText = opBtnText;
+            renderHintStep(1);
+        }
+        function closeHintModal() {
+            document.getElementById('hint-modal').style.display = 'none';
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            if (hintTimeout) clearTimeout(hintTimeout); // Clear timeout
+        }
+        function renderHintStep(step) {
+            const scene = document.getElementById('hint-scene'); scene.innerHTML = '';
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            if (hintTimeout) clearTimeout(hintTimeout);
+            
+            if (currentQ.hintType === 'elevator') renderElevatorStep(step, scene);
+            else if (currentQ.hintType === 'balloon') renderBalloonStep(step, scene);
+            else if (currentQ.hintType === 'sign_rule') renderSignRuleStep(step, scene);
+            else if (currentQ.hintType === 'exponent') renderExponentStep(step, scene);
+            else if (currentQ.hintType === 'bodmas') renderBODMASStep(step, scene);
+        }
+
+        function renderElevatorStep(step, container) {
+            let n1 = currentQ.n1; let moveVal = (currentQ.op === 'sub') ? -currentQ.n2 : currentQ.n2; let target = n1 + moveVal;
+            let allNums = [n1, target]; let minVal = Math.min(...allNums) - 2; let maxVal = Math.max(...allNums) + 2; let range = maxVal - minVal;
+            const shaft = document.createElement('div'); shaft.className = 'elevator-shaft';
+            for (let i = minVal; i <= maxVal; i++) {
+                let pct = ((i - minVal) / range) * 100; let isZero = (i === 0); let isStart = (i === n1);
+                let extraClass = ''; if(isZero) extraClass += ' zero'; if(isStart) extraClass += ' start-line';
+                let tickHtml = `<div id="tick-${i}" class="tick-mark ${extraClass}" style="bottom:${pct}%"><span id="label-${i}" class="tick-label ${isZero?'zero-label':''}">${i}</span></div>`;
+                shaft.innerHTML += tickHtml;
+            }
+            const cab = document.createElement('div'); cab.className = 'elevator-cab'; const arrow = document.createElement('div'); arrow.className = 'move-arrow';
+            let startPct = ((n1 - minVal) / range) * 100; cab.style.bottom = `${startPct}%`; arrow.style.bottom = `${startPct}%`; arrow.innerHTML = `0`;
+            shaft.appendChild(cab); shaft.appendChild(arrow); container.appendChild(shaft);
+            if (step === 2) {
+                let duration = 1500; let startTime = null; let lastTickVal = null; 
+                const animate = (time) => {
+                    if (!startTime) startTime = time; let progress = (time - startTime) / duration; if (progress > 1) progress = 1;
+                    let currentVal = n1 + (moveVal * progress); let currentPct = ((currentVal - minVal) / range) * 100;
+                    cab.style.bottom = `${currentPct}%`; arrow.style.bottom = `${currentPct}%`;
+                    let counterVal = Math.round(moveVal * progress); let sign = counterVal > 0 ? "⬆ +" : (counterVal < 0 ? "⬇ " : ""); let color = counterVal > 0 ? "green" : (counterVal < 0 ? "red" : "black");
+                    arrow.innerHTML = `<span style="color:${color}">${sign}${counterVal}</span>`;
+                    let currentInt = Math.round(currentVal);
+                    if (currentInt !== lastTickVal && currentInt !== n1 && currentInt !== target) {
+                        let newT = document.getElementById(`tick-${currentInt}`); let newL = document.getElementById(`label-${currentInt}`);
+                        if(newT) { newT.classList.add('active'); hintTimeout = setTimeout(() => { newT.classList.remove('active'); if(newL) newL.classList.remove('active'); }, 400); }
+                        if(newL) newL.classList.add('active');
+                        lastTickVal = currentInt;
+                    }
+                    if (progress < 1) { animationFrameId = requestAnimationFrame(animate); } else {
+                        let endT = document.getElementById(`tick-${target}`); let endL = document.getElementById(`label-${target}`);
+                        if(endT) endT.classList.add('final'); if(endL) endL.classList.add('final');
+                    }
+                }; animationFrameId = requestAnimationFrame(animate);
+            }
+        }
+        function renderBalloonStep(step, container) {
+            let n1 = currentQ.n1, n2 = currentQ.n2, op = currentQ.op;
+            let itemClass = '', itemIcon = '', startPosClass = '', animClass = '', arrClass = '', sym = '';
+            if (op === 'add' && n2 > 0) { itemIcon='🧴'; itemClass='tank'; startPosClass='tank-outside'; animClass='fly-in'; arrClass='up'; sym='+'; }
+            else if (op === 'sub' && n2 > 0) { itemIcon='🧴'; itemClass='tank'; startPosClass='tank-attached'; animClass='fly-out'; arrClass='down'; sym='-'; }
+            else if (op === 'add' && n2 < 0) { itemIcon='🪨'; itemClass='sandbag'; startPosClass='sand-outside'; animClass='attach-up'; arrClass='down'; sym='-'; }
+            else if (op === 'sub' && n2 < 0) { itemIcon='🪨'; itemClass='sandbag'; startPosClass='sand-attached'; animClass='drop-down'; arrClass='up'; sym='+'; }
+            let isRising = (arrClass === 'up'); let startB = isRising ? 10 : 60; let endB = isRising ? 60 : 10;
+            let wrapperScaleStart = 1, wrapperScaleEnd = 1; if ((op==='add'&&n2>0) || (op==='sub'&&n2>0)) { wrapperScaleEnd = (op==='add') ? 1.2 : 0.8; }
+            let cleanRaw = currentQ.rawDisplay.replace(/^\((-?\d+)\)/, '$1'); let startLabel = `拆括號前: ${cleanRaw}`; let endLabel = `拆括號後: ${currentQ.correctAnswer}`;
+            let tankHtml = (itemClass==='tank') ? `<div class="item-icon tank ${startPosClass}">${itemIcon}</div>` : '';
+            let sandHtml = (itemClass==='sandbag') ? `<div class="item-icon sandbag ${startPosClass}">${itemIcon}</div>` : '';
+            let sceneHtml = `<div class="balloon-sky"><div class="cloud" style="top:10px; left:10%">☁</div><div class="cloud" style="top:30px; right:15%">☁</div><div class="balloon-wrapper" style="bottom:${startB}%"><div class="balloon-top">H₂ ${tankHtml}</div><div class="rope l"></div><div class="rope r"></div><div class="balloon-basket">${sandHtml}</div></div><div class="balloon-label">${startLabel}</div></div>`;
+            container.innerHTML = sceneHtml;
+            if (step === 2) {
+                const wrapper = container.querySelector('.balloon-wrapper'); const top = container.querySelector('.balloon-top'); const item = container.querySelector('.item-icon'); const lab = container.querySelector('.balloon-label');
+                hintTimeout = setTimeout(() => { if(item) item.classList.add(animClass); if (wrapperScaleEnd !== 1) top.style.transform = `scale(${wrapperScaleEnd})`; wrapper.style.bottom = `${endB}%`; lab.innerText = endLabel; }, 100);
+            }
+        }
+        function renderSignRuleStep(step, container) {
+            let s1 = currentQ.sign1; let s2 = currentQ.sign2;
+            let signChar1 = s1 > 0 ? '+' : '-'; let signChar2 = s2 > 0 ? '+' : '-';
+            let resSign = (s1 * s2) > 0 ? '+' : '-';
+            container.innerHTML = `<div class="visual-center"><div id="ball1" class="sign-ball ${s1>0?'sign-plus':'sign-minus'}" style="left:30%">${signChar1}</div><div id="ball2" class="sign-ball ${s2>0?'sign-plus':'sign-minus'}" style="left:60%">${signChar2}</div><div id="rule-text" style="margin-top:80px; font-size:1rem; opacity:0"></div></div>`;
+            if (step === 2) {
+                hintTimeout = setTimeout(() => {
+                    const b1 = document.getElementById('ball1'); const b2 = document.getElementById('ball2'); const txt = document.getElementById('rule-text');
+                    b1.style.left = '45%'; b2.style.left = '45%'; 
+                    hintTimeout = setTimeout(() => { b2.style.display = 'none'; b1.className = `sign-ball ${resSign==='+'?'sign-plus':'sign-minus'}`; b1.innerText = resSign; b1.style.transform = 'scale(1.5)'; txt.innerText = (s1===s2) ? "同號得正" : "異號得負"; txt.style.opacity = 1; }, 800);
+                }, 100);
+            }
+        }
+        function renderExponentStep(step, container) {
+            let b = currentQ.base; let p = currentQ.power; let type = currentQ.expType; 
+            let expanded = "";
+            if (type === 'bracket') { let terms = []; for(let i=0; i<p; i++) terms.push(`(${b})`); expanded = terms.join(" × "); } 
+            else { let absB = Math.abs(b); let terms = []; for(let i=0; i<p; i++) terms.push(`${absB}`); expanded = `- (${terms.join(" × ")})`; }
+            container.innerHTML = `<div class="visual-center"><div style="font-size:2rem;">${currentQ.rawDisplay}</div><div id="exp-res" class="exp-expanded" style="opacity:0">${expanded} = ${currentQ.correctAnswer}</div></div>`;
+            if (window.MathJax) MathJax.typesetPromise([container]);
+            if (step === 2) hintTimeout = setTimeout(() => { document.getElementById('exp-res').style.opacity = 1; }, 200);
+        }
+        function renderBODMASStep(step, container) {
+            let full = currentQ.rawDisplay; let high = currentQ.bodmasHigh; 
+            container.innerHTML = `<div class="visual-center"><div id="bod-text" style="font-size:1.5rem; transition:all 0.5s;">${full}</div><div id="bod-hint" style="margin-top:20px; color:#e67e22; font-size:1rem; opacity:0;">優先計算部分</div></div>`;
+            if (window.MathJax) MathJax.typesetPromise([container]);
+            if (step === 2) {
+                hintTimeout = setTimeout(() => { document.getElementById('bod-hint').innerText = `第一步先算： ${high}`; document.getElementById('bod-hint').style.opacity = 1; document.getElementById('bod-hint').style.transform = "scale(1.2)"; }, 300);
+            }
+        }
+
+        // --- Handlers ---
+        function selectMCOption(btn, opt) {
+            const allBtns = document.getElementById('mc-options-area').children;
+            for(let b of allBtns) b.classList.remove('selected-style');
+            btn.classList.add('selected-style');
+            selectedMCOption = opt;
+            document.getElementById('btn-mc-confirm').disabled = false;
+        }
+
+        function submitMC() {
+            if (selectedMCOption === null) return;
+            const isCorrect = (selectedMCOption.toString() === currentQ.correctAnswer);
+            handleResult(isCorrect);
+            document.getElementById('btn-mc-confirm').style.display = 'none'; 
+            const allBtns = document.getElementById('mc-options-area').children;
+            for(let b of allBtns) {
+                b.classList.add('disabled'); b.classList.remove('selected-style');
+                let val = b.getAttribute('data-value');
+                if (val === selectedMCOption.toString()) b.classList.add(isCorrect ? 'correct-style' : 'wrong-style');
+                if (val === currentQ.correctAnswer) b.classList.add('correct-style');
+            }
+            showFeedback('mc', isCorrect);
+        }
+
+        function submitCalc() {
+            let val = document.getElementById('user-input').value;
+            if (val === '' || val === '-') return;
+            let isCorrect = (parseInt(val) === parseInt(currentQ.correctAnswer));
+            handleResult(isCorrect);
+            document.getElementById('keypad-wrapper').classList.add('hidden');
+            showFeedback('calc', isCorrect);
+        }
+
+        function showFeedback(type, isCorrect) {
+            const box = document.getElementById(type + '-feedback');
+            const msg = document.getElementById(type + '-msg');
+            const ans = document.getElementById(type + '-ans-display');
+            const btn = document.getElementById('btn-toggle-hint-' + type);
+            box.style.display = 'block';
+            if (isCorrect) {
+                msg.innerText = "回答正確！"; msg.className = "fb-text text-green"; ans.innerHTML = ""; btn.style.display = 'none'; 
+            } else {
+                msg.innerText = "回答錯誤"; msg.className = "fb-text text-red";
+                ans.innerHTML = `正確答案：${currentQ.correctAnswer}`;
+                if (window.MathJax) MathJax.typesetPromise([ans]);
+                if (currentQ.hintType) btn.style.display = 'block';
+            }
+        }
+
+        function handleResult(isCorrect) {
+            if (isCorrect) {
+                state.score += 1; state.streak++;
+                if (currentQ.weightIndex !== -1) state.weights[currentQ.weightIndex] = Math.max(1, state.weights[currentQ.weightIndex] - 1);
+                if (state.streak >= 10 && state.level < 9) { state.level++; state.streak = 0; alert(`🎉 實力提升！進入 Level ${state.level}！`); }
+            } else {
+                state.streak = 0;
+                if (currentQ.weightIndex !== -1) state.weights[currentQ.weightIndex] = Math.min(35, state.weights[currentQ.weightIndex] + 5);
+            }
+            updateStats();
+        }
+
+        function getGCD(a, b) { return b ? getGCD(b, a % b) : a; }
+        function toFractionLatex(n, d) {
+            if (d < 0) { n = -n; d = -d; }
+            let common = getGCD(Math.abs(n), Math.abs(d)); n /= common; d /= common;
+            if (d === 1) return n.toString(); if (n === 0) return "0";
+            let sign = ""; if (n < 0) { sign = "-"; n = Math.abs(n); }
+            return `\\(${sign}\\frac{${n}}{${d}}\\)`;
+        }
+        function updateStats() {
+            document.getElementById('score-display').innerText = `分數: ${state.score}`;
+            document.getElementById('streak-display').innerText = `連對: ${state.streak}`;
+            const badge = document.getElementById('level-badge');
+            badge.className = state.level === 9 ? "level-badge ultimate" : "level-badge";
+            badge.innerText = state.level === 9 ? "ULTIMATE" : (state.level === 8 ? "法則" : `LEVEL ${state.level}`);
+        }
+        function showSaveModal() {
+            const sc = state.score.toString(36).toUpperCase(); const lv = state.level; const st = state.streak.toString(36).toUpperCase();
+            let wStr = ""; state.weights.forEach(w => { wStr += Math.min(35, Math.max(1, w)).toString(36).toUpperCase(); });
+            document.getElementById('save-code-display').innerText = `${sc}-${lv}-${st}-${wStr}`;
+            document.getElementById('save-modal').style.display = 'flex';
+        }
+        function closeSaveModal() { document.getElementById('save-modal').style.display = 'none'; }
+        function goToHome() { document.getElementById('save-modal').style.display = 'none'; document.getElementById('start-modal').style.display = 'flex'; document.getElementById('passcode-input').value = ''; }
+        function copyCode(e) { 
+            const t = e.innerText||e.value; 
+            if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(()=>alert("密碼已複製！")); else { const a=document.createElement("textarea"); a.value=t; document.body.appendChild(a); a.select(); document.execCommand('copy'); document.body.removeChild(a); alert("密碼已複製！"); }
+        }
+        function loadGame() {
+            const input = document.getElementById('passcode-input').value.trim().toUpperCase();
+            if (!input) return;
+            if (/^[1-9]$/.test(input)) {
+                let targetLevel = parseInt(input);
+                state = { score: 0, streak: 0, level: targetLevel, weights: [10, 10, 10, 10, 10, 10, 10] };
+                document.getElementById('start-modal').style.display = 'none';
+                updateStats(); generateQuestion(); return;
+            }
+            try {
+                const i = input.split('-');
+                if(i.length!==4) throw new Error();
+                state.score=parseInt(i[0],36); state.level=parseInt(i[1]); state.streak=parseInt(i[2],36);
+                for(let j=0;j<7;j++) if(j<i[3].length) state.weights[j]=parseInt(i[3][j],36);
+                initGame(false);
+            } catch(e) { alert("密碼錯誤"); }
+        }
+        function nextQuestion() { generateQuestion(); }
+        function typeKey(v) { let f=document.getElementById('user-input'); if(f.value.length<8) f.value+=v; }
+        function delKey() { let f=document.getElementById('user-input'); f.value=f.value.slice(0,-1); }
+
+    </script>
+</body>
+</html>

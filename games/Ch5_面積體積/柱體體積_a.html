@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>幾何柱體與錐體探索 (加密ID版)</title>
+    <style>
+        /* === 全局設定 === */
+        body { 
+            font-family: "Microsoft JhengHei", -apple-system, BlinkMacSystemFont, sans-serif; 
+            background: #f0f4f8; 
+            margin: 0; padding: 0; 
+            display: flex; flex-direction: column; align-items: center; 
+            min-height: 100vh; 
+            overscroll-behavior: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        #game-page { width: 100%; display: flex; flex-direction: column; align-items: center; padding-bottom: 20px; }
+
+        /* === 頂部資訊列 === */
+        .header-bar { 
+            width: 100%; padding: 10px 15px; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
+            display: flex; flex-direction: column; gap: 8px; box-sizing: border-box;
+            position: sticky; top: 0; z-index: 10;
+        }
+
+        .header-top { 
+            display: flex; justify-content: center; align-items: center; width: 100%; gap: 8px; margin-bottom: 2px;
+        }
+
+        .shape-badge { 
+            background: #3b82f6; color: white; padding: 5px 15px; 
+            border-radius: 20px; font-weight: bold; font-size: 1rem; white-space: nowrap;
+        }
+
+        /* === 加密 ID 樣式 === */
+        #session-id-display {
+            font-family: "Consolas", "Monaco", monospace;
+            font-size: 0.85rem; /* 稍微加大 */
+            color: #475569;
+            background: #e2e8f0;
+            padding: 5px 10px;
+            border-radius: 6px;
+            border: 1px solid #cbd5e1;
+            letter-spacing: 1px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        /* === 計分板 === */
+        .score-board { 
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; 
+            width: 100%; max-width: 500px; margin: 0 auto;
+        }
+        .score-box {
+            background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 8px;
+            padding: 5px 10px; display: flex; flex-direction: column; align-items: center;
+            transition: 0.3s;
+        }
+        .score-box.active { border-color: #6366f1; background: #eef2ff; }
+        .score-title { font-size: 0.85rem; font-weight: bold; color: #64748b; margin-bottom: 2px; }
+        .score-data { font-size: 0.9rem; font-weight: bold; color: #334155; display: flex; gap: 10px;}
+        .score-val { color: #2563eb; }
+
+        .controls { width: 95%; max-width: 500px; margin-top: 10px; display: flex; gap: 8px; justify-content: center;}
+        button { cursor: pointer; border: none; border-radius: 8px; font-size: 1rem; transition: 0.2s; font-weight: bold; touch-action: manipulation;}
+        .btn-mode { flex: 1; padding: 12px 5px; background-color: #e2e8f0; color: #555; }
+        .btn-mode.active { background-color: #6366f1; color: white; box-shadow: 0 2px 5px rgba(99, 102, 241, 0.3); } 
+        .btn-action { padding: 12px 20px; font-size: 1.1rem; border-radius: 50px; min-width: 120px;}
+        .btn-check { background-color: #10b981; color: white; box-shadow: 0 4px 0 #059669;}
+        .btn-check:active { transform: translateY(4px); box-shadow: none; }
+        .btn-check:disabled { background-color: #cbd5e1; box-shadow: none; cursor: not-allowed; transform: none; }
+        .btn-next { background-color: #f59e0b; color: white; display: none; box-shadow: 0 4px 0 #d97706;}
+        .btn-next.show { display: inline-block; animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes pop { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+        #game-container { position: relative; width: 95%; max-width: 500px; height: 0; padding-bottom: 85%; background: white; border: 2px solid #e2e8f0; border-radius: 16px; margin: 15px 0; overflow: hidden;}
+        #game-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+
+        .line-segment { stroke-width: 5; stroke-linecap: round; fill: none; transition: stroke 0.2s; pointer-events: none;} 
+        @media (max-width: 600px) { .line-segment { stroke-width: 6; } }
+        .line-segment.solid { stroke-dasharray: none; }
+        .line-segment.dashed { stroke-dasharray: 10, 10; }
+        .drawing-mode .line-segment.interactive { stroke: #3b82f6; stroke-width: 10; cursor: pointer; pointer-events: auto; }
+        .drawing-mode .line-segment.locked { stroke: #cbd5e1; }
+        .line-segment.correct { stroke: #10b981 !important; } 
+        .line-segment.wrong { stroke: #ef4444 !important; }
+        .area-mode .line-segment { stroke: #64748b; opacity: 0.4; }
+        .outline-shape { stroke: #cbd5e1; stroke-width: 5; fill: none; }
+        .drawing-mode .outline-shape { stroke: #cbd5e1; }
+        .area-mode .outline-shape { stroke: #64748b; opacity: 0.4; }
+
+        .face-polygon { fill: transparent; stroke: transparent; stroke-width: 0; transition: fill 0.1s; pointer-events: none; }
+        .area-mode .face-polygon { fill: rgba(0, 0, 0, 0.02); stroke: rgba(0,0,0,0.01); stroke-width: 20px; stroke-linejoin: round; pointer-events: auto; paint-order: stroke fill; }
+        .face-polygon.interactive:active { fill: rgba(99, 102, 241, 0.4) !important; } 
+        .face-polygon.selected { fill: rgba(59, 130, 246, 0.6) !important; stroke: none; }
+        .face-polygon.highlight-quiz { fill: rgba(245, 158, 11, 0.7) !important; stroke: #f59e0b; stroke-width: 2; }
+        .face-polygon.correct-area { fill: rgba(16, 185, 129, 0.7) !important; stroke: none; }
+        .face-polygon.wrong-area { fill: rgba(239, 68, 68, 0.7) !important; stroke: none; }
+
+        #mcq-container { display: none; flex-direction: row; flex-wrap: nowrap; gap: 5px; width: 98%; max-width: 500px; margin-bottom: 10px; justify-content: space-between;}
+        .mcq-option { background: white; border: 2px solid #e2e8f0; padding: 10px 2px; border-radius: 8px; text-align: center; font-size: 0.9rem; font-weight: bold; color: #475569; box-shadow: 0 2px 0 #cbd5e1; flex: 1; display: flex; align-items: center; justify-content: center; cursor: pointer; line-height: 1.2;}
+        .mcq-option.active-selection { border-color: #3b82f6; background-color: #eff6ff; color: #1d4ed8; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);}
+        .mcq-option.correct-opt { background: #d1fae5; border-color: #10b981; color: #065f46; box-shadow: none;}
+        .mcq-option.wrong-opt { background: #fee2e2; border-color: #ef4444; color: #991b1b; box-shadow: none;}
+
+        #instruction { font-size: 1.1rem; color: #333; margin: 5px 20px; font-weight: bold; min-height: 3rem; text-align: center; display: flex; align-items: center; justify-content: center;}
+        #result-msg { font-weight: bold; font-size: 1.2rem; height: 30px; text-align: center; margin-top: 5px; margin-bottom: 20px;}
+    </style>
+</head>
+<body>
+
+    <div id="game-page">
+        <div class="header-bar">
+            <div class="header-top">
+                <div class="shape-badge" id="shape-name">載入中...</div>
+                <div id="session-id-display">ID: ---</div>
+            </div>
+
+            <div class="score-board">
+                <div class="score-box" id="score-draw-box">
+                    <div class="score-title">✏️ 繪圖</div>
+                    <div class="score-data">
+                        分: <span class="score-val" id="score-draw">0</span>
+                        題: <span class="score-val" id="count-draw">0</span>
+                    </div>
+                </div>
+                <div class="score-box" id="score-area-box">
+                    <div class="score-title">📐 面積</div>
+                    <div class="score-data">
+                        分: <span class="score-val" id="score-area">0</span>
+                        題: <span class="score-val" id="count-area">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn-mode active" id="btn-draw" onclick="setMode('drawing')">修正虛實線</button>
+            <button class="btn-mode" id="btn-area" onclick="setMode('area')">面積與公式</button>
+        </div>
+
+        <div id="instruction"></div>
+
+        <div id="game-container">
+            <svg viewBox="0 0 500 400" id="game-svg"></svg>
+        </div>
+
+        <div id="mcq-container"></div>
+
+        <div class="controls" id="action-controls">
+            <button class="btn-action btn-check" id="btn-check" onclick="checkAnswer()">✅ 核對</button>
+            <button class="btn-action btn-next" id="btn-next" onclick="nextLevel()">下一題 ⏭️</button>
+        </div>
+
+        <div id="result-msg"></div>
+    </div>
+
+    <script>
+        // === 1. 加密 ID 生成器 (加密邏輯) ===
+        // 密鑰 (隨意的大質數)
+        const XOR_KEY = 98765432101234n; 
+
+        function generateEncryptedID() {
+            const now = new Date();
+            // 格式: YYYYMMDDHHmmss (14位數)
+            const timeStr = now.getFullYear().toString() +
+                            (now.getMonth() + 1).toString().padStart(2, '0') +
+                            now.getDate().toString().padStart(2, '0') +
+                            now.getHours().toString().padStart(2, '0') +
+                            now.getMinutes().toString().padStart(2, '0') +
+                            now.getSeconds().toString().padStart(2, '0');
+            
+            // 1. 倒序字串 (讓秒數變化影響高位數，打破順序感)
+            // 例: 2023...58 -> 85...3202
+            const reversedStr = timeStr.split('').reverse().join('');
+            const rawVal = BigInt(reversedStr);
+
+            // 2. 混淆 (XOR)
+            const encryptedVal = rawVal ^ XOR_KEY;
+
+            // 3. 計算校驗碼 (Checksum) - 模 36
+            const checksum = encryptedVal % 36n;
+            const checksumChar = checksum.toString(36).toUpperCase();
+
+            // 4. 轉 Base36 (縮短長度)
+            const bodyCode = encryptedVal.toString(36).toUpperCase();
+
+            // 組合: 本體 + 校驗碼
+            const finalCode = bodyCode + checksumChar;
+
+            document.getElementById('session-id-display').textContent = `${finalCode}`;
+        }
+
+        // === 遊戲邏輯 ===
+        const shapeLibrary = [
+            { id: 'cuboid', name: '長方體', totalFaces: 6, allowArea: true, lines: [{x1:100,y1:150,x2:250,y2:150,ans:'solid'},{x1:250,y1:150,x2:250,y2:300,ans:'solid'},{x1:250,y1:300,x2:100,y2:300,ans:'solid'},{x1:100,y1:300,x2:100,y2:150,ans:'solid'},{x1:100,y1:150,x2:200,y2:80,ans:'solid'},{x1:250,y1:150,x2:350,y2:80,ans:'solid'},{x1:250,y1:300,x2:350,y2:230,ans:'solid'},{x1:200,y1:80,x2:350,y2:80,ans:'solid'},{x1:350,y1:80,x2:350,y2:230,ans:'solid'},{x1:200,y1:230,x2:350,y2:230,ans:'dashed'},{x1:200,y1:230,x2:200,y2:80,ans:'dashed'},{x1:200,y1:230,x2:100,y2:300,ans:'dashed'}], faces: [] },
+            { id: 'cube', name: '正方體', totalFaces: 6, allowArea: true, lines: [{x1:150,y1:150,x2:250,y2:150,ans:'solid'},{x1:250,y1:150,x2:250,y2:250,ans:'solid'},{x1:250,y1:250,x2:150,y2:250,ans:'solid'},{x1:150,y1:250,x2:150,y2:150,ans:'solid'},{x1:150,y1:150,x2:220,y2:80,ans:'solid'},{x1:250,y1:150,x2:320,y2:80,ans:'solid'},{x1:250,y1:250,x2:320,y2:180,ans:'solid'},{x1:220,y1:80,x2:320,y2:80,ans:'solid'},{x1:320,y1:80,x2:320,y2:180,ans:'solid'},{x1:220,y1:180,x2:320,y2:180,ans:'dashed'},{x1:220,y1:180,x2:220,y2:80,ans:'dashed'},{x1:220,y1:180,x2:150,y2:250,ans:'dashed'}], faces: [] },
+            { id: 'tri_prism', name: '三角柱體', totalFaces: 5, allowArea: true, lines: [{x1:100,y1:300,x2:200,y2:300,ans:'solid'},{x1:200,y1:300,x2:150,y2:150,ans:'solid'},{x1:150,y1:150,x2:100,y2:300,ans:'solid'},{x1:150,y1:150,x2:300,y2:100,ans:'solid'},{x1:200,y1:300,x2:350,y2:250,ans:'solid'},{x1:300,y1:100,x2:350,y2:250,ans:'solid'},{x1:100,y1:300,x2:250,y2:250,ans:'dashed'},{x1:300,y1:100,x2:250,y2:250,ans:'dashed'},{x1:350,y1:250,x2:250,y2:250,ans:'dashed'}], faces: [{pts:"200,300 350,250 300,100 150,150",type:"lateral"},{pts:"100,300 150,150 300,100 250,250",type:"lateral"},{pts:"100,300 200,300 350,250 250,250",type:"lateral"},{pts:"100,300 200,300 150,150",type:"base"},{pts:"250,250 350,250 300,100",type:"base"}] },
+            { id: 'para_prism', name: '平行四邊形柱', totalFaces: 6, allowArea: true, lines: [{x1:100,y1:300,x2:250,y2:300,ans:'solid'},{x1:150,y1:150,x2:300,y2:150,ans:'solid'},{x1:100,y1:300,x2:150,y2:150,ans:'solid'},{x1:250,y1:300,x2:300,y2:150,ans:'solid'},{x1:150,y1:150,x2:250,y2:80,ans:'solid'},{x1:300,y1:150,x2:400,y2:80,ans:'solid'},{x1:250,y1:300,x2:350,y2:230,ans:'solid'},{x1:250,y1:80,x2:400,y2:80,ans:'solid'},{x1:400,y1:80,x2:350,y2:230,ans:'solid'},{x1:200,y1:230,x2:350,y2:230,ans:'dashed'},{x1:200,y1:230,x2:250,y2:80,ans:'dashed'},{x1:200,y1:230,x2:100,y2:300,ans:'dashed'}], faces: [] },
+            { id: 'trap_prism', name: '梯形柱體', totalFaces: 6, allowArea: true, lines: [{x1:80,y1:300,x2:220,y2:300,ans:'solid'},{x1:110,y1:180,x2:190,y2:180,ans:'solid'},{x1:80,y1:300,x2:110,y2:180,ans:'solid'},{x1:220,y1:300,x2:190,y2:180,ans:'solid'},{x1:110,y1:180,x2:210,y2:100,ans:'solid'},{x1:190,y1:180,x2:290,y2:100,ans:'solid'},{x1:220,y1:300,x2:320,y2:220,ans:'solid'},{x1:210,y1:100,x2:290,y2:100,ans:'solid'},{x1:290,y1:100,x2:320,y2:220,ans:'solid'},{x1:180,y1:220,x2:320,y2:220,ans:'dashed'},{x1:180,y1:220,x2:210,y2:100,ans:'dashed'},{x1:180,y1:220,x2:80,y2:300,ans:'dashed'}], faces: [{pts:"80,300 220,300 320,220 180,220",type:"lateral"},{pts:"220,300 190,180 290,100 320,220",type:"lateral"},{pts:"80,300 220,300 190,180 110,180",type:"base"},{pts:"180,220 320,220 290,100 210,100",type:"base"}] },
+            { id: 'tri_pyramid', name: '三角錐體', totalFaces: 4, allowArea: false, lines: [{x1:100,y1:300,x2:300,y2:300,ans:'solid'},{x1:100,y1:300,x2:200,y2:200,ans:'dashed'},{x1:300,y1:300,x2:200,y2:200,ans:'dashed'},{x1:200,y1:50,x2:100,y2:300,ans:'solid'},{x1:200,y1:50,x2:300,y2:300,ans:'solid'},{x1:200,y1:50,x2:200,y2:200,ans:'dashed'}], faces: [] },
+            { id: 'rect_pyramid', name: '四角錐體', totalFaces: 5, allowArea: false, lines: [{x1:100,y1:300,x2:250,y2:300,ans:'solid'},{x1:250,y1:300,x2:350,y2:200,ans:'solid'},{x1:350,y1:200,x2:200,y2:200,ans:'dashed'},{x1:200,y1:200,x2:100,y2:300,ans:'dashed'},{x1:225,y1:50,x2:100,y2:300,ans:'solid'},{x1:225,y1:50,x2:250,y2:300,ans:'solid'},{x1:225,y1:50,x2:350,y2:200,ans:'solid'},{x1:225,y1:50,x2:200,y2:200,ans:'dashed'}], faces: [] },
+            { id: 'cylinder', name: '圓柱體', totalFaces: 3, allowArea: false, outline: {type:'cylinder',cx:250,cy:100,rx:100,ry:30,h:200}, lines: [{x1:150,y1:100,x2:150,y2:300,ans:'solid'},{x1:350,y1:100,x2:350,y2:300,ans:'solid'},{type:'path',d:"M 150 300 A 100 30 0 0 0 350 300",ans:'solid'},{type:'path',d:"M 150 300 A 100 30 0 0 1 350 300",ans:'dashed'}], faces: [] },
+            { id: 'sphere', name: '球體', totalFaces: 1, allowArea: false, outline: {type:'sphere',cx:250,cy:200,r:100}, lines: [{type:'path',d:"M 150 200 A 100 30 0 0 0 350 200",ans:'dashed'},{type:'path',d:"M 150 200 A 100 30 0 0 1 350 200",ans:'dashed'}], faces: [] }
+        ];
+
+        let currentMode = 'drawing';
+        let currentShapeData = null;
+        let areaQuestionType = 'interactive';
+        let targetAreaType = 'base'; 
+        let currentMCQAnswer = null;
+        let highlightIndex = -1;
+        let formulaType = ''; 
+        let scores = { drawing: 0, area: 0 };
+        let counts = { drawing: 0, area: 0 };
+        let attempts = 0; 
+        let userMCQSelection = null; 
+
+        const svgCanvas = document.getElementById('game-svg');
+        const instructionEl = document.getElementById('instruction');
+        const resultMsg = document.getElementById('result-msg');
+        const nextBtn = document.getElementById('btn-next');
+        const checkBtn = document.getElementById('btn-check');
+        const mcqContainer = document.getElementById('mcq-container');
+        const shapeNameBadge = document.getElementById('shape-name');
+        
+        const scoreDrawBox = document.getElementById('score-draw-box');
+        const scoreAreaBox = document.getElementById('score-area-box');
+        const scoreDrawEl = document.getElementById('score-draw');
+        const scoreAreaEl = document.getElementById('score-area');
+        const countDrawEl = document.getElementById('count-draw');
+        const countAreaEl = document.getElementById('count-area');
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function nextLevel() {
+            let pool = shapeLibrary;
+            if (currentMode === 'area') pool = shapeLibrary.filter(s => s.allowArea === true);
+            const randomShape = pool[Math.floor(Math.random() * pool.length)];
+            currentShapeData = JSON.parse(JSON.stringify(randomShape));
+            attempts = 0;
+            userMCQSelection = null;
+
+            currentShapeData.lines.forEach((l, i) => l.tempId = i);
+            const shuffledLines = shuffleArray([...currentShapeData.lines]);
+            const targetIds = [shuffledLines[0].tempId, shuffledLines[1].tempId, shuffledLines[2].tempId];
+
+            currentShapeData.lines.forEach(line => {
+                if (targetIds.includes(line.tempId)) {
+                    line.lock = false; line.current = 'solid';
+                } else {
+                    line.lock = true; line.current = line.ans;
+                }
+            });
+
+            shapeNameBadge.textContent = currentShapeData.name;
+            nextBtn.classList.remove('show');
+            resultMsg.textContent = '';
+            checkBtn.disabled = false;
+            setMode(currentMode); 
+        }
+
+        function setMode(mode) {
+            if (mode === 'area' && currentShapeData.allowArea === false) {
+                currentMode = 'area';
+                nextLevel();
+                return;
+            }
+            currentMode = mode;
+            resultMsg.textContent = '';
+            nextBtn.classList.remove('show');
+            checkBtn.disabled = false;
+            attempts = 0; 
+            userMCQSelection = null;
+
+            document.getElementById('btn-draw').classList.toggle('active', mode === 'drawing');
+            document.getElementById('btn-area').classList.toggle('active', mode === 'area');
+            document.getElementById('game-container').className = mode === 'drawing' ? 'drawing-mode' : 'area-mode';
+
+            if (mode === 'drawing') {
+                scoreDrawBox.classList.add('active'); scoreAreaBox.classList.remove('active');
+            } else {
+                scoreDrawBox.classList.remove('active'); scoreAreaBox.classList.add('active');
+            }
+
+            if (mode === 'area') initAreaQuestion();
+            renderGame();
+            updateInstruction();
+        }
+
+        function initAreaQuestion() {
+            mcqContainer.style.display = 'none';
+            checkBtn.style.display = 'inline-block';
+            checkBtn.disabled = false;
+            highlightIndex = -1;
+            userMCQSelection = null;
+            
+            const id = currentShapeData.id;
+            const isAmbiguous = ['cube', 'cuboid', 'para_prism'].includes(id);
+            let rand = Math.random();
+
+            if (isAmbiguous) {
+                if (rand < 0.5) areaQuestionType = 'mcq_count';
+                else areaQuestionType = 'mcq_formula';
+            } else {
+                if (rand < 0.3) {
+                    areaQuestionType = 'interactive';
+                    targetAreaType = Math.random() > 0.5 ? 'base' : 'lateral';
+                } else if (rand < 0.6) {
+                    areaQuestionType = 'mcq_identify';
+                    currentMCQAnswer = (Math.random() > 0.5) ? 'base' : 'lateral';
+                    const candidates = currentShapeData.faces.map((f, i) => ({...f, idx: i})).filter(f => f.type === currentMCQAnswer);
+                    if (candidates.length > 0) highlightIndex = candidates[Math.floor(Math.random() * candidates.length)].idx;
+                } else if (rand < 0.8) {
+                    areaQuestionType = 'mcq_count';
+                } else {
+                    areaQuestionType = 'mcq_formula';
+                }
+            }
+
+            if (areaQuestionType === 'mcq_formula') {
+                const fRnd = Math.random();
+                if (fRnd < 0.33) formulaType = 'vol';
+                else if (fRnd < 0.66) formulaType = 'lat';
+                else formulaType = 'tot';
+            }
+        }
+
+        function updateInstruction() {
+            if (currentMode === 'drawing') {
+                mcqContainer.style.display = 'none';
+                checkBtn.style.display = 'inline-block';
+                instructionEl.textContent = `請點擊 3 條藍色線段，修正為正確的虛線或實線。`;
+            } else {
+                switch(areaQuestionType) {
+                    case 'interactive':
+                        const typeText = targetAreaType === 'base' ? '底面積' : '側面面積';
+                        instructionEl.textContent = `請點擊其中一塊「${typeText}」`;
+                        break;
+                    case 'mcq_identify':
+                        instructionEl.textContent = `圖中橙色部分是？`;
+                        renderMCQ();
+                        break;
+                    case 'mcq_count':
+                        instructionEl.textContent = `這個立體圖形共有幾個面？`;
+                        renderMCQ();
+                        break;
+                    case 'mcq_formula':
+                        if (formulaType === 'vol') instructionEl.textContent = `柱體「體積」公式？`;
+                        else if (formulaType === 'lat') instructionEl.textContent = `柱體「側面面積」公式？`;
+                        else instructionEl.textContent = `柱體「總表面面積」公式？`;
+                        renderMCQ();
+                        break;
+                }
+            }
+        }
+
+        function renderMCQ() {
+            mcqContainer.style.display = 'flex';
+            mcqContainer.innerHTML = '';
+            let options = [];
+
+            if (areaQuestionType === 'mcq_identify') {
+                options = [{ text: "底面積", val: 'base' }, { text: "側面面積", val: 'lateral' }];
+            } else if (areaQuestionType === 'mcq_count') {
+                const correct = currentShapeData.totalFaces;
+                currentMCQAnswer = correct;
+                options = [{ text: `${correct} 個`, val: correct }, { text: `${correct + 1} 個`, val: correct + 1 }, { text: `${correct - 1} 個`, val: correct - 1 }];
+                options = shuffleArray(options);
+            } else if (areaQuestionType === 'mcq_formula') {
+                currentMCQAnswer = formulaType;
+                options = [
+                    { text: "底面積 × 高", val: 'vol' },
+                    { text: "底周界 × 高", val: 'lat' },
+                    { text: "底面積 × 2 + 側面面積", val: 'tot' }
+                ];
+                options = shuffleArray(options);
+            }
+
+            options.forEach(opt => {
+                const btn = document.createElement('div');
+                btn.className = 'mcq-option';
+                btn.textContent = opt.text;
+                btn.onclick = () => selectMCQOption(btn, opt.val);
+                mcqContainer.appendChild(btn);
+            });
+        }
+
+        function selectMCQOption(btn, val) {
+            if (nextBtn.classList.contains('show')) return; 
+            const allOpts = document.querySelectorAll('.mcq-option');
+            allOpts.forEach(o => o.classList.remove('active-selection'));
+            btn.classList.add('active-selection');
+            userMCQSelection = val;
+            resultMsg.textContent = ""; 
+        }
+
+        function renderGame() {
+            svgCanvas.innerHTML = ''; 
+            if (currentShapeData.outline) {
+                const o = currentShapeData.outline;
+                if (o.type === 'cylinder') {
+                    const el = document.createElementNS("http://www.w3.org/2000/svg", "ellipse");
+                    el.setAttribute("cx", o.cx); el.setAttribute("cy", o.cy); el.setAttribute("rx", o.rx); el.setAttribute("ry", o.ry);
+                    el.setAttribute("class", "outline-shape");
+                    svgCanvas.appendChild(el);
+                } else if (o.type === 'sphere') {
+                    const el = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    el.setAttribute("cx", o.cx); el.setAttribute("cy", o.cy); el.setAttribute("r", o.r);
+                    el.setAttribute("class", "outline-shape");
+                    svgCanvas.appendChild(el);
+                }
+            }
+            if (currentShapeData.faces) {
+                currentShapeData.faces.forEach((faceData, index) => {
+                    const poly = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+                    poly.setAttribute("points", faceData.pts);
+                    let classes = "face-polygon";
+                    if (currentMode === 'area' && areaQuestionType === 'interactive') classes += " interactive"; 
+                    if (index === highlightIndex) classes += " highlight-quiz";
+                    poly.setAttribute("class", classes);
+                    poly.dataset.type = faceData.type;
+                    const tapHandler = function(e) {
+                         if (currentMode === 'area' && areaQuestionType === 'interactive') {
+                            if(e.type === 'touchstart') e.preventDefault(); 
+                            this.classList.toggle('selected');
+                            resultMsg.textContent = '';
+                        }
+                    };
+                    poly.addEventListener('touchstart', tapHandler);
+                    poly.addEventListener('click', tapHandler);
+                    svgCanvas.appendChild(poly);
+                });
+            }
+            currentShapeData.lines.forEach((lineData) => {
+                let el;
+                if (lineData.type === 'path') {
+                    el = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                    el.setAttribute("d", lineData.d);
+                } else {
+                    el = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                    el.setAttribute("x1", lineData.x1); el.setAttribute("y1", lineData.y1);
+                    el.setAttribute("x2", lineData.x2); el.setAttribute("y2", lineData.y2);
+                }
+                let classes = "line-segment";
+                if (currentMode === 'drawing') {
+                    classes += " " + lineData.current;
+                    classes += lineData.lock ? " locked" : " interactive";
+                } else {
+                    classes += " " + lineData.ans; 
+                }
+                el.setAttribute("class", classes);
+                const toggleLine = function(e) {
+                    if (e.type === 'touchstart') e.preventDefault();
+                    if (currentMode !== 'drawing') return;
+                    if (lineData.lock) return; 
+                    if (lineData.current === 'solid') {
+                        lineData.current = 'dashed';
+                        el.setAttribute("class", "line-segment dashed interactive");
+                    } else {
+                        lineData.current = 'solid';
+                        el.setAttribute("class", "line-segment solid interactive");
+                    }
+                    el.classList.remove('correct', 'wrong'); 
+                    resultMsg.textContent = '';
+                }
+                el.addEventListener('touchstart', toggleLine);
+                el.addEventListener('click', toggleLine);
+                svgCanvas.appendChild(el);
+            });
+        }
+
+        function updateScore(isSuccess) {
+            if (isSuccess) {
+                if (attempts === 0) { scores[currentMode] += 1; resultMsg.textContent = "太棒了！答對了！(+1分)"; }
+                else { scores[currentMode] += 0.5; resultMsg.textContent = "修正正確！(+0.5分)"; }
+                resultMsg.style.color = "#10b981";
+                counts[currentMode]++;
+                finishQuestion();
+                
+                if(currentMode === 'drawing') {
+                    document.querySelectorAll('.drawing-mode .line-segment.interactive').forEach(l => l.classList.add('correct'));
+                } else if(areaQuestionType === 'interactive') {
+                    document.querySelectorAll('.face-polygon.selected').forEach(f => f.classList.add('correct-area'));
+                } else {
+                    const btn = document.querySelector('.mcq-option.active-selection');
+                    if(btn) { btn.classList.remove('active-selection'); btn.classList.add('correct-opt'); }
+                }
+            } else {
+                if (attempts === 0) {
+                    attempts++;
+                    resultMsg.style.color = "#ef4444";
+                    resultMsg.textContent = "有錯誤，請再檢查一次！(還有1次機會)";
+                } else {
+                    scores[currentMode] -= 1;
+                    counts[currentMode]++;
+                    resultMsg.style.color = "#ef4444";
+                    resultMsg.textContent = "機會用盡 (-1分)，正確答案如圖";
+                    revealAnswer(); 
+                    finishQuestion();
+                }
+            }
+            scoreDrawEl.textContent = scores.drawing; scoreAreaEl.textContent = scores.area;
+            countDrawEl.textContent = counts.drawing; countAreaEl.textContent = counts.area;
+        }
+
+        function finishQuestion() {
+            nextBtn.classList.add('show');
+            checkBtn.disabled = true;
+            if (currentMode === 'drawing') {
+                document.querySelectorAll('.interactive').forEach(l => l.style.pointerEvents = 'none');
+            } else {
+                document.querySelectorAll('.face-polygon').forEach(p => p.style.pointerEvents = 'none');
+                document.querySelectorAll('.mcq-option').forEach(o => o.style.pointerEvents = 'none');
+            }
+        }
+
+        function revealAnswer() {
+            if (currentMode === 'drawing') {
+                const lines = document.querySelectorAll('.drawing-mode .line-segment.interactive');
+                let domIndex = 0;
+                currentShapeData.lines.forEach((lineData) => {
+                    if (!lineData.lock) {
+                        const lineEl = lines[domIndex];
+                        if(lineData.ans === 'solid') { lineEl.classList.remove('dashed'); lineEl.classList.add('solid'); } 
+                        else { lineEl.classList.remove('solid'); lineEl.classList.add('dashed'); }
+                        lineEl.classList.add('correct');
+                        domIndex++;
+                    }
+                });
+            } else if (areaQuestionType === 'interactive') {
+                const faces = document.querySelectorAll('.face-polygon');
+                faces.forEach(face => {
+                    if (face.dataset.type === targetAreaType) face.classList.add('correct-area'); 
+                    else if (face.classList.contains('selected')) face.classList.add('wrong-area'); 
+                });
+            } else {
+                const btn = document.querySelector('.mcq-option.active-selection');
+                if(btn) { btn.classList.remove('active-selection'); btn.classList.add('wrong-opt'); }
+            }
+        }
+
+        function checkAnswer() {
+            if (currentMode === 'drawing') {
+                checkDrawing();
+            } else if (areaQuestionType === 'interactive') {
+                checkAreaInteractive();
+            } else {
+                if (userMCQSelection === null) {
+                    resultMsg.textContent = "請先選擇一個答案";
+                    resultMsg.style.color = "#333";
+                    return;
+                }
+                updateScore(userMCQSelection === currentMCQAnswer);
+            }
+        }
+
+        function checkDrawing() {
+            let allCorrect = true;
+            const lines = document.querySelectorAll('.drawing-mode .line-segment.interactive');
+            let domIndex = 0;
+            currentShapeData.lines.forEach((lineData) => {
+                if (!lineData.lock) {
+                    const lineEl = lines[domIndex];
+                    const isCorrect = lineData.current === lineData.ans;
+                    if (attempts === 1 || isCorrect) {
+                        lineEl.classList.remove('correct', 'wrong');
+                        if (!isCorrect && attempts === 1) lineEl.classList.add('wrong');
+                    }
+                    if (!isCorrect) allCorrect = false;
+                    domIndex++;
+                }
+            });
+            updateScore(allCorrect);
+        }
+
+        function checkAreaInteractive() {
+            const faces = document.querySelectorAll('.face-polygon');
+            let hasSelectedCorrect = false;
+            let hasSelectedWrong = false;
+            faces.forEach(face => {
+                const isSelected = face.classList.contains('selected');
+                const isTarget = face.dataset.type === targetAreaType;
+                face.classList.remove('correct-area', 'wrong-area');
+                if (isSelected) {
+                    if (isTarget) hasSelectedCorrect = true;
+                    else hasSelectedWrong = true;
+                }
+            });
+            if (!hasSelectedCorrect && !hasSelectedWrong) {
+                resultMsg.textContent = "請至少選擇一塊區域";
+                return;
+            }
+            updateScore(hasSelectedCorrect && !hasSelectedWrong);
+        }
+
+        window.onload = function() {
+            generateEncryptedID();
+            nextLevel();
+        }
+    </script>
+</body>
+</html>

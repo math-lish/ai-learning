@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>數學温習 (Q2修正版)</title>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background: #f0f2f5; margin: 0; padding: 8px; display: flex; justify-content: center; height: 98vh; box-sizing: border-box; overflow: hidden; }
+.container { width: 100%; max-width: 500px; background: #fff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: flex; flex-direction: column; height: 100%; position: relative; }
+.top-info { display: flex; justify-content: space-between; padding: 10px 15px; font-size: 0.9em; color: #7f8c8d; background: #f8f9fa; border-bottom: 1px solid #eee; flex-shrink: 0; }
+#quiz-view { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+.quiz-content { padding: 10px 15px; flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; }
+.question-text { font-size: 1.3em; font-weight: bold; color: #2c3e50; margin: 10px 0 15px 0; text-align: center; width: 100%; min-height: 40px; }
+.geo-image { margin-bottom: 15px; text-align: center; display: flex; justify-content: center; }
+.input-container { display: flex; align-items: center; justify-content: center; width: 100%; margin-bottom: 15px; }
+.virtual-input { flex-grow: 1; min-height: 50px; background: #fff; border: 2px solid #3498db; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.6em; font-family: monospace; color: #333; }
+.feedback-area { width: 95%; display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 10px; }
+.feedback { width: 100%; padding: 10px; border-radius: 6px; font-weight: bold; text-align: center; display: none; font-size: 1.1em; }
+.correct { background-color: #d4edda; color: #155724; }
+.incorrect { background-color: #f8d7da; color: #721c24; }
+.btn-teach { display: none; background-color: #f39c12; color: white; border: none; padding: 8px 15px; border-radius: 20px; font-size: 0.95em; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2); margin-top: 5px; }
+.solution-box { width: 100%; background: #fffcf5; border: 1px solid #fce8b2; border-radius: 8px; padding: 15px; margin-top: 10px; display: none; text-align: left; color: #444; font-size: 1em; line-height: 1.6; }
+.solution-box h4 { margin: 0 0 8px 0; color: #d35400; border-bottom: 1px dashed #fce8b2; padding-bottom: 5px; font-size: 0.95em; }
+.short-div-table { border-collapse: collapse; margin: 10px auto; font-family: 'Times New Roman', serif; font-size: 1.2em; }
+.short-div-table td { padding: 2px 10px; text-align: center; }
+.border-right { border-right: 1px solid #000; }
+.border-bottom { border-bottom: 1px solid #000; }
+.txt-red-factor { color: #e74c3c; font-weight: bold; }
+.grid-table { border-collapse: collapse; margin: 10px auto; font-size: 1.1em; }
+.grid-table td { border: 1px solid #999; padding: 8px 12px; text-align: center; }
+.bg-blue { background-color: #e3f2fd; color: #2980b9; font-weight: bold; }
+.bg-org { background-color: #fff3e0; color: #d35400; font-weight: bold; }
+.txt-res { color: #c0392b; font-weight: bold; }
+.cell-hidden { border: none !important; background: transparent !important; }
+.keypad-area { background: #f1f3f5; padding: 10px; border-top: 1px solid #ddd; flex-shrink: 0; }
+.key-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+.key { background: white; border: 1px solid #ccc; border-radius: 5px; height: 45px; display: flex; align-items: center; justify-content: center; font-size: 1.2em; cursor: pointer; user-select: none; }
+.key:active { background: #eee; transform: translateY(2px); }
+.main-btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 1.1em; color: white; cursor: pointer; margin-bottom: 8px; }
+.btn-check { background-color: #2980b9; }
+.btn-next { background-color: #27ae60; display: none; }
+#result-view { display: none; flex-direction: column; padding: 20px; overflow-y: auto; text-align: center; flex-grow: 1; height: 100%; }
+.history-box { margin-top: 10px; border: 1px solid #eee; border-radius: 8px; max-height: 300px; overflow-y: auto; background: #fff; }
+.history-table { width: 100%; border-collapse: collapse; font-size: 0.85em; }
+.history-table th, .history-table td { padding: 8px 4px; border-bottom: 1px solid #f1f1f1; text-align: center; vertical-align: middle; }
+.history-table th { background: #f8f9fa; position: sticky; top: 0; font-weight: bold; z-index: 5; }
+.btn-view-wrong { background-color: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.85em; }
+.btn-view-correct { background-color: #27ae60; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.85em; }
+.btn-disabled { background-color: #ecf0f1; color: #bdc3c7; border: 1px solid #ddd; padding: 5px 8px; border-radius: 4px; cursor: default; }
+.modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
+.modal-content { background: white; width: 90%; max-width: 450px; max-height: 85vh; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+.modal-header { font-size: 1.2em; font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+.modal-body { overflow-y: auto; flex-grow: 1; }
+.close-modal-btn { background: none; border: none; font-size: 1.5em; cursor: pointer; color: #888; }
+.review-item { border-bottom: 1px solid #eee; padding: 15px 0; margin-bottom: 10px; }
+.review-q { font-weight: bold; color: #2c3e50; margin-bottom: 8px; }
+.wrong-record .review-my-ans { color: #c0392b; text-decoration: line-through; }
+.review-cor-ans { color: #27ae60; font-weight: bold; margin-top: 5px; }
+</style>
+</head>
+<body>
+<div class="container">
+ <div class="top-info"><span id="p-text">Q 1/14</span><span id="score-mini">得分: 0</span></div>
+ <div id="quiz-view">
+ <div class="quiz-content">
+ <div id="q-text" class="question-text">題目載入中...</div>
+ <div id="q-image" class="geo-image" style="display:none;"></div>
+ <div class="input-container">
+ <span id="prefix" style="display:none; margin-right:5px; font-weight:bold; font-size:1.2em;">x=</span>
+ <div class="virtual-input"><span id="input-val"></span></div>
+ <span id="suffix" style="display:none; margin-left:5px; color:#555;"></span>
+ </div>
+ <div class="feedback-area">
+ <div id="q-feedback" class="feedback"></div>
+ <button id="btn-teach" class="btn-teach" onclick="toggleTeach()">💡 查看教學步驟</button>
+ </div>
+ <div id="solution-box" class="solution-box"></div>
+ </div>
+ <div class="keypad-area">
+ <button class="main-btn btn-check" id="btn-check" onclick="checkAns()">核對答案</button>
+ <button class="main-btn btn-next" id="btn-next" onclick="nextQ()">下一題</button>
+ <div class="key-grid">
+ <div class="key" onclick="kp('7')">7</div><div class="key" onclick="kp('8')">8</div><div class="key" onclick="kp('9')">9</div>
+ <div class="key" style="background:#eef" onclick="kp('×')">×</div><div class="key" style="background:#eef" onclick="kp('÷')">÷</div>
+ <div class="key" style="background:#eef" onclick="kp('(')">(</div><div class="key" style="background:#eef" onclick="kp(')')">)</div>
+ <div class="key" onclick="kp('4')">4</div><div class="key" onclick="kp('5')">5</div><div class="key" onclick="kp('6')">6</div>
+ <div class="key" style="background:#eef" onclick="kp('+')">+</div><div class="key" style="background:#eef" onclick="kp('-')">-</div>
+ <div class="key" style="background:#eef" onclick="kp('^')">^</div><div class="key" style="color:#d35400" onclick="kp('x')">x</div>
+ <div class="key" onclick="kp('1')">1</div><div class="key" onclick="kp('2')">2</div><div class="key" onclick="kp('3')">3</div>
+ <div class="key" onclick="kp('0')">0</div>
+ <div class="key" style="color:#d35400" onclick="kp('a')">a</div><div class="key" style="color:#d35400" onclick="kp('y')">y</div>
+ <div class="key" style="background:#fee; color:red" onclick="del()">⌫</div>
+ </div>
+ </div>
+ </div>
+ <div id="result-view">
+ <h2>練習完成</h2>
+ <h1 id="final-score" style="font-size:3em; margin:10px 0;"></h1>
+ <div style="width:100%; margin-bottom:10px;">
+ <button class="main-btn" style="background:#95a5a6" onclick="initGame('all')">全部重做</button>
+ <button class="main-btn" style="background:#e74c3c" id="btn-retry-wrong" onclick="initGame('wrong')">重做錯題</button>
+ </div>
+ <div class="history-box">
+ <table class="history-table">
+ <thead><tr><th>次數</th><th>時間</th><th>分數</th><th>錯題</th><th>正題</th></tr></thead>
+ <tbody id="history-body"></tbody>
+ </table>
+ </div>
+ </div>
+</div>
+<div id="detail-modal" class="modal-overlay">
+ <div class="modal-content">
+ <div class="modal-header"><span id="modal-title">詳情</span><button class="close-modal-btn" onclick="closeModal()">×</button></div>
+ <div id="modal-body-content" class="modal-body"></div>
+ <button class="main-btn" style="margin-top:10px; background:#7f8c8d;" onclick="closeModal()">關閉</button>
+ </div>
+</div>
+<script>
+try {
+var qList = [], currIdx = 0, currInput = "", wrongIds = [], sessionLog = [];
+function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function gcd(a, b) { return b == 0 ? a : gcd(b, a % b); }
+function getLCM(a, b) { return (a * b) / gcd(a, b); }
+function fmtPoly(c, v) { if(c===1)return v; if(c===-1)return "-"+v; return c+v; }
+function fmtPolyWithSign(c, v) { if(c===0) return ""; let s = (c>0) ? "+" : "-"; let val = Math.abs(c); if(val===1) val=""; return s + " " + val + v; }
+function getCubeSVG(s, highlight) { let fill = highlight ? "#ffe082" : "none"; let base = '<rect x="40" y="60" width="80" height="80" fill="' + fill + '" stroke="black" stroke-width="2"/><polyline points="40,60 70,30 150,30 150,110 120,140" fill="none" stroke="black" stroke-width="2"/><line x1="150" y1="30" x2="120" y2="60" stroke="black" stroke-width="2"/>'; if(highlight) { return '<svg width="150" height="150" viewBox="0 0 200 170">' + base + '<line x1="120" y1="60" x2="120" y2="140" stroke="red" stroke-width="4"/><text x="130" y="100" font-size="16" fill="red" font-weight="bold">高</text><text x="80" y="100" font-size="14" fill="#d35400">底面積</text></svg>'; } return '<svg width="150" height="150" viewBox="0 0 200 170">' + base + '<text x="80" y="158" font-size="16" text-anchor="middle" fill="#333">' + s + 'cm</text><text x="125" y="100" font-size="16" dominant-baseline="middle" fill="#333">' + s + 'cm</text><text x="110" y="45" font-size="16" text-anchor="middle" fill="#333">' + s + 'cm</text></svg>'; }
+function getCuboidSVG(l, w, h, highlight) { if(highlight) { return '<svg width="180" height="140" viewBox="0 0 240 180"><polygon points="50,60 90,30 190,30 150,60" fill="#ffe082" stroke="none"/><rect x="50" y="60" width="100" height="70" fill="none" stroke="black" stroke-width="2"/><polyline points="50,60 90,30 190,30 150,60" fill="none" stroke="black" stroke-width="2"/><polyline points="150,60 190,30 190,100 150,130" fill="none" stroke="black" stroke-width="2"/><line x1="190" y1="30" x2="190" y2="100" stroke="red" stroke-width="4"/><text x="110" y="50" font-size="14" fill="#d35400">底面積</text><text x="200" y="70" font-size="16" fill="red">高</text></svg>'; } return '<svg width="180" height="140" viewBox="0 0 240 180"><rect x="50" y="60" width="100" height="70" fill="none" stroke="black" stroke-width="2"/><polyline points="50,60 90,30 190,30 150,60" fill="none" stroke="black" stroke-width="2"/><polyline points="150,60 190,30 190,100 150,130" fill="none" stroke="black" stroke-width="2"/><text x="100" y="155" font-size="16" text-anchor="middle" fill="#333">' + l + 'cm</text><text x="35" y="100" font-size="16" text-anchor="middle" fill="#333">' + h + 'cm</text><text x="60" y="40" font-size="16" text-anchor="middle" fill="#333">' + w + 'cm</text></svg>'; }
+function getPrismSVG(b, h, len, highlight) { let p1={x:40, y:120}; let p2={x:140, y:120}; let p3={x:90, y:40}; let dX=40, dY=-20; let p4={x:p1.x+dX, y:p1.y+dY}; let p5={x:p2.x+dX, y:p2.y+dY}; let p6={x:p3.x+dX, y:p3.y+dY}; let hBaseX = p3.x; let hBaseY = p1.y; if(highlight) { return '<svg width="200" height="150" viewBox="0 0 240 150"><polygon points="' + p1.x + ',' + p1.y + ' ' + p2.x + ',' + p2.y + ' ' + p3.x + ',' + p3.y + '" fill="#ffe082" stroke="none"/><line x1="' + p1.x + '" y1="' + p1.y + '" x2="' + p4.x + '" y2="' + p4.y + '" stroke="#555" stroke-dasharray="4,4"/><line x1="' + p4.x + '" y1="' + p4.y + '" x2="' + p5.x + '" y2="' + p5.y + '" stroke="#555" stroke-dasharray="4,4"/><line x1="' + p4.x + '" y1="' + p4.y + '" x2="' + p6.x + '" y2="' + p6.y + '" stroke="#555" stroke-dasharray="4,4"/><polygon points="' + p1.x + ',' + p1.y + ' ' + p2.x + ',' + p2.y + ' ' + p3.x + ',' + p3.y + '" fill="none" stroke="black" stroke-width="2"/><line x1="' + p1.x + '" y1="' + p1.y + '" x2="' + p4.x + '" y2="' + p4.y + '" stroke="black" stroke-width="2" stroke-dasharray="4,4"/><line x1="' + p2.x + '" y1="' + p2.y + '" x2="' + p5.x + '" y2="' + p5.y + '" stroke="black" stroke-width="2"/><line x1="' + p3.x + '" y1="' + p3.y + '" x2="' + p6.x + '" y2="' + p6.y + '" stroke="black" stroke-width="2"/><line x1="' + p5.x + '" y1="' + p5.y + '" x2="' + p6.x + '" y2="' + p6.y + '" stroke="black" stroke-width="2"/><line x1="' + p3.x + '" y1="' + p3.y + '" x2="' + p6.x + '" y2="' + p6.y + '" stroke="red" stroke-width="4"/><text x="90" y="100" font-size="14" fill="#d35400" text-anchor="middle">底面積</text><text x="' + ((p3.x+p6.x)/2) + '" y="' + ((p3.y+p6.y)/2 - 10) + '" font-size="16" fill="red" text-anchor="middle">高</text></svg>'; } return '<svg width="200" height="150" viewBox="0 0 240 150"><line x1="' + p1.x + '" y1="' + p1.y + '" x2="' + p4.x + '" y2="' + p4.y + '" stroke="#999" stroke-width="1.5" stroke-dasharray="5,3"/><line x1="' + p4.x + '" y1="' + p4.y + '" x2="' + p5.x + '" y2="' + p5.y + '" stroke="#999" stroke-width="1.5" stroke-dasharray="5,3"/><line x1="' + p4.x + '" y1="' + p4.y + '" x2="' + p6.x + '" y2="' + p6.y + '" stroke="#999" stroke-width="1.5" stroke-dasharray="5,3"/><line x1="' + p3.x + '" y1="' + p3.y + '" x2="' + hBaseX + '" y2="' + hBaseY + '" stroke="#555" stroke-dasharray="4,4"/><polygon points="' + p1.x + ',' + p1.y + ' ' + p2.x + ',' + p2.y + ' ' + p3.x + ',' + p3.y + '" fill="none" stroke="black" stroke-width="2"/><line x1="' + p2.x + '" y1="' + p2.y + '" x2="' + p5.x + '" y2="' + p5.y + '" stroke="black" stroke-width="2"/><line x1="' + p3.x + '" y1="' + p3.y + '" x2="' + p6.x + '" y2="' + p6.y + '" stroke="black" stroke-width="2"/><line x1="' + p5.x + '" y1="' + p5.y + '" x2="' + p6.x + '" y2="' + p6.y + '" stroke="black" stroke-width="2"/><text x="' + (p3.x+5) + '" y="' + ((p3.y+hBaseY)/2 + 5) + '" font-size="16" fill="#333">' + h + 'cm</text><text x="' + ((p1.x+p2.x)/2) + '" y="' + (p1.y+20) + '" font-size="16" text-anchor="middle" fill="#333">' + b + 'cm</text><text x="' + ((p3.x+p6.x)/2) + '" y="' + ((p3.y+p6.y)/2 - 8) + '" font-size="16" text-anchor="middle" fill="#333">' + len + 'cm</text></svg>'; }
+function getCoordSVG(x, y, quad) { let colors = { "I": "#fff", "II": "#fff", "III": "#fff", "IV": "#fff" }; colors[quad] = "#fffacd"; let cx = 100 + x * 15; let cy = 100 - y * 15; return '<svg width="200" height="200" viewBox="0 0 200 200" style="border:1px solid #ccc; background:#fff;"><rect x="100" y="0" width="100" height="100" fill="' + colors['I'] + '" /><rect x="0" y="0" width="100" height="100" fill="' + colors['II'] + '" /><rect x="0" y="100" width="100" height="100" fill="' + colors['III'] + '" /><rect x="100" y="100" width="100" height="100" fill="' + colors['IV'] + '" /><line x1="100" y1="0" x2="100" y2="200" stroke="black" stroke-width="1.5"/><line x1="0" y1="100" x2="200" y2="100" stroke="black" stroke-width="1.5"/><text x="190" y="95" font-size="12">x</text><text x="105" y="10" font-size="12">y</text><text x="180" y="20" font-size="20" fill="#ddd" font-weight="bold">I</text><text x="20" y="20" font-size="20" fill="#ddd" font-weight="bold">II</text><text x="20" y="180" font-size="20" fill="#ddd" font-weight="bold">III</text><text x="180" y="180" font-size="20" fill="#ddd" font-weight="bold">IV</text><circle cx="' + cx + '" cy="' + cy + '" r="4" fill="red" /><text x="' + (cx+5) + '" y="' + (cy-5) + '" font-size="12" fill="red">(' + x + ',' + y + ')</text></svg>'; }
+function makeQ(id) { var txt="", ans=[], displayAns="", imgSVG="", steps=""; if(id===1) { var nums = [12, 18, 20, 36, 45, 50, 63, 75, 98]; var n = nums[rand(0, nums.length-1)]; var divs=[], rems=[n], temp=n; while(true){ var f=false; for(var i=2; i*i<=temp; i++){ if(temp%i===0){ divs.push(i); temp/=i; rems.push(temp); f=true; break; } } if(!f) break; } var factors={}; for(var fIdx=0; fIdx<([].concat(divs, temp)).length; fIdx++){ var f=[].concat(divs, temp)[fIdx]; factors[f]=(factors[f]||0)+1; } var ansStr = Object.keys(factors).map(function(f){return factors[f]>1?f+'^'+factors[f]:f;}).join(" × "); var rawAns = Object.keys(factors).map(function(f){return factors[f]>1?f+'^'+factors[f]:f;}).join("x"); var expandedStr = [].concat(divs, temp).join(" × "); displayAns = ansStr; txt = "1. 寫出 (" + n + ") 的質因數連乘式 (指數記數法)。"; ans = [rawAns]; var tbl = '<table class="short-div-table">'; for(var k=0; k<divs.length; k++) tbl += '<tr><td class="border-right txt-red-factor">' + divs[k] + '</td><td class="border-bottom">' + rems[k] + '</td></tr>'; tbl += '<tr><td></td><td class="txt-red-factor">' + temp + '</td></tr></table>'; steps = tbl + '<div style="text-align:center; margin-top:5px;">' + n + ' = ' + expandedStr + ' = ' + ansStr + '</div>'; } else if(id===2) { var n1=rand(6,12)*2, n2=rand(6,12)*3; var isHCF = rand(0,1)==0; var a=n1, b=n2, common=[]; var rows=[a + ' ' + b]; while(true){ var d=1; for(var k of [2,3,5,7]){if(a%k==0&&b%k==0){d=k;break;}} if(d===1)break; common.push(d); a/=d;b/=d; rows.push(a + ' ' + b); } if(common.length === 0) { common = [1]; rows.push(a + ' ' + b); } var tbl = '<table class="short-div-table">'; for(var i=0; i<common.length; i++) tbl+='<tr><td class="border-right txt-red-factor">' + common[i] + '</td><td class="border-bottom">' + rows[i] + '</td></tr>'; var lastCls = isHCF ? "" : "txt-red-factor"; tbl += '<tr><td></td><td class="' + lastCls + '">' + rows[rows.length-1] + '</td></tr></table>'; if(isHCF) { var v=gcd(n1,n2); txt="2. 求 " + n1 + " 和 " + n2 + " 的 H.C.F.。"; ans=[v.toString()]; displayAns=v; steps=tbl+'<div style="margin-top:5px; text-align:left;">H.C.F. = ' + common.join(" x ") + ' = ' + v + '</div>'; } else { var v=getLCM(n1,n2); txt="2. 求 " + n1 + " 和 " + n2 + " 的 L.C.M.。"; ans=[v.toString()]; displayAns=v; steps=tbl+'<div style="margin-top:5px; text-align:left;">L.C.M. = ' + ([].concat(common,a,b)).join(" x ") + ' = ' + v + '</div>'; } } else if(id===3) { var a=rand(2,9), b=rand(2,9), type=rand(0,1); var op=type==0?"+":"-"; var res=type==0?-a-b:-a+b; var s2=type==0?"-"+a+"-"+b:"-"+a+"+"+b; txt="3. 計算 -" + a + " " + op + " (-" + b + ")。"; ans=[res.toString()]; displayAns=res; steps="計算: -" + a + " " + op + " (-" + b + ") = " + s2 + " = " + res; } else if(id===4) { var a=rand(2,9), b=rand(2,9), isPos=rand(0,1)==0; if(isPos) { txt="4. 計算 " + a + "(- " + b + ")。"; ans=[(-a*b).toString()]; displayAns=-a*b; steps="正負得負: " + a + "(- " + b + ") = " + a + " × (-" + b + ") = -" + (a*b); } else { txt="4. 計算 (-" + a + ")(-" + b + ")。"; ans=[(a*b).toString()]; displayAns=a*b; steps="負負得正: (-" + a + ")(-" + b + ") = " + a + " × " + b + " = " + (a*b); } } else if(id===5) { var a=rand(2,9), b=rand(2,9), t=rand(1,4); if(t==1){ txt="5. 以代數式表示「由 x 減去 " + a + " 之差除以 " + b + "」。"; ans=["(x-" + a + ")/" + b, "(x-" + a + ")÷" + b]; displayAns="(x-" + a + ")/" + b; steps="1. 先寫出差: (x-" + a + ")\n2. 再除以 " + b + ": (x-" + a + ") ÷ " + b + "\n3. 寫成分數形式: (x-" + a + ")/" + b; } else if(t==2){ txt="5. 以代數式表示「x 與 " + a + " 之和乘以 " + b + "」。"; ans=[b + "(x+" + a + ")"]; displayAns=b + "(x+" + a + ")"; steps="1. 先寫出和: (x+" + a + ")\n2. 再乘以 " + b + ": " + b + "(x+" + a + ")"; } else if(t==3){ txt="5. 以代數式表示「x 乘以 " + a + " 之後減去 " + b + "」。"; ans=[a + "x-" + b]; displayAns=a + "x-" + b; steps="1. 先寫乘積: " + a + "x\n2. 再減去 " + b + ": " + a + "x - " + b; } else{ txt="5. 以代數式表示「x 除以 " + a + " 之後加上 " + b + "」。"; ans=["x/" + a + "+" + b, "x÷" + a + "+" + b]; displayAns="x/" + a + " + " + b; steps="1. 先寫除法: x ÷ " + a + "\n2. 寫成分數: x/" + a + "\n3. 再加上 " + b + ": x/" + a + " + " + b; } } else if(id===6) { var a=rand(2,9), b=rand(1,9); if(rand(0,1)==0) { txt="6. 解方程: x - " + a + " = " + b + "。"; ans=[(b+a).toString()]; displayAns=b+a; steps="x - " + a + " = " + b + "\nx = " + b + " + " + a + "\nx = " + (b+a); } else { txt="6. 解方程: x + " + a + " = " + b + "。"; ans=[(b-a).toString()]; displayAns=b-a; steps="x + " + a + " = " + b + "\nx = " + b + " - " + a + "\nx = " + (b-a); } } else if(id===7) { var k=rand(2,5), x=rand(2,6); if(rand(0,1)==0) { txt="7. 解方程: " + k + "x = " + (k*x) + "。"; ans=[x.toString()]; displayAns=x; steps=k + "x = " + (k*x) + "\nx = " + (k*x) + " ÷ " + k + "\nx = " + x; } else { txt="7. 解方程: x/" + k + " = " + x + "。"; ans=[(x*k).toString()]; display

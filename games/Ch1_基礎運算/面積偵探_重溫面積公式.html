@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+ <title>面積偵探 - 左右佈局版</title>
+ <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+ <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+ <style>
+ :root {
+ --primary: #4a90e2;
+ --secondary: #f5a623;
+ --success: #2ecc71;
+ --error: #e74c3c;
+ --bg: #f4f7f6;
+ --text: #2c3e50;
+ }
+ html, body { height: 100%; width: 100%; margin: 0; padding: 0; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: var(--bg); color: var(--text); touch-action: manipulation; }
+ .container { display: flex; flex-direction: column; height: 100%; padding: 10px; box-sizing: border-box; max-width: 600px; margin: 0 auto; background: white; overflow-y: auto; position: relative; }
+ header { flex: 0 0 auto; display: flex; flex-direction: column; gap: 5px; padding-bottom: 5px; border-bottom: 1px solid #eee; margin-bottom: 5px; }
+ .header-top { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+ h1 { font-size: 1.1rem; margin: 0; color: var(--primary); }
+ .score { font-size: 1.1rem; font-weight: bold; color: var(--secondary); }
+ .icon-group { display: flex; gap: 10px; align-items: center; }
+ .hint-icon { background: #eee; border: none; border-radius: 50%; width: 35px; height: 35px; font-weight: bold; color: var(--primary); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; transition: background 0.2s; }
+ .hint-icon:active { background: #ddd; }
+ .timer-container { width: 100%; height: 10px; background-color: #e0e0e0; border-radius: 5px; overflow: hidden; position: relative; }
+ .timer-bar { height: 100%; width: 100%; background-color: var(--success); transition: width 1s linear, background-color 0.5s ease; }
+ .timer-label { position: absolute; right: 0; top: -15px; font-size: 0.75rem; color: #888; }
+ .float-text { position: absolute; font-weight: bold; font-size: 1.5rem; animation: floatUp 1s ease-out forwards; pointer-events: none; z-index: 50; text-shadow: 1px 1px 0 #fff; white-space: nowrap; }
+ @keyframes floatUp { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-40px); opacity: 0; } }
+ .canvas-container { flex: 1 1 auto; min-height: 150px; max-height: 35vh; display: flex; justify-content: center; align-items: center; margin: 0 0 5px 0; position: relative; background-color: #fafafa; border-radius: 8px; }
+ canvas { width: 100%; height: 100%; object-fit: contain; }
+ .interact-bar { flex: 0 0 auto; min-height: 60px; display: flex; flex-direction: row; align-items: center; justify-content: space-between; margin-bottom: 10px; padding: 0 5px; }
+ .message { font-size: 1.1rem; font-weight: bold; text-align: left; flex: 1; margin-right: 10px; }
+ #nextBtn { background-color: var(--primary); color: white; border: none; padding: 10px 30px; font-size: 1rem; border-radius: 25px; cursor: pointer; display: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); white-space: nowrap; }
+ .controls { flex: 0 0 auto; width: 100%; display: flex; flex-direction: column; }
+ .question-text { margin: 0 0 5px 0; font-size: 0.95rem; text-align: center; color: #666; }
+ .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 5px; }
+ .option-btn { background: white; border: 2px solid #ddd; min-height: 55px; padding: 5px; font-size: 1.1rem; border-radius: 8px; cursor: pointer; color: var(--text); display: flex; align-items: center; justify-content: center; touch-action: manipulation; transition: background 0.2s; }
+ .option-btn:active { background-color: #f0f8ff; }
+ .option-btn.correct { background-color: var(--success); color: white; border-color: var(--success); }
+ .option-btn.wrong { background-color: var(--error); color: white; border-color: var(--error); }
+ .option-btn:disabled { opacity: 0.9; cursor: default; }
+ .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 999; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
+ .modal-content { background: white; padding: 25px; border-radius: 15px; width: 100%; max-width: 350px; font-size: 1rem; text-align: center; }
+ .modal-content h2 { margin-top: 0; color: var(--error); }
+ .modal-content ul { text-align: left; padding-left: 20px; line-height: 2.2; list-style-type: disc; }
+ .btn-large { background: var(--primary); color: white; border: none; padding: 12px 30px; font-size: 1.2rem; border-radius: 8px; cursor: pointer; margin-top: 15px; width: 100%; }
+ .rule-box { text-align: left; background: #f9f9f9; padding: 10px; border-radius: 8px; margin-bottom: 10px; font-size: 0.95rem; line-height: 1.6; }
+ .level-text { color: #d35400; font-weight: bold; }
+ .win-text { color: #2ecc71; font-weight: bold; font-size: 1.2rem; }
+ </style>
+</head>
+<body>
+<div class="container">
+ <header>
+ <div class="header-top">
+ <h1>面積偵探</h1>
+ <div class="icon-group">
+ <span class="score" id="scoreDisplay">★ 0</span>
+ <button class="hint-icon" onclick="openHelp()" title="說明">?</button>
+ </div>
+ </div>
+ <div style="position:relative; margin-top:15px;">
+ <span class="timer-label" id="maxTimeLabel">Max: 60s</span>
+ <div class="timer-container"><div class="timer-bar" id="timerBar"></div></div>
+ </div>
+ </header>
+ <div class="canvas-container"><canvas id="gameCanvas" width="800" height="500"></canvas></div>
+ <div class="interact-bar">
+ <div id="messageBox" class="message"></div>
+ <button id="nextBtn" onclick="nextQuestion()">下一題 ➔</button>
+ </div>
+ <div class="controls">
+ <h3 class="question-text">請選擇正確的列式</h3>
+ <div class="options-grid" id="optionsContainer"></div>
+ </div>
+</div>
+<div id="helpModal" class="modal">
+ <div class="modal-content">
+ <h3 style="color:var(--primary); margin-top:0;">💡 偵探手冊</h3>
+ <div class="rule-box"><b>規則：</b><br>⏳ 時間軸倒數<br>✅ 答對：<b>+3分</b> / +5秒<br>❌ 答錯：-5秒<br>⚠️ <span class="level-text">每10分難度升級，上限-6秒 (最少6秒)</span></div>
+ <hr>
+ <ul style="font-size: 0.95rem;">
+ <li><b>正方形：</b> 邊長²</li>
+ <li><b>長方形：</b> 長 × 闊</li>
+ <li><b>平行四邊形：</b> 底 × 高</li>
+ <li><b>三角形：</b> (底 × 高) ÷ 2</li>
+ <li><b>梯形：</b> (上底 + 下底) × 高 ÷ 2</li>
+ </ul>
+ <p style="font-size:0.9rem; color:#666;">若圖形無直角符號，請選<b>「無法計算」</b><br>注意：部分題目可能<b>沒有單位</b></p>
+ <button class="btn-large" onclick="closeModal('helpModal')">開始遊戲</button>
+ </div>
+</div>
+<div id="gameOverModal" class="modal">
+ <div class="modal-content">
+ <h2>⏰ 時間到！</h2>
+ <p style="font-size: 1.2rem;">遊戲結束</p>
+ <p style="font-size: 1.5rem; font-weight: bold; margin: 20px 0;">最終得分: <span id="finalScore">0</span></p>
+ <p>你共完成了 <span id="finalQCount">0</span> 題</p>
+ <button class="btn-large" onclick="restartGame()">再玩一次</button>
+ </div>
+</div>
+<div id="gameWinModal" class="modal">
+ <div class="modal-content">
+ <h2 style="color:var(--success);">🏆 恭喜破關！</h2>
+ <p style="font-size: 1.2rem;">你是面積大師！</p>
+ <p style="font-size: 1.5rem; font-weight: bold; margin: 20px 0;">最終得分: <span id="winScore">0</span></p>
+ <p class="win-text">太厲害了！🎉</p>
+ <button class="btn-large" onclick="restartGame()">再次挑戰</button>
+ </div>
+</div>
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const scoreEl = document.getElementById('scoreDisplay');
+const timerBar = document.getElementById('timerBar');
+const maxTimeLabel = document.getElementById('maxTimeLabel');
+const optionsContainer = document.getElementById('optionsContainer');
+const messageBox = document.getElementById('messageBox');
+const nextBtn = document.getElementById('nextBtn');
+let score = 0; let questionCount = 0;
+const INITIAL_MAX_TIME = 60;
+const TIME_PENALTY_PER_LEVEL = 6;
+const MIN_MAX_TIME = 6;
+const WIN_SCORE = 100;
+let currentMaxTime = INITIAL_MAX_TIME; let currentLevel = 0; let timeLeft = INITIAL_MAX_TIME; let timerInterval = null; let isPaused = true; let isAnswered = false;
+function initGame() { openHelp(); }
+function startGame() {
+score = 0; currentLevel = 0; questionCount = 1; currentMaxTime = INITIAL_MAX_TIME; timeLeft = currentMaxTime; isPaused = false;
+scoreEl.textContent = '★ ' + score; updateMaxTimeLabel(); updateTimerBar();
+clearInterval(timerInterval); timerInterval = setInterval(gameLoop, 1000); generateQuestion();
+}
+function gameLoop() { if (!isPaused && timeLeft > 0) { timeLeft--; updateTimerBar(); if (timeLeft <= 0) { endGame(); } }
+}
+function updateMaxTimeLabel() { maxTimeLabel.textContent = '上限: ' + currentMaxTime + 's'; }
+function updateTimerBar() {
+let percentage = (timeLeft / currentMaxTime) * 100;
+if (percentage > 100) percentage = 100; if (percentage < 0) percentage = 0;
+timerBar.style.width = percentage + '%';
+if (percentage > 50) { timerBar.style.backgroundColor = 'var(--success)'; } else if (percentage > 20) { timerBar.style.backgroundColor = 'var(--secondary)'; } else { timerBar.style.backgroundColor = 'var(--error)'; }
+}
+function checkLevelUp(currentScore) {
+const newLevel = Math.floor(currentScore / 10);
+if (newLevel > currentLevel) {
+currentLevel = newLevel;
+if (currentMaxTime > MIN_MAX_TIME) {
+currentMaxTime -= TIME_PENALTY_PER_LEVEL;
+if (currentMaxTime < MIN_MAX_TIME) currentMaxTime = MIN_MAX_TIME;
+updateMaxTimeLabel();
+if (timeLeft > currentMaxTime) { timeLeft = currentMaxTime; }
+updateTimerBar(); return true;
+} else { return "MAXED"; }
+}
+return false;
+}
+function endGame() { clearInterval(timerInterval); document.getElementById('finalScore').textContent = score; document.getElementById('finalQCount').textContent = questionCount - 1; document.getElementById('gameOverModal').style.display = 'flex'; }
+function gameWin() { clearInterval(timerInterval); document.getElementById('winScore').textContent = score; document.getElementById('gameWinModal').style.display = 'flex'; }
+function restartGame() { closeModal('gameOverModal'); closeModal('gameWinModal'); startGame(); }
+function openHelp() { isPaused = true; document.getElementById('helpModal').style.display = 'flex'; }
+function closeModal(id) { document.getElementById(id).style.display = 'none'; if (id === 'helpModal') { if (timerInterval === null) startGame(); else isPaused = false; } }
+const SHAPES = ['square', 'rectangle', 'triangle', 'parallelogram', 'trapezoid']; const UNITS = ['cm', 'm'];
+function randomInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function shuffle(array) { return array.sort(() => Math.random() - 0.5); }
+function generateQuestion() {
+isAnswered = false; isPaused = false; nextBtn.style.display = 'none'; messageBox.innerHTML = '';
+const type = SHAPES[randomInt(0, SHAPES.length - 1)]; const hasUnit = Math.random() > 0.3; const unitText = hasUnit ? UNITS[randomInt(0, 1)] : '';
+let isCalculable = true; if (['triangle', 'parallelogram', 'trapezoid'].includes(type)) { isCalculable = Math.random() > 0.3; }
+let dims = {}; let correctTex = "", wrongTex = ""; const d1 = randomInt(2, 10); const d2 = randomInt(2, 10); const d3 = randomInt(2, 8);
+switch(type) {
+case 'square': dims = { s: d1 }; correctTex = d1 + '^2'; wrongTex = d1 + '(4)'; break;
+case 'rectangle': dims = { w: d1, h: d2 }; if (d1 === d2) { correctTex = d1 + '^2'; wrongTex = d1 + '(4)'; } else { correctTex = d1 + '(' + d2 + ')'; wrongTex = '(' + d1 + '+' + d2 + ')(2)'; } break;
+case 'triangle': dims = { b: d1, h: d2 }; correctTex = '\\frac{' + d1 + '(' + d2 + ')}{2}'; wrongTex = d1 + '(' + d2 + ')'; break;
+case 'parallelogram': dims = { b: d1, h: d2 }; correctTex = d1 + '(' + d2 + ')'; wrongTex = '\\frac{' + d1 + '(' + d2 + ')}{2}'; break;
+case 'trapezoid': let bot = d3 + randomInt(2, 5); dims = { top: d3, bottom: bot, h: d2 }; correctTex = '\\frac{(' + d3 + '+' + bot + ')(' + d2 + ')}{2}'; wrongTex = '(' + d3 + '+' + bot + ')(' + d2 + ')'; break;
+}
+drawShape({ type, unit: unitText, hasUnit: hasUnit, isCalculable, dims }); generateOptions({ type, unit: unitText, hasUnit: hasUnit, isCalculable, correctTex, wrongTex });
+}
+function generateOptions(data) {
+optionsContainer.innerHTML = ''; let options = []; let unitTex = data.hasUnit ? '\\text{' + data.unit + '}^2' : '';
+const correctStr = data.correctTex + (unitTex ? ' ' + unitTex : ''); let trapUnitStr = data.hasUnit ? data.correctTex : data.correctTex + ' \\text{cm}^2';
+const wrongFormulaStr = data.wrongTex + (unitTex ? ' ' + unitTex : '');
+if (!data.isCalculable) {
+options.push({ text: "無法計算", isCorrect: true, msg: "⭕ 正確！" });
+options.push({ text: correctStr, isCorrect: false, msg: "❌ 沒有直角" });
+options.push({ text: trapUnitStr, isCorrect: false, msg: "❌ 沒高且單位錯" });
+options.push({ text: wrongFormulaStr, isCorrect: false, msg: "❌ 算錯且沒高" });
+} else {
+options.push({ text: correctStr, isCorrect: true, msg: "⭕ 答對了！" });
+options.push({ text: trapUnitStr, isCorrect: false, msg: data.hasUnit ? "❌ 忘了單位！" : "❌ 題目沒有單位！" });
+options.push({ text: wrongFormulaStr, isCorrect: false, msg: "❌ 公式錯誤" });
+options.push({ text: "無法計算", isCorrect: false, msg: "❌ 有直角可算" });
+}
+shuffle(options).forEach(opt => { const btn = document.createElement('button'); btn.className = 'option-btn'; btn.innerHTML = opt.text; btn.dataset.isCorrect = opt.isCorrect; btn.onclick = (e) => handleAnswer(btn, opt, e); optionsContainer.appendChild(btn); });
+if (window.MathJax) MathJax.typesetPromise([optionsContainer]).catch(err => console.log(err));
+}
+function handleAnswer(btn, option, event) {
+if (isAnswered) return; isAnswered = true; isPaused = true;
+const allBtns = document.querySelectorAll('.option-btn'); allBtns.forEach(b => b.disabled = true);
+const rect = btn.getBoundingClientRect(); const x = rect.left + rect.width / 2; const y = rect.top;
+if (option.isCorrect) {
+score += 3; timeLeft += 5; if (timeLeft > currentMaxTime) timeLeft = currentMaxTime;
+scoreEl.textContent = '★ ' + score; btn.classList.add('correct');
+if (score > WIN_SCORE) { setTimeout(gameWin, 1000); } else { const levelStatus = checkLevelUp(score); if (levelStatus === true) { setTimeout(() => { showFloatText(window.innerWidth/2 - 100, window.innerHeight/2, "⚠️ 難度提升！上限 -6s", "#d35400"); }, 500); } else if (levelStatus === "MAXED") { setTimeout(() => { showFloatText(window.innerWidth/2 - 100, window.innerHeight/2, "⚠️ 難度提升！(時間不變)", "#d35400"); }, 500); } }
+messageBox.style.color = 'var(--success)';
+} else {
+timeLeft -= 5; showFloatText(x, y, "-5s", "#e74c3c"); btn.classList.add('wrong'); allBtns.forEach(b => { if (b.dataset.isCorrect === "true") b.classList.add('correct'); }); messageBox.style.color = 'var(--error)';
+}
+updateTimerBar(); messageBox.innerHTML = option.msg;
+if (timeLeft <= 0) { timeLeft = 0; updateTimerBar(); setTimeout(endGame, 1000); } else if (score <= WIN_SCORE) { nextBtn.style.display = 'block'; }
+}
+function showFloatText(x, y, text, color) {
+const el = document.createElement('div'); el.className = 'float-text'; el.textContent = text; el.style.color = color; el.style.left = x + 'px'; el.style.top = y + 'px'; el.style.position = 'fixed'; document.body.appendChild(el); setTimeout(() => el.remove(), 1500);
+}
+window.nextQuestion = function() { questionCount++; generateQuestion(); }
+function drawRightAngle(x, y, size, quadrant) { ctx.beginPath(); ctx.strokeStyle = "#e74c3c"; ctx.lineWidth = 3; switch(quadrant) { case 1: ctx.moveTo(x, y-size); ctx.lineTo(x+size, y-size); ctx.lineTo(x+size, y); break; case 2: ctx.moveTo(x, y-size); ctx.lineTo(x-size, y-size); ctx.lineTo(x-size, y); break; case 3: ctx.moveTo(x, y+size); ctx.lineTo(x-size, y+size); ctx.lineTo(x-size, y); break; case 4: ctx.moveTo(x, y+size); ctx.lineTo(x+size, y+size); ctx.lineTo(x+size, y); break; } ctx.stroke(); }
+function drawDashedLine(x1, y1, x2, y2) { ctx.beginPath(); ctx.setLineDash([10, 8]); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.strokeStyle = "#e74c3c"; ctx.lineWidth = 3; ctx.stroke(); ctx.setLineDash([]); }
+function drawShape(data) {
+ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.strokeStyle = '#333'; ctx.fillStyle = '#eaf6ff'; ctx.lineWidth = 5; ctx.font = "bold 32px Arial"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; const cx = canvas.width/2, cy = canvas.height/2, scale = 40, u = data.unit, raSize = 18;
+ctx.beginPath();
+if (data.type === 'square' || data.type === 'rectangle') {
+const w = (data.type === 'square' ? data.dims.s : data.dims.w) * scale; const h = (data.type === 'square' ? data.dims.s : data.dims.h) * scale; const x = cx-w/2, y = cy-h/2; ctx.rect(x, y, w, h); ctx.fill(); ctx.stroke(); ctx.fillStyle = "#d35400"; if(data.type === 'square') { ctx.textBaseline="bottom"; ctx.fillText(data.dims.s+u, x+w/2, y-10); ctx.textBaseline="middle"; ctx.fillText(data.dims.s+u, x+w+45, y+h/2); } else { ctx.textBaseline="bottom"; ctx.fillText(data.dims.w+u, x+w/2, y-10); ctx.textBaseline="middle"; ctx.fillText(data.dims.h+u, x+w+45, y+h/2); } drawRightAngle(x,y,raSize,4); drawRightAngle(x+w,y,raSize,3); drawRightAngle(x+w,y+h,raSize,2); drawRightAngle(x,y+h,raSize,1);
+} else if (data.type === 'triangle') {
+const b = data.dims.b*scale, h = data.dims.h*scale; const x = cx-b/2, y = cy+h/2; ctx.moveTo(x, y); ctx.lineTo(x+b, y); const topX=cx, topY=y-h; ctx.lineTo(topX, topY); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.fillStyle="#d35400"; ctx.textBaseline="top"; ctx.fillText(data.dims.b+u, x+b/2, y+20); if (data.isCalculable) { drawDashedLine(topX, topY, topX, y); drawRightAngle(topX, y, raSize, 1); ctx.textBaseline="middle"; ctx.fillText(data.dims.h+u, topX+40, topY+h/2); } else { ctx.textBaseline="middle"; ctx.fillText(data.dims.h+u, x+b*0.1-40, y-h/2); }
+} else if (data.type === 'parallelogram') {
+const b=data.dims.b*scale, h=data.dims.h*scale; let slant = (Math.random()>0.5)?h*0.4:-h*0.6; const startY=cy+h/2, startX=cx-b/2-slant/2; ctx.moveTo(startX, startY); ctx.lineTo(startX+b, startY); ctx.lineTo(startX+b+slant, startY-h); ctx.lineTo(startX+slant, startY-h); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.fillStyle="#d35400"; ctx.textBaseline="top"; ctx.fillText(data.dims.b+u, startX+b/2, startY+20); if (data.isCalculable) { const tx=startX+slant, ty=startY-h, dx=tx, dy=startY; if (dx>=startX && dx<=startX+b) { drawDashedLine(tx, ty, dx, dy); drawRightAngle(dx, dy, raSize, 1); ctx.textBaseline="middle"; ctx.fillText(data.dims.h+u, dx+20, ty+h/2); } else { drawDashedLine(dx, dy, startX, dy); drawDashedLine(tx, ty, dx, dy); drawRightAngle(dx, dy, raSize, 1); ctx.textBaseline="middle"; ctx.fillText(data.dims.h+u, dx-40, ty+h/2); } } else { ctx.textBaseline="middle"; ctx.fillText(data.dims.h+u, startX+slant-30, cy); }
+} else if (data.type === 'trapezoid') {
+const top=data.dims.top*scale, bot=data.dims.bottom*scale, h=data.dims.h*scale; const startY=cy+h/2, startX=cx-bot/2, topY=cy-h/2, topX=cx-top/2; ctx.moveTo(startX, startY); ctx.lineTo(startX+bot, startY); ctx.lineTo(topX+top, topY); ctx.lineTo(topX, topY); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.fillStyle="#d35400"; ctx.textBaseline="bottom"; ctx.fillText(data.dims.top+u, cx, topY-10); ctx.textBaseline="top"; ctx.fillText(data.dims.bottom+u, cx, startY+20); if (data.isCalculable) { drawDashedLine(topX, topY, topX, startY); drawRightAngle(topX, startY, raSize, 1); ctx.textBaseline="middle"; ctx.fillText(data.dims.h+u, topX-40, cy); } else { ctx.textBaseline="middle"; ctx.fillText(data.dims.h+u, topX-40, cy); }
+}
+}
+initGame();
+</script>
+</body>
+</html>

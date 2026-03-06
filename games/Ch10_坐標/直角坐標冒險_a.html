@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>直角坐標大冒險：完美體驗版</title>
+    <style>
+        :root {
+            --bg-space: #0b0c15;
+            --ui-bg: #15192b;
+            --text-color: #e0e6ed;
+            --accent-color: #00d2ff;
+            --treasure-color: #ffd700;
+            --sort-color: #a29bfe;
+            --btn-bg: #2b3a55;
+            --btn-neutral: #34495e;
+            --success-color: #00b894;
+            --error-color: #ff4757;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-space);
+            color: var(--text-color);
+            margin: 0; padding: 0;
+            display: flex; flex-direction: column; align-items: center;
+            height: 100vh; overflow: hidden; touch-action: none;
+        }
+
+        /* --- Header --- */
+        .header {
+            width: 100%; max-width: 600px;
+            background: var(--ui-bg);
+            border-bottom: 1px solid #34495e;
+            padding: 8px; box-sizing: border-box;
+            display: flex; flex-direction: column; gap: 8px;
+            z-index: 20; flex-shrink: 0;
+        }
+
+        .nav-row { display: flex; justify-content: space-between; gap: 8px; }
+        .stats-row { 
+            display: flex; justify-content: space-around; 
+            align-items: center;
+            font-size: 13px; background: rgba(0,0,0,0.4); 
+            padding: 6px 10px; border-radius: 6px;
+            gap: 10px;
+        }
+        .id-box {
+            font-family: 'Courier New', monospace; color: #ffeaa7; font-weight: bold;
+            border-right: 1px solid #555; padding-right: 10px; white-space: nowrap;
+        }
+        .scores-box {
+            display: flex; gap: 10px; flex-grow: 1; justify-content: space-around;
+        }
+        .stat-val { color: var(--accent-color); font-weight: bold; font-family: monospace; }
+        .stat-val.gold { color: var(--treasure-color); }
+
+        .nav-btn {
+            flex: 1; background: var(--btn-bg); border: 1px solid #4b6584; color: #bdc3c7;
+            padding: 8px 4px; border-radius: 8px; font-size: 14px; cursor: pointer; white-space: nowrap;
+        }
+        .nav-btn.active.mode-collect { background: var(--accent-color); color: #000; font-weight: 800; border-color: var(--accent-color); }
+        .nav-btn.active.mode-sort { background: var(--sort-color); color: #000; font-weight: 800; border-color: var(--sort-color); }
+        .nav-btn.active.mode-treasure { background: var(--treasure-color); color: #000; font-weight: 800; border-color: var(--treasure-color); }
+
+        /* --- Game Containers --- */
+        .game-container {
+            flex-grow: 1; width: 100%; max-width: 600px;
+            position: relative; display: none; flex-direction: column;
+        }
+        .game-container.visible { display: flex; }
+
+        .canvas-wrapper {
+            flex-grow: 1; background: radial-gradient(circle at center, #1e272e 0%, #000000 100%);
+            position: relative; overflow: hidden; display: flex; justify-content: center; align-items: center;
+        }
+        .game-canvas { display: block; }
+
+        /* --- Controls --- */
+        .controls-area {
+            background: var(--ui-bg); padding: 10px;
+            border-top: 1px solid #34495e; flex-shrink: 0;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
+            padding-bottom: max(10px, env(safe-area-inset-bottom));
+            position: relative; 
+        }
+
+        .display-row { display: flex; gap: 10px; align-items: center; padding-bottom: 8px; }
+        
+        .message-box { 
+            flex-grow: 1; font-size: 14px; color: #dfe6e9; 
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            display: flex; align-items: center;
+            height: 24px;
+        }
+        
+        /* 公式樣式：緊湊、醒目 */
+        .formula-display {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            color: #fab1a0;
+            letter-spacing: -1px; /* 緊湊字距 */
+        }
+
+        .input-group {
+            display: flex; align-items: center; background: #000; 
+            border: 1px solid var(--accent-color); border-radius: 4px; padding: 0 8px;
+        }
+        .display-screen {
+            background: transparent; border: none; color: var(--accent-color);
+            font-family: 'Courier New', monospace; font-size: 24px; 
+            padding: 4px 0; min-width: 60px; text-align: right; letter-spacing: 2px; outline: none;
+        }
+        .unit-text { font-size: 14px; color: #888; margin-left: 5px; user-select: none;}
+
+        .keypad { display: grid; gap: 4px; }
+        .keypad.collect-pad { grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(2, 48px); }
+        .keypad.treasure-pad { grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(2, 48px); }
+        
+        .treasure-actions { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 5px; margin-bottom: 8px; }
+        
+        .btn {
+            background: var(--btn-bg); color: white; border: none; border-radius: 6px;
+            font-size: 20px; font-weight: 600; padding: 0; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 0 rgba(0,0,0,0.2); touch-action: manipulation;
+        }
+        .btn:active { transform: translateY(2px); box-shadow: none; }
+        .btn-sym { color: var(--accent-color); background: #1e272e; font-size: 18px; font-weight: bold; }
+        .btn-act { background: var(--success-color); color: #fff; font-size: 16px; }
+        .btn-del { background: var(--error-color); font-size: 18px; }
+        .btn-toggle { background: #636e72; font-size: 12px; }
+        
+        .btn-next-level {
+            grid-column: 1 / -1; background: var(--accent-color); color: #000;
+            font-weight: 800; animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.8; } 100% { opacity: 1; } }
+
+        /* --- Sort Mode --- */
+        .hq-wrapper {
+            flex-grow: 1; background: linear-gradient(135deg, #2d3436 0%, #000000 100%);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 20px; padding: 20px;
+        }
+        .monitor-frame {
+            background: #000; border: 4px solid #555; border-radius: 12px;
+            width: 80%; aspect-ratio: 1.4/1;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            position: relative; overflow: hidden;
+            display: flex; flex-direction: column;
+        }
+        #sortQuestionView, #sortFeedbackView {
+            width: 100%; height: 100%; position: absolute; top: 0; left: 0;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        #sortFeedbackView { background: #111; z-index: 5; display: none; cursor: pointer; }
+        #sortFeedbackCanvas { width: 100%; height: 100%; display: block; }
+        .trash-coordinate { 
+            font-family: monospace; color: #00d2ff; 
+            font-size: min(48px, 12vw); white-space: nowrap; 
+            letter-spacing: 2px; text-shadow: 0 0 10px rgba(0, 210, 255, 0.5);
+        }
+        .hq-controls { 
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; max-width: 400px; 
+        }
+        .quad-btn { 
+            padding: 15px; background: var(--btn-neutral); color: #ecf0f1;
+            border: none; border-radius: 8px; font-weight: bold; font-size: 16px;
+            cursor: pointer; box-shadow: 0 3px 0 rgba(0,0,0,0.3); transition: all 0.1s;
+        }
+        .quad-btn:active { transform: translateY(2px); box-shadow: none; }
+        .quad-btn.correct { background: var(--success-color) !important; color: white; box-shadow: 0 0 10px var(--success-color); }
+        .quad-btn.wrong { background: var(--error-color) !important; color: white; opacity: 0.6; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="nav-row">
+            <button class="nav-btn active mode-collect" onclick="switchMode('collect')">🤖 1.收集</button>
+            <button class="nav-btn mode-sort" onclick="switchMode('sort')">🏢 2.分類</button>
+            <button class="nav-btn mode-treasure" onclick="switchMode('treasure')">💎 3.尋寶</button>
+        </div>
+        <div class="stats-row">
+            <div class="id-box">ID:<span id="gameID">---</span></div>
+            <div class="scores-box">
+                <span>收集:<span class="stat-val" id="statCollect">0/0</span></span>
+                <span>分類:<span class="stat-val" style="color:var(--sort-color);" id="statSort">0/0</span></span>
+                <span>尋寶:<span class="stat-val gold" id="statTreasure">0/0</span></span>
+            </div>
+        </div>
+    </div>
+
+    <div id="container-collect" class="game-container visible">
+        <div class="canvas-wrapper">
+            <canvas id="canvasCollect" class="game-canvas"></canvas>
+        </div>
+        <div class="controls-area">
+            <div class="display-row">
+                <div class="message-box" id="msgCol">輸入坐標 (x, y)</div>
+                <div class="input-group">
+                    <div class="display-screen" id="dispCol">_</div>
+                </div>
+            </div>
+            <div class="keypad collect-pad">
+                <button class="btn" onclick="CollectGame.input('1')">1</button>
+                <button class="btn" onclick="CollectGame.input('2')">2</button>
+                <button class="btn" onclick="CollectGame.input('3')">3</button>
+                <button class="btn" onclick="CollectGame.input('4')">4</button>
+                <button class="btn" onclick="CollectGame.input('5')">5</button>
+                <button class="btn btn-sym" onclick="CollectGame.input('(')">(</button>
+                <button class="btn btn-sym" onclick="CollectGame.input(',')">,</button>
+                <button class="btn btn-sym" onclick="CollectGame.input(')')">)</button>
+                <button class="btn" onclick="CollectGame.input('6')">6</button>
+                <button class="btn" onclick="CollectGame.input('7')">7</button>
+                <button class="btn" onclick="CollectGame.input('8')">8</button>
+                <button class="btn" onclick="CollectGame.input('9')">9</button>
+                <button class="btn" onclick="CollectGame.input('0')">0</button>
+                <button class="btn btn-sym" onclick="CollectGame.input('-')">-</button>
+                <button class="btn btn-del" onclick="CollectGame.backspace()">⌫</button>
+                <button class="btn btn-act" onclick="CollectGame.submit()">🚀</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="container-sort" class="game-container">
+        <div class="hq-wrapper">
+            <div class="monitor-frame">
+                <div id="sortQuestionView">
+                    <div style="color:#888; font-size:12px; margin-bottom:10px;">INCOMING DATA</div>
+                    <div class="trash-coordinate" id="sortDisplay">(?, ?)</div>
+                </div>
+                <div id="sortFeedbackView">
+                    <canvas id="sortFeedbackCanvas"></canvas>
+                </div>
+            </div>
+            <div class="hq-controls">
+                <button class="quad-btn" id="btn-II" onclick="SortGame.submit('II')">象限 II</button>
+                <button class="quad-btn" id="btn-Y" onclick="SortGame.submit('Y')">Y 軸</button>
+                <button class="quad-btn" id="btn-I" onclick="SortGame.submit('I')">象限 I</button>
+                <button class="quad-btn" id="btn-III" onclick="SortGame.submit('III')">象限 III</button>
+                <button class="quad-btn" id="btn-X" onclick="SortGame.submit('X')">X 軸</button>
+                <button class="quad-btn" id="btn-IV" onclick="SortGame.submit('IV')">象限 IV</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="container-treasure" class="game-container">
+        <div class="canvas-wrapper">
+            <canvas id="canvasTreasure" class="game-canvas"></canvas>
+        </div>
+        
+        <div class="controls-area">
+            <div class="display-row">
+                <div class="message-box" id="msgTreasure">
+                    </div>
+                <div class="input-group" style="border-color: var(--treasure-color);">
+                    <div class="display-screen" id="dispTreasure" style="color: var(--treasure-color);">_</div>
+                    <span class="unit-text">單位</span>
+                </div>
+            </div>
+            <div class="treasure-actions" id="treasureActions">
+                <button class="btn btn-act" id="btnMoveX" onclick="TreasureGame.submitX()">↔ 移動</button>
+                <button class="btn btn-act" id="btnMoveY" onclick="TreasureGame.submitY()" style="display:none;">⚓ 抓取</button>
+                <button class="btn btn-toggle" onclick="TreasureGame.toggleGrid()"># 網格</button>
+                <button class="btn btn-del" onclick="TreasureGame.backspace()">⌫</button>
+            </div>
+            <div class="treasure-actions" id="treasureNext" style="display:none;">
+                <button class="btn btn-next-level" onclick="TreasureGame.nextLevel()">下一題 ➔</button>
+            </div>
+
+            <div class="keypad treasure-pad">
+                <button class="btn" onclick="TreasureGame.input('1')">1</button>
+                <button class="btn" onclick="TreasureGame.input('2')">2</button>
+                <button class="btn" onclick="TreasureGame.input('3')">3</button>
+                <button class="btn" onclick="TreasureGame.input('4')">4</button>
+                <button class="btn" onclick="TreasureGame.input('5')">5</button>
+                <button class="btn" onclick="TreasureGame.input('6')">6</button>
+                <button class="btn" onclick="TreasureGame.input('7')">7</button>
+                <button class="btn" onclick="TreasureGame.input('8')">8</button>
+                <button class="btn" onclick="TreasureGame.input('9')">9</button>
+                <button class="btn" onclick="TreasureGame.input('0')">0</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+    const GameIDSystem = {
+        XOR_KEY: 98765432101234n,
+        generate: function() {
+            const now = new Date();
+            const pad = (n) => n.toString().padStart(2, '0');
+            const timeStr = now.getFullYear() + pad(now.getMonth() + 1) + pad(now.getDate()) +
+                            pad(now.getHours()) + pad(now.getMinutes()) + pad(now.getSeconds());
+            const reversedStr = timeStr.split('').reverse().join('');
+            const rawVal = BigInt(reversedStr);
+            const encryptedVal = rawVal ^ this.XOR_KEY;
+            const bodyCode = encryptedVal.toString(36).toUpperCase();
+            const checksumChar = (encryptedVal % 36n).toString(36).toUpperCase();
+            return bodyCode + checksumChar;
+        }
+    };
+
+    const CanvasOptimizer = {
+        createCache: function(w, h) {
+            const c = document.createElement('canvas');
+            c.width = w; c.height = h;
+            return c;
+        }
+    };
+
+    // --- 遊戲 1: 收集模式 ---
+    const CollectGame = {
+        state: { originScreenPos: {x: 0, y: 0}, robotScreenPos: {x: 0, y: 0}, targetScreenPos: {x: 0, y: 0}, animPos: {x: 0, y: 0}, input: "", isAnimating: false, success: 0, total: 0, attempted: false },
+        init: function() { this.state.originScreenPos = {x: 0, y: 0}; this.state.robotScreenPos = {x: 0, y: 0}; this.newRound(true); },
+        newRound: function(isReset) {
+            this.state.attempted = false;
+            if(isReset) { this.state.originScreenPos = {x: 0, y: 0}; this.state.robotScreenPos = {x: 0, y: 0}; this.state.animPos = {x: 0, y: 0}; } 
+            else { this.state.originScreenPos = {...this.state.robotScreenPos}; this.state.animPos = {...this.state.robotScreenPos}; }
+            let tx, ty; do { tx = Math.floor(Math.random() * 13) - 6; ty = Math.floor(Math.random() * 13) - 6; } while (tx === this.state.robotScreenPos.x && ty === this.state.robotScreenPos.y);
+            this.state.targetScreenPos = {x: tx, y: ty};
+            this.state.input = ""; this.updateUI(); this.draw();
+        },
+        input: function(c) { if(!this.state.isAnimating && this.state.input.length<15) {this.state.input+=c; this.updateUI();} },
+        backspace: function() { if(!this.state.isAnimating) {this.state.input=this.state.input.slice(0,-1); this.updateUI();} },
+        submit: function() {
+            if(this.state.isAnimating) return;
+            const s = this.state;
+            if(!s.attempted) { s.total++; document.getElementById('statCollect').textContent = `${s.success}/${s.total}`; }
+            const match = s.input.match(/^\(\s*(-?\d+)\s*,\s*(-?\d+)\s*\)$/);
+            if(!match) { this.setMessage("格式錯誤! 用(x,y)", "var(--error-color)"); return; }
+            const inX = parseInt(match[1]), inY = parseInt(match[2]);
+            const relX = s.targetScreenPos.x - s.originScreenPos.x; 
+            const relY = s.targetScreenPos.y - s.originScreenPos.y;
+            if(inX === relX && inY === relY) {
+                if(!s.attempted) { s.success++; document.getElementById('statCollect').textContent = `${s.success}/${s.total}`; }
+                s.attempted = true; this.setMessage("坐標正確，前進！", "var(--success-color)"); this.animate();
+            } else { 
+                s.attempted = true; 
+                if (inX === relY && inY === relX) this.setMessage("留意先x後y!", "var(--error-color)");
+                else if (inX === relX) this.setMessage("x坐標正確，請檢視y坐標!", "var(--error-color)");
+                else if (inY === relY) this.setMessage("y坐標正確，請檢視x坐標!", "var(--error-color)");
+                else if (Math.abs(inX) === Math.abs(relX) && Math.abs(inY) === Math.abs(relY)) this.setMessage("數字正確，請檢查正負號!", "var(--error-color)");
+                else this.setMessage("錯誤!請呼叫支援!", "var(--error-color)");
+            }
+        },
+        animate: function() {
+            this.state.isAnimating = true; const startX = this.state.robotScreenPos.x; const startY = this.state.robotScreenPos.y; const destX = this.state.targetScreenPos.x; const destY = this.state.targetScreenPos.y; const startTime = performance.now();
+            const loop = (t) => {
+                const p = Math.min((t-startTime)/1000, 1); const ease = 1 - Math.pow(1 - p, 3);
+                this.state.animPos.x = startX + (destX - startX) * ease; this.state.animPos.y = startY + (destY - startY) * ease;
+                this.draw();
+                if(p < 1) requestAnimationFrame(loop); else { this.state.isAnimating = false; this.state.robotScreenPos = {x: destX, y: destY}; setTimeout(() => this.newRound(false), 200); }
+            }; requestAnimationFrame(loop);
+        },
+        updateUI: function() { document.getElementById('dispCol').textContent = this.state.input==="" ? "_" : this.state.input; },
+        setMessage: function(m, c) { const el=document.getElementById('msgCol'); el.textContent=m; el.style.color=c||"#dfe6e9"; },
+        draw: function() {
+            const cvs = document.getElementById('canvasCollect'); if (!cvs) return; const ctx = cvs.getContext('2d');
+            ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cvs.width, cvs.height);
+            const dpr = window.devicePixelRatio || 1; ctx.scale(dpr, dpr); const size = cvs.width / dpr; const unit = size/14, cx = size/2, cy = size/2;
+            ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.font = "bold 14px Arial";
+            for(let i = -7; i <= 7; i++) {
+                const screenX = cx + i * unit; const screenY = cy - i * unit;
+                ctx.beginPath(); ctx.moveTo(screenX, 0); ctx.lineTo(screenX, size); ctx.lineWidth=(i===this.state.originScreenPos.x)?3:1; ctx.strokeStyle=(i===this.state.originScreenPos.x)?"rgba(255,255,255,0.9)":"rgba(255,255,255,0.15)"; ctx.stroke();
+                if(i!==this.state.originScreenPos.x) { ctx.fillStyle = "rgba(255,255,255,0.5)"; ctx.fillText(i-this.state.originScreenPos.x, screenX, Math.min(Math.max(cy-this.state.originScreenPos.y*unit + 20, 20), size-10)); }
+                ctx.beginPath(); ctx.moveTo(0, screenY); ctx.lineTo(size, screenY); ctx.lineWidth=(i===this.state.originScreenPos.y)?3:1; ctx.strokeStyle=(i===this.state.originScreenPos.y)?"rgba(0,210,255,0.9)":"rgba(255,255,255,0.15)"; ctx.stroke();
+                if(i!==this.state.originScreenPos.y) { ctx.fillStyle = "rgba(255,255,255,0.5)"; ctx.fillText(i-this.state.originScreenPos.y, Math.min(Math.max(cx+this.state.originScreenPos.x*unit - 20, 10), size-10), screenY); }
+            }
+            this.drawIcon(ctx, cx + this.state.targetScreenPos.x * unit, cy - this.state.targetScreenPos.y * unit, '🦴', unit, false);
+            const rx = cx + this.state.animPos.x * unit; const ry = cy - this.state.animPos.y * unit;
+            const curRelX = Math.round(this.state.animPos.x - this.state.originScreenPos.x); const curRelY = Math.round(this.state.animPos.y - this.state.originScreenPos.y);
+            this.drawIcon(ctx, rx, ry, '🤖', unit, true, `(${curRelX},${curRelY})`);
+        },
+        drawIcon: function(ctx, x, y, c, s, l, lt) {
+            ctx.save(); ctx.translate(x, y); ctx.font = `${s*0.8}px Segoe UI Emoji, Arial`; 
+            ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(c, 0, 0);
+            if(l) { 
+                ctx.fillStyle="#fff"; ctx.font="bold 16px monospace";
+                if (x > s * 11) { ctx.textAlign = "right"; ctx.fillText(lt, -s/3, -s/3); } 
+                else { ctx.textAlign = "left"; ctx.fillText(lt, s/3, -s/3); }
+            }
+            ctx.restore();
+        }
+    };
+
+    // --- 遊戲 2: 分類模式 ---
+    const SortGame = {
+        task: {x:0, y:0}, success: 0, total: 0, attempted: false,
+        init: function() { this.newRound(); },
+        newRound: function() {
+            this.attempted = false; this.task.x = Math.floor(Math.random()*19)-9; this.task.y = Math.floor(Math.random()*19)-9;
+            document.getElementById('sortQuestionView').style.display = 'flex'; document.getElementById('sortFeedbackView').style.display = 'none';
+            document.getElementById('sortDisplay').textContent = `(${this.task.x}, ${this.task.y})`;
+            document.querySelectorAll('.quad-btn').forEach(btn => { btn.classList.remove('correct', 'wrong'); });
+        },
+        submit: function(ans) {
+            if(this.attempted) return; this.attempted = true; this.total++;
+            const cor = this.getCorrectZone(this.task.x, this.task.y); const isCorrect = (ans === cor);
+            if(isCorrect) this.success++;
+            document.getElementById('statSort').textContent = `${this.success}/${this.total}`;
+            document.getElementById(`btn-${cor}`).classList.add('correct');
+            if(!isCorrect) document.getElementById(`btn-${ans}`).classList.add('wrong');
+            document.getElementById('sortQuestionView').style.display = 'none';
+            const fbView = document.getElementById('sortFeedbackView'); fbView.style.display = 'block';
+            this.drawFeedback(cor, ans);
+            fbView.onclick = () => { fbView.onclick = null; this.newRound(); };
+        },
+        getCorrectZone: function(x, y) {
+            if(x>0 && y>0) return "I"; if(x<0 && y>0) return "II"; if(x<0 && y<0) return "III"; if(x>0 && y<0) return "IV";
+            if(y===0) return "X"; if(x===0) return "Y"; return "O";
+        },
+        drawFeedback: function(correctZone, userZone) {
+            const cvs = document.getElementById('sortFeedbackCanvas'); const parent = cvs.parentElement; const w = parent.clientWidth, h = parent.clientHeight; if(w===0) return;
+            cvs.width = w * window.devicePixelRatio; cvs.height = h * window.devicePixelRatio;
+            const ctx = cvs.getContext('2d'); ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+            const cx = w/2, cy = h/2, scale = Math.min(w,h)/22;
+            ctx.clearRect(0,0,w,h);
+            this.fillZone(ctx, correctZone, cx, cy, w, h, "rgba(0, 184, 148, 0.5)"); 
+            if(userZone !== correctZone) this.fillZone(ctx, userZone, cx, cy, w, h, "rgba(255, 71, 87, 0.5)"); 
+            ctx.strokeStyle = "rgba(255,255,255,0.1)"; ctx.lineWidth = 1; ctx.beginPath();
+            for(let i=-10; i<=10; i++) { ctx.moveTo(cx+i*scale, 0); ctx.lineTo(cx+i*scale, h); ctx.moveTo(0, cy-i*scale); ctx.lineTo(w, cy-i*scale); } ctx.stroke();
+            ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(w, cy); ctx.moveTo(cx, 0); ctx.lineTo(cx, h); ctx.stroke();
+            ctx.fillStyle = "rgba(255,255,255,0.4)"; ctx.font = "bold 40px Arial"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+            ctx.fillText("I", cx + w/4, cy - h/4); ctx.fillText("II", cx - w/4, cy - h/4); ctx.fillText("III", cx - w/4, cy + h/4); ctx.fillText("IV", cx + w/4, cy + h/4);
+            ctx.font = "bold 20px Arial"; ctx.fillStyle = "#fff"; ctx.fillText("x", w - 15, cy - 15); ctx.fillText("y", cx + 15, 15);
+            const dotX = cx + this.task.x * scale; const dotY = cy - this.task.y * scale;
+            ctx.beginPath(); ctx.arc(dotX, dotY, 6, 0, Math.PI*2); ctx.fillStyle = "#fff"; ctx.fill(); ctx.strokeStyle = "#000"; ctx.lineWidth = 2; ctx.stroke();
+            ctx.font = "16px sans-serif"; ctx.fillStyle = "#fff"; ctx.fillText("點擊畫面下一題", cx, h - 20);
+        },
+        fillZone: function(ctx, zone, cx, cy, w, h, color) {
+            ctx.fillStyle = color; ctx.strokeStyle = color; ctx.lineWidth = 10; 
+            if(zone === 'I') ctx.fillRect(cx, 0, w/2, cy); else if(zone === 'II') ctx.fillRect(0, 0, cx, cy); else if(zone === 'III') ctx.fillRect(0, cy, cx, h/2);
+            else if(zone === 'IV') ctx.fillRect(cx, cy, w/2, h/2); else if(zone === 'X') { ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(w, cy); ctx.stroke(); }
+            else if(zone === 'Y') { ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, h); ctx.stroke(); }
+        }
+    };
+
+    // --- 遊戲 3: 尋寶模式 (修正: 重疊避讓 + 公式移至訊息欄 + 鬼影) ---
+    const TreasureGame = {
+        state: { 
+            robot: {x:0,y:0}, target: {x:0,y:0}, originalTarget: {x:0,y:0},
+            animPos: {x:0,y:0}, 
+            step: 'x', input: "", found: 0, success: 0, isAnimating: false, showGrid: false, 
+            hook: { active: false, len: 0, maxLen: 0, dir: 1, hit: false },
+            errorData: null,
+            waitingForNext: false,
+            startMarker: null 
+        },
+        cacheCanvas: null,
+        init: function() { this.newRound(true); },
+        
+        redrawCache: function() {
+            const cvs = document.getElementById('canvasTreasure'); if(!cvs) return; const w = cvs.width, h = cvs.height;
+            if(!this.cacheCanvas || this.cacheCanvas.width !== w) { this.cacheCanvas = CanvasOptimizer.createCache(w, h); }
+            const ctx = this.cacheCanvas.getContext('2d'); const unit = w/14, cx = w/2, cy = h/2;
+            ctx.clearRect(0, 0, w, h);
+            if(this.state.showGrid) {
+                ctx.lineWidth=1; ctx.strokeStyle="rgba(255,255,255,0.2)"; ctx.beginPath(); for(let i=-6; i<=6; i++) { ctx.moveTo(cx+i*unit,0); ctx.lineTo(cx+i*unit,h); ctx.moveTo(0,cy-i*unit); ctx.lineTo(w,cy-i*unit); } ctx.stroke();
+                ctx.lineWidth=2; ctx.strokeStyle="rgba(255,255,255,0.4)"; ctx.beginPath(); ctx.moveTo(cx,0); ctx.lineTo(cx,h); ctx.moveTo(0,cy); ctx.lineTo(w,cy); ctx.stroke();
+                ctx.fillStyle="rgba(255,255,255,0.5)"; ctx.font="12px Arial"; ctx.textAlign="center"; ctx.textBaseline="middle"; for(let i=-6; i<=6; i++) { if(i!==0) { ctx.fillText(i,cx+i*unit,cy+12); ctx.fillText(i,cx-12,cy-i*unit); } }
+            } else { ctx.fillStyle="#555"; ctx.fillRect(cx-1,0,2,h); ctx.fillRect(0,cy-1,w,2); }
+        },
+
+        newRound: function() {
+            this.state.found++;
+            document.getElementById('statTreasure').textContent = `${this.state.success}/${this.state.found}`;
+            
+            const rx = Math.floor(Math.random()*11)-5, ry = Math.floor(Math.random()*11)-5;
+            this.state.robot = {x:rx, y:ry}; 
+            this.state.animPos = {x:rx, y:ry};
+            
+            let tx, ty; do { tx=Math.floor(Math.random()*11)-5; ty=Math.floor(Math.random()*11)-5; } while(tx===rx && ty===ry);
+            this.state.target = {x:tx, y:ty};
+            this.state.originalTarget = {x:tx, y:ty}; 
+
+            this.state.step = 'x'; this.state.input = ""; this.state.hook.active = false;
+            this.state.errorData = null; 
+            this.state.waitingForNext = false;
+            this.state.startMarker = null;
+
+            document.getElementById('treasureActions').style.display = 'grid';
+            document.getElementById('treasureNext').style.display = 'none';
+
+            this.updateUI(); this.redrawCache(); this.draw();
+        },
+        input: function(c) { 
+            if(!this.state.isAnimating && !this.state.waitingForNext && this.state.input.length<5) {
+                this.state.input+=c; this.updateUI();
+            } 
+        },
+        backspace: function() { 
+            if(!this.state.isAnimating && !this.state.waitingForNext) {
+                this.state.input=this.state.input.slice(0,-1); this.updateUI();
+            } 
+        },
+        toggleGrid: function() { this.state.showGrid = !this.state.showGrid; this.redrawCache(); this.draw(); },
+        
+        updateUI: function() {
+            document.getElementById('dispTreasure').textContent = this.state.input===""?"_":this.state.input;
+            const bx = document.getElementById('btnMoveX'), by = document.getElementById('btnMoveY'), msg = document.getElementById('msgTreasure');
+            
+            msg.innerHTML = "";
+            msg.className = "message-box";
+
+            if(this.state.waitingForNext) {
+                 msg.textContent = "請檢視結果";
+                 msg.style.color = "#fff";
+                 return;
+            }
+
+            if(this.state.step==='x') { 
+                bx.style.display='inline-block'; by.style.display='none'; 
+                msg.textContent = "輸入水平距離";
+                msg.style.color = "#aaa";
+            } else { 
+                bx.style.display='none'; by.style.display='inline-block'; 
+                msg.textContent = "X軸對齊！輸入垂直距離";
+                msg.style.color = "var(--treasure-color)";
+            }
+        },
+
+        formatDistMath: function(label, start, end) {
+            const max = Math.round(Math.max(start, end));
+            const min = Math.round(Math.min(start, end));
+            const dist = max - min;
+            let str = `${label}距離=${max}-${min}`;
+            if (min < 0) {
+                str = `${label}距離=${max}-(${min})=${max}+${Math.abs(min)}=${dist}`;
+            } else {
+                str += `=${dist}`;
+            }
+            return str + "單位";
+        },
+
+        submitX: function() {
+            if(this.state.isAnimating || this.state.input==="") return;
+            const dist = parseInt(this.state.input), sx = this.state.robot.x, tx = this.state.target.x;
+            const dir = (tx > sx) ? 1 : -1, moveDist = Math.abs(dist), destX = sx + (moveDist * dir);
+            
+            if(destX < -6 || destX > 6) { 
+                document.getElementById('msgTreasure').innerHTML = `<span style='color:var(--error-color)'>警告：超出邊界</span>`; 
+                return; 
+            }
+
+            this.animateMove(destX, this.state.robot.y, () => {
+                if(destX === tx) { 
+                    this.state.startMarker = {x: sx, y: this.state.robot.y, text: `(${sx},${this.state.robot.y})`};
+
+                    const msg = document.getElementById('msgTreasure');
+                    msg.className = "message-box formula-display"; 
+                    msg.textContent = this.formatDistMath("水平", sx, destX);
+
+                    this.state.step='y'; this.state.robot.x=destX; this.state.input=""; 
+                    document.getElementById('dispTreasure').textContent = "_";
+                    document.getElementById('btnMoveX').style.display = 'none';
+                    document.getElementById('btnMoveY').style.display = 'inline-block';
+                    
+                    this.draw(); // Immediate redraw for ghost
+                } else { 
+                    setTimeout(()=>{
+                        this.animateMove(sx, this.state.robot.y, () => {
+                             this.state.input=""; this.updateUI();
+                        });
+                    }, 500); 
+                }
+            });
+        },
+
+        submitY: function() {
+            if(this.state.isAnimating || this.state.input==="") return;
+            const dist = Math.abs(parseInt(this.state.input)), sy = this.state.robot.y, ty = this.state.target.y;
+            const dir = (ty > sy) ? 1 : -1, isHit = (dist === Math.abs(ty-sy));
+            
+            const inputYDiff = dist * dir;
+            const wrongDestY = sy + inputYDiff;
+
+            this.state.waitingForNext = true;
+            document.getElementById('treasureActions').style.display = 'none';
+            document.getElementById('treasureNext').style.display = 'grid';
+
+            const msg = document.getElementById('msgTreasure');
+            msg.className = "message-box formula-display";
+            msg.textContent = this.formatDistMath("垂直", sy, ty);
+            
+            if (isHit) {
+                this.state.success++; 
+                this.state.hook = { active:true, maxLen:dist, dir:dir, hit:true, len:0 };
+                this.animateHook(() => {});
+            } else {
+                this.state.errorData = { 
+                    type: 'y', 
+                    start: sy, 
+                    target: ty, 
+                    wrongDest: wrongDestY,
+                    wrongDiff: dist,
+                    correctDiff: Math.abs(ty - sy)
+                };
+                this.draw();
+            }
+        },
+
+        nextLevel: function() {
+            this.newRound();
+        },
+
+        animateMove: function(dx, dy, cb) {
+            this.state.isAnimating=true; const sx=this.state.animPos.x, sy=this.state.animPos.y, st=performance.now();
+            const loop=(t)=>{
+                const p=Math.min((t-st)/500,1), e=1-Math.pow(1-p,3);
+                this.state.animPos.x=sx+(dx-sx)*e; this.state.animPos.y=sy+(dy-sy)*e;
+                this.draw(); 
+                if(p<1) requestAnimationFrame(loop); 
+                else { 
+                    this.state.isAnimating=false; 
+                    // Snap to integer to prevent float issues
+                    this.state.animPos.x = Math.round(this.state.animPos.x);
+                    this.state.animPos.y = Math.round(this.state.animPos.y);
+                    if(cb)cb(); 
+                }
+            }; requestAnimationFrame(loop);
+        },
+        animateHook: function(cb) {
+            this.state.isAnimating=true; const st=performance.now(), dur=1000;
+            const loop=(t)=>{
+                const el=t-st;
+                if(el<dur/2) this.state.hook.len = this.state.hook.maxLen * (el/(dur/2));
+                else if(el<dur) {
+                    const p=(el-dur/2)/(dur/2); this.state.hook.len = this.state.hook.maxLen * (1-p);
+                    if(this.state.hook.hit) this.state.target.y = this.state.animPos.y + (this.state.hook.dir * this.state.hook.len);
+                } else { this.state.hook.active=false; this.state.isAnimating=false; this.draw(); if(cb)cb(); return; }
+                this.draw(); requestAnimationFrame(loop);
+            }; requestAnimationFrame(loop);
+        },
+        draw: function() {
+            const cvs = document.getElementById('canvasTreasure'); if(!cvs || !this.cacheCanvas) return;
+            const ctx=cvs.getContext('2d'); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cvs.width, cvs.height);
+            ctx.drawImage(this.cacheCanvas, 0, 0, cvs.width, cvs.height);
+            const dpr = window.devicePixelRatio || 1; ctx.scale(dpr, dpr); const size = cvs.width / dpr; const unit=size/14, cx=size/2, cy=size/2;
+            
+            // --- 1. 繪製水平移動的起點鬼影 (半透明) ---
+            if (this.state.startMarker) {
+                ctx.save(); ctx.globalAlpha = 0.5;
+                CollectGame.drawIcon(ctx, cx+this.state.startMarker.x*unit, cy-this.state.startMarker.y*unit, '🛸', unit, true, this.state.startMarker.text, 'top');
+                ctx.restore();
+            }
+
+            // --- 智慧標籤邏輯 ---
+            const dx = this.state.animPos.x - this.state.target.x;
+            const dy = this.state.animPos.y - this.state.target.y;
+            const isClose = (dx*dx + dy*dy) < 2.25;
+
+            // --- 2. 繪製寶箱 Ghost (答對等待中) ---
+            if(this.state.waitingForNext && !this.state.errorData) {
+                 const ot = this.state.originalTarget;
+                 ctx.save(); ctx.globalAlpha = 0.5;
+                 // 寶箱鬼影強制在上方，若太近飛船會讓位
+                 CollectGame.drawIcon(ctx, cx+ot.x*unit, cy-ot.y*unit, '💎', unit, true, `(${ot.x},${ot.y})`, 'top');
+                 ctx.restore();
+            }
+
+            // --- 3. 繪製實體寶箱 ---
+            const hideMovingCoords = (this.state.hook.active && this.state.hook.hit) || (this.state.waitingForNext && !this.state.errorData);
+            CollectGame.drawIcon(ctx, cx+this.state.target.x*unit, cy-this.state.target.y*unit, '💎', unit, !hideMovingCoords, `(${this.state.target.x},${this.state.target.y})`, 'top');
+            
+            const rx = cx+this.state.animPos.x*unit, ry = cy-this.state.animPos.y*unit;
+            
+            if(this.state.hook.active) {
+                const hy = ry-(this.state.hook.len*this.state.hook.dir*unit);
+                ctx.strokeStyle="#fff"; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(rx,ry); ctx.lineTo(rx,hy); ctx.stroke();
+            }
+            
+            // --- 4. 繪製飛船 ---
+            const robotLabelPos = isClose ? 'bottom' : 'top';
+            CollectGame.drawIcon(ctx, rx, ry, '🛸', unit, true, `(${Math.round(this.state.animPos.x)},${Math.round(this.state.animPos.y)})`, robotLabelPos);
+            
+            if(!this.state.isAnimating && !this.state.hook.active && !this.state.errorData && !this.state.waitingForNext) {
+                const tx = cx+this.state.target.x*unit, ty = cy-this.state.target.y*unit;
+                if(this.state.step==='x' && this.state.target.x!==this.state.animPos.x) this.drawArrow(ctx, rx, ry, tx, ry, "#ffeaa7");
+            }
+
+            if(this.state.errorData) {
+                const ed = this.state.errorData;
+                const offset = 20;
+                const startX = rx; const startY = ry;
+                const correctX = rx; const correctY = cy - ed.target * unit;
+                const wrongX = rx; const wrongY = cy - ed.wrongDest * unit; 
+                this.drawLabelArrow(ctx, startX + offset, startY, correctX + offset, correctY, "var(--success-color)", `${ed.correctDiff}單位`, 1);
+                this.drawLabelArrow(ctx, startX - offset, startY, wrongX - offset, wrongY, "var(--error-color)", `${ed.wrongDiff}單位`, -1);
+            }
+        },
+        drawArrow: function(ctx, x1, y1, x2, y2, color) {
+            const dx = x2-x1, dy = y2-y1, angle = Math.atan2(dy, dx), head = 15;
+            ctx.save(); ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = 4;
+            ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(x2, y2);
+            ctx.lineTo(x2-head*Math.cos(angle-Math.PI/6), y2-head*Math.sin(angle-Math.PI/6));
+            ctx.lineTo(x2-head*Math.cos(angle+Math.PI/6), y2-head*Math.sin(angle+Math.PI/6)); ctx.fill(); ctx.restore();
+        },
+        drawLabelArrow: function(ctx, x1, y1, x2, y2, colorStr, label, offsetDir=1) {
+            let color = colorStr; if(colorStr.includes('success')) color = '#00b894'; if(colorStr.includes('error')) color = '#ff4757';
+            const dx = x2-x1, dy = y2-y1, angle = Math.atan2(dy, dx), head = 10, dist = Math.sqrt(dx*dx + dy*dy);
+            if(dist < 5) return;
+            ctx.save(); ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = 3;
+            ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(x2, y2);
+            ctx.lineTo(x2-head*Math.cos(angle-Math.PI/6), y2-head*Math.sin(angle-Math.PI/6));
+            ctx.lineTo(x2-head*Math.cos(angle+Math.PI/6), y2-head*Math.sin(angle+Math.PI/6)); ctx.fill();
+            
+            const midX = (x1+x2)/2, midY = (y1+y2)/2;
+            ctx.font = "bold 14px Arial"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+            const metrics = ctx.measureText(label); const padding = 4;
+            
+            const textOffsetX = 15 * offsetDir;
+            
+            ctx.fillStyle = "rgba(0,0,0,0.8)"; 
+            ctx.fillRect(midX - metrics.width/2 - padding + textOffsetX, midY - 10, metrics.width + padding*2, 20);
+            ctx.fillStyle = color; 
+            ctx.fillText(label, midX + textOffsetX, midY); 
+            ctx.restore();
+        }
+    };
+
+    function switchMode(mode) {
+        document.querySelectorAll('.game-container').forEach(el => el.classList.remove('visible'));
+        document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+        if(mode === 'collect') { document.getElementById('container-collect').classList.add('visible'); document.querySelector('.mode-collect').classList.add('active'); triggerResize(); }
+        else if(mode === 'sort') { document.getElementById('container-sort').classList.add('visible'); document.querySelector('.mode-sort').classList.add('active'); if(SortGame.total === 0) SortGame.init(); }
+        else if(mode === 'treasure') { document.getElementById('container-treasure').classList.add('visible'); document.querySelector('.mode-treasure').classList.add('active'); triggerResize(); if(TreasureGame.state.found === 0) TreasureGame.init(); }
+    }
+    function triggerResize() {
+        resizeCanvas('canvasCollect'); CollectGame.draw(); resizeCanvas('canvasTreasure'); TreasureGame.redrawCache(); TreasureGame.draw();
+        if(document.getElementById('container-sort').classList.contains('visible') && document.getElementById('sortFeedbackView').style.display === 'block') { SortGame.drawFeedback(SortGame.getCorrectZone(SortGame.task.x, SortGame.task.y), null); }
+    }
+    function resizeCanvas(id) {
+        const c = document.getElementById(id); const p = c.parentElement;
+        if(p.clientWidth > 0) { const s = Math.min(p.clientWidth, p.clientHeight); if (c.width !== s * window.devicePixelRatio) { c.width = s * window.devicePixelRatio; c.height = s * window.devicePixelRatio; c.style.width = s + "px"; c.style.height = s + "px"; } }
+    }
+    let resizeTimer;
+    window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { triggerResize(); }, 100); });
+    window.onload = function() { 
+        document.getElementById('gameID').textContent = GameIDSystem.generate();
+        setTimeout(() => { CollectGame.init(); triggerResize(); }, 100); 
+    }
+</script>
+</body>
+</html>

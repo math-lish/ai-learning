@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>代數星際工廠：括號修正版</title>
+    
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #1e272e;
+            --panel-bg: #2f3640;
+            --accent: #ffd32a;
+            --danger: #ff3f34;
+            --success: #0be881;
+            --chip-var-bg: #4bcffa;
+            --chip-num-bg: #ff9f43;
+        }
+
+        * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: #d2dae2;
+            margin: 0; padding: 0;
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+        }
+
+        header {
+            height: 50px; background: rgba(0,0,0,0.3);
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 20px;
+        }
+        .stat-value { color: var(--accent); font-weight: bold; font-size: 1.2rem; }
+        .lives-container { font-size: 1.2rem; letter-spacing: 2px; }
+
+        #game-stage {
+            flex: 1; display: flex; flex-direction: column; align-items: center;
+            padding: 10px; width: 100%; max-width: 500px; margin: 0 auto;
+            overflow-y: auto;
+        }
+
+        /* --- 題目卡片 --- */
+        #question-card {
+            background: var(--panel-bg); width: 100%; 
+            min-height: 240px; 
+            padding: 15px 10px; 
+            border-radius: 15px; text-align: center; margin-bottom: 15px;
+            border: 2px solid #4b6584; position: relative;
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: flex-start; 
+        }
+
+        /* 題目文字 */
+        #question-text {
+            font-family: 'Times New Roman', serif; font-size: 2.2rem;
+            color: white; line-height: 1.1; margin-bottom: 5px;
+            height: 50px; display: flex; align-items: center; justify-content: center;
+        }
+
+        /* 提示區域容器 */
+        #hint-container {
+            width: 100%;
+            margin-top: 5px;      
+            padding-top: 5px;     
+            border-top: 1px dashed rgba(127, 140, 141, 0.5);
+            display: none; 
+            flex-direction: column; align-items: center;
+            flex-grow: 1; justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* 等式容器 */
+        .equation-row {
+            display: flex; align-items: center; justify-content: center; flex-wrap: wrap;
+            font-family: 'Times New Roman', serif; font-size: 1.5rem; color: white;
+            width: 100%; gap: 3px; 
+            padding: 5px; border-radius: 8px;
+            transition: all 0.3s;
+        }
+        
+        /* HTML 風格的數學元件 */
+        .interactive-term {
+            cursor: pointer; padding: 2px 6px; border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: background 0.2s;
+        }
+        .interactive-term:hover { background: rgba(255,255,255,0.1); }
+
+        .expanded-coef { color: var(--chip-num-bg); font-weight: bold; margin: 0 2px; padding: 2px 4px; border-radius: 4px; transition: all 0.2s; }
+        .expanded-vars { color: var(--chip-var-bg); margin: 0 2px; padding: 2px 4px; border-radius: 4px; transition: all 0.2s; }
+        
+        /* 變數群組 */
+        .vars-group {
+            display: inline-flex; align-items: center;
+            border-radius: 6px; padding: 2px;
+            transition: all 0.2s;
+        }
+
+        /* 準備好交換時的目標樣式 */
+        .swap-target {
+            cursor: pointer;
+            border: 2px solid var(--accent) !important;
+            background: rgba(255, 211, 42, 0.15) !important;
+            border-radius: 8px;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,211,42,0.4); } 50% { transform: scale(1.05); box-shadow: 0 0 0 4px rgba(255,211,42,0); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,211,42,0); } }
+
+        /* 分數結構 */
+        .fraction-wrap { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; }
+        .numerator { border-bottom: 2px solid white; padding-bottom: 2px; display: flex; justify-content: center; }
+        .denominator { padding-top: 2px; display: flex; justify-content: center; }
+
+        .cancelled { text-decoration: line-through; opacity: 0.4; color: #ff6b6b; }
+        
+        /* 提示按鈕 */
+        #btn-hint {
+            background: var(--accent); color: #000; border: none;
+            padding: 6px 16px; border-radius: 20px; font-weight: bold;
+            cursor: pointer; font-size: 0.9rem; margin-top: 5px;
+            box-shadow: 0 3px 0 #cfa908;
+            position: absolute; top: 90px;
+        }
+        #btn-hint:active { transform: translateY(2px); box-shadow: none; }
+        
+        sup { font-size: 0.6em; vertical-align: super; position: relative; top: -0.1em; }
+
+        /* --- 選項區 (LaTeX 風格) --- */
+        #options-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; margin-bottom: 15px;
+            min-height: 150px;
+        }
+        .option-btn {
+            background: #34495e; border: 2px solid transparent; border-radius: 12px;
+            color: white; font-size: 1.2rem; padding: 10px;
+            display: flex; justify-content: center; align-items: center;
+            transition: transform 0.1s;
+        }
+        .option-btn.selected { border-color: var(--accent); background-color: #57606f; }
+        .correct-btn { background-color: var(--success) !important; color: #000 !important; }
+        .wrong-btn { background-color: var(--danger) !important; opacity: 0.6; }
+
+        #btn-confirm {
+            width: 100%; background: var(--success); color: #000;
+            font-size: 1.2rem; font-weight: bold; padding: 12px;
+            border: none; border-radius: 50px; opacity: 0.5; pointer-events: none;
+        }
+        #btn-confirm.active { opacity: 1; pointer-events: auto; cursor: pointer; }
+
+        /* Game Over */
+        #game-over-modal {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 200;
+            display: none; flex-direction: column; justify-content: center; align-items: center;
+            color: white;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="lives-container" id="lives-display">❤️❤️❤️</div>
+        <div class="stat-value">Score: <span id="score-val">0</span></div>
+    </header>
+
+    <div id="game-stage">
+        <div id="question-card">
+            <div id="question-text">Loading...</div>
+            
+            <button id="btn-hint" onclick="showHint()">💡 展開提示</button>
+
+            <div id="hint-container">
+                <div id="hint-equation" class="equation-row"></div>
+            </div>
+        </div>
+        
+        <div id="options-grid"></div>
+        
+        <div><button id="btn-confirm" onclick="submitAnswer()">✅ 確定答案</button></div>
+    </div>
+
+    <div id="game-over-modal">
+        <h1 style="color:var(--danger)">能量耗盡</h1>
+        <p>最終分數: <span id="final-score">0</span></p>
+        <button id="btn-restart" onclick="startGame()" style="padding:10px 30px; border-radius:20px; border:none; background:var(--accent); font-size:1.2rem; font-weight:bold; cursor:pointer;">重新開始</button>
+    </div>
+
+<script>
+    let gameState = { 
+        score: 0, 
+        lives: 3,
+        currentProblem: null, 
+        selectedOptionBtn: null,
+        selectedOptionValue: null,
+        isProcessing: false,
+        isFirstAttempt: true 
+    };
+
+    let hintState = {
+        expandedT1: false,
+        expandedT2: false,
+        swapped: false
+    };
+
+    // MathJax 渲染
+    function renderMath() {
+        if (window.MathJax) {
+            const node = document.getElementById('options-grid');
+            window.MathJax.typesetPromise([node]).catch((err) => console.log(err));
+        }
+    }
+
+    function startGame() {
+        gameState.score = 0;
+        gameState.lives = 3;
+        document.getElementById('game-over-modal').style.display = 'none';
+        updateStats();
+        nextLevel();
+    }
+
+    function updateStats() {
+        document.getElementById('score-val').innerText = gameState.score;
+        let hearts = "";
+        for(let i=0; i<gameState.lives; i++) hearts += "❤️";
+        for(let i=gameState.lives; i<3; i++) hearts += "🖤";
+        document.getElementById('lives-display').innerText = hearts;
+    }
+
+    // --- HTML 格式化 (題目與提示) ---
+    function formatTermHTML(coef, exp) {
+        if (coef === 0) return "0";
+        let cStr = coef.toString();
+        if (Math.abs(coef) === 1 && exp !== 0) cStr = coef === 1 ? "" : "-";
+        if (exp === 0) return coef.toString();
+        if (exp === 1) return cStr + "x";
+        return `${cStr}x<sup>${exp}</sup>`;
+    }
+
+    // --- LaTeX 格式化 (選項) ---
+    function formatTermLaTeX(coef, exp) {
+        if (coef === 0) return "0";
+        let cStr = coef.toString();
+        if (Math.abs(coef) === 1 && exp !== 0) cStr = coef === 1 ? "" : "-";
+        if (exp === 0) return coef.toString();
+        if (exp === 1) return cStr + "x";
+        return `${cStr}x^{${exp}}`;
+    }
+
+    function formatResultLaTeX(coef, exp) {
+        if (exp >= 0) {
+            return `\\( ${formatTermLaTeX(coef, exp)} \\)`;
+        } else {
+            let absExp = Math.abs(exp);
+            let denomStr = (absExp === 1) ? "x" : `x^{${absExp}}`;
+            return `\\( \\frac{${coef}}{${denomStr}} \\)`;
+        }
+    }
+
+    function generateProblem() {
+        const isDiv = Math.random() > 0.5;
+        let p = {};
+        
+        if (!isDiv) {
+            p.type = 'mul';
+            p.c1 = Math.floor(Math.random() * 5) + 2; p.c2 = Math.floor(Math.random() * 5) + 2;
+            p.e1 = Math.floor(Math.random() * 3) + 1; p.e2 = Math.floor(Math.random() * 3) + 1;
+            p.ansC = p.c1 * p.c2; 
+            p.ansE = p.e1 + p.e2;
+            p.qText = `${formatTermHTML(p.c1, p.e1)} · ${formatTermHTML(p.c2, p.e2)}`;
+            p.ansText = formatResultLaTeX(p.ansC, p.ansE);
+        } else {
+            p.type = 'div';
+            let qC = Math.floor(Math.random() * 4) + 2;
+            p.c2 = Math.floor(Math.random() * 3) + 2;
+            p.c1 = qC * p.c2;
+
+            let isFractionAnswer = Math.random() > 0.5;
+            if (isFractionAnswer) {
+                p.e1 = Math.floor(Math.random() * 2) + 1;
+                p.e2 = p.e1 + Math.floor(Math.random() * 2) + 1;
+                p.ansE = p.e1 - p.e2; 
+            } else {
+                p.e2 = Math.floor(Math.random() * 2) + 1;
+                p.e1 = p.e2 + Math.floor(Math.random() * 2) + 1;
+                p.ansE = p.e1 - p.e2;
+            }
+            p.ansC = qC;
+            // 除法題目加上括號
+            p.qText = `${formatTermHTML(p.c1, p.e1)} ÷ (${formatTermHTML(p.c2, p.e2)})`;
+            p.ansText = formatResultLaTeX(p.ansC, p.ansE);
+        }
+
+        let opts = new Set([p.ansText]);
+        if (p.type === 'mul') {
+            opts.add(formatResultLaTeX(p.ansC, p.e1 * p.e2));
+            opts.add(formatResultLaTeX(p.c1 + p.c2, p.ansE));
+            opts.add(formatResultLaTeX(p.c1 + p.c2, p.e1 * p.e2));
+        } else {
+            opts.add(formatResultLaTeX(p.c1 - p.c2, p.ansE));
+            opts.add(formatResultLaTeX(p.ansC, -p.ansE)); 
+            opts.add(formatResultLaTeX(p.c1 - p.c2, -p.ansE));
+        }
+        while(opts.size < 4) {
+            let randC = Math.floor(Math.random()*10)+1;
+            let randE = Math.floor(Math.random()*5) * (Math.random()>0.5?1:-1);
+            let val = formatResultLaTeX(randC, randE);
+            if(val !== p.ansText) opts.add(val);
+        }
+        p.options = Array.from(opts).sort(() => Math.random() - 0.5);
+        return p;
+    }
+
+    function nextLevel() {
+        if (gameState.lives <= 0) {
+            document.getElementById('final-score').innerText = gameState.score;
+            document.getElementById('game-over-modal').style.display = 'flex';
+            return;
+        }
+
+        gameState.currentProblem = generateProblem();
+        gameState.isFirstAttempt = true; 
+
+        document.getElementById('question-text').innerHTML = gameState.currentProblem.qText;
+        const grid = document.getElementById('options-grid');
+        grid.innerHTML = "";
+        
+        // 重置提示 UI
+        document.getElementById('hint-container').style.display = 'none';
+        document.getElementById('btn-hint').style.display = 'block';
+        hintState = { expandedT1: false, expandedT2: false, swapped: false };
+        
+        const eqDiv = document.getElementById('hint-equation');
+        eqDiv.className = 'equation-row';
+        eqDiv.onclick = null;
+        eqDiv.innerHTML = "";
+
+        gameState.selectedOptionBtn = null;
+        document.getElementById('btn-confirm').classList.remove('active');
+        gameState.isProcessing = false;
+
+        gameState.currentProblem.options.forEach(opt => {
+            let btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerHTML = opt;
+            btn.onclick = () => selectOption(opt, btn);
+            grid.appendChild(btn);
+        });
+
+        renderMath();
+    }
+
+    function selectOption(val, btn) {
+        if(gameState.isProcessing) return;
+        document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        gameState.selectedOptionBtn = btn;
+        gameState.selectedOptionValue = val;
+        document.getElementById('btn-confirm').classList.add('active');
+    }
+
+    function submitAnswer() {
+        if(!gameState.selectedOptionBtn || gameState.isProcessing) return;
+        gameState.isProcessing = true;
+        const btn = gameState.selectedOptionBtn;
+        const isCorrect = gameState.selectedOptionValue === gameState.currentProblem.ansText;
+
+        if(isCorrect) {
+            btn.classList.add('correct-btn');
+            gameState.score += 10;
+            
+            // 回血機制
+            if (gameState.isFirstAttempt && gameState.lives < 3) {
+                gameState.lives++;
+            }
+            updateStats();
+            
+            document.getElementById('btn-confirm').classList.remove('active');
+            setTimeout(nextLevel, 1000);
+        } else {
+            btn.classList.add('wrong-btn');
+            gameState.lives--;
+            gameState.isFirstAttempt = false; 
+            updateStats();
+
+            document.getElementById('btn-confirm').classList.remove('active');
+            
+            if (gameState.lives <= 0) {
+                setTimeout(nextLevel, 800); 
+            } else {
+                setTimeout(() => { 
+                    btn.classList.remove('wrong-btn'); 
+                    btn.classList.remove('selected');
+                    gameState.selectedOptionBtn = null;
+                    gameState.isProcessing = false; 
+                }, 800);
+            }
+        }
+    }
+
+    // ==========================================
+    // 提示邏輯
+    // ==========================================
+
+    function showHint() {
+        const hintContainer = document.getElementById('hint-container');
+        const hintBtn = document.getElementById('btn-hint');
+        hintContainer.style.display = 'flex';
+        hintBtn.style.display = 'none';
+        renderHintInitial();
+    }
+
+    function renderHintInitial() {
+        const eqDiv = document.getElementById('hint-equation');
+        const p = gameState.currentProblem;
+        
+        eqDiv.innerHTML = "";
+        eqDiv.onclick = null;
+        eqDiv.className = 'equation-row'; 
+
+        let equals = document.createElement('span');
+        equals.innerHTML = "= ";
+        equals.style.marginRight = "5px";
+        eqDiv.appendChild(equals);
+
+        if (p.type === 'div') {
+            let wrapper = document.createElement('div');
+            wrapper.className = "fraction-wrap";
+            
+            let numDiv = document.createElement('div');
+            numDiv.className = "numerator interactive-term";
+            numDiv.innerHTML = formatTermHTML(p.c1, p.e1);
+            numDiv.onclick = () => expandHintTerm(1, numDiv);
+
+            let denDiv = document.createElement('div');
+            denDiv.className = "denominator interactive-term";
+            denDiv.innerHTML = formatTermHTML(p.c2, p.e2);
+            denDiv.onclick = () => expandHintTerm(2, denDiv);
+
+            wrapper.appendChild(numDiv);
+            wrapper.appendChild(denDiv);
+            eqDiv.appendChild(wrapper);
+        } else {
+            // 乘法
+            let t1 = document.createElement('div');
+            t1.className = "interactive-term";
+            t1.id = "hint-t1";
+            t1.innerHTML = formatTermHTML(p.c1, p.e1);
+            t1.onclick = () => expandHintTerm(1, t1);
+
+            let dot = document.createElement('span');
+            dot.innerHTML = " · ";
+            dot.style.margin = "0 3px";
+
+            let t2 = document.createElement('div');
+            t2.className = "interactive-term";
+            t2.id = "hint-t2";
+            t2.innerHTML = formatTermHTML(p.c2, p.e2);
+            t2.onclick = () => expandHintTerm(2, t2);
+
+            eqDiv.appendChild(t1);
+            eqDiv.appendChild(dot);
+            eqDiv.appendChild(t2);
+        }
+    }
+
+    function expandHintTerm(id, el) {
+        if ((id===1 && hintState.expandedT1) || (id===2 && hintState.expandedT2)) return;
+
+        const p = gameState.currentProblem;
+        let coef = id === 1 ? p.c1 : p.c2;
+        let exp = id === 1 ? p.e1 : p.e2;
+
+        // 包裝: 係數 span, 變數群 span
+        let html = `<span class="expanded-coef" id="coef-${id}">${coef}</span>`;
+        
+        let xStr = "";
+        for(let i=0; i<exp; i++) {
+            if(i>0) xStr += "·";
+            if(p.type === 'div') {
+                xStr += `<span class="expanded-vars x-chip" style="cursor:pointer" data-loc="${id===1?'top':'bot'}">x</span>`;
+            } else {
+                xStr += `<span class="expanded-vars">x</span>`;
+            }
+        }
+        
+        if (p.type === 'mul') {
+            // 乘法模式：將變數群包在一個容器中 (vars-group)，以便整組點擊
+            html += `<span style="margin:0 2px">·</span><span class="vars-group" id="vars-group-${id}">${xStr}</span>`;
+        } else {
+            html += `<span style="margin:0 2px">·</span>${xStr}`;
+        }
+
+        el.innerHTML = html;
+        el.style.cursor = "default";
+        el.classList.remove("interactive-term");
+
+        if(id === 1) hintState.expandedT1 = true;
+        if(id === 2) hintState.expandedT2 = true;
+
+        checkCompletion();
+    }
+
+    function checkCompletion() {
+        const p = gameState.currentProblem;
+        if (hintState.expandedT1 && hintState.expandedT2) {
+            if (p.type === 'div') {
+                bindCancelEvents();
+            } else {
+                // 乘法：設定精準點擊目標 (交界處)
+                setupMulSwapInteraction();
+            }
+        }
+    }
+
+    // --- 乘法精準換位邏輯 ---
+    function setupMulSwapInteraction() {
+        // 目標：第一個單項式的變數群整組 (vars-group-1)
+        // 目標：第二個單項式的係數 (coef-2)
+        const targetVarGroup1 = document.getElementById('vars-group-1');
+        const targetCoef2 = document.getElementById('coef-2');
+
+        if (targetVarGroup1) {
+            targetVarGroup1.classList.add('swap-target'); // 視覺特效
+            targetVarGroup1.onclick = performSwap;
+        }
+        if (targetCoef2) {
+            targetCoef2.classList.add('swap-target'); // 視覺特效
+            targetCoef2.onclick = performSwap;
+        }
+    }
+
+    function performSwap() {
+        if (hintState.swapped) return;
+        
+        const eqDiv = document.getElementById('hint-equation');
+        const p = gameState.currentProblem;
+        
+        let vars1 = Array(p.e1).fill(`<span class="expanded-vars">x</span>`).join("·");
+        let vars2 = Array(p.e2).fill(`<span class="expanded-vars">x</span>`).join("·");
+
+        let newHtml = `<span style="margin-right:10px">= </span>`;
+        newHtml += `<span class="expanded-coef">${p.c1}</span>`;
+        newHtml += `<span style="margin:0 2px">·</span>`;
+        newHtml += `<span class="expanded-coef">${p.c2}</span>`; // 交換後的係數
+        newHtml += `<span style="margin:0 2px">·</span>`;
+        newHtml += `<span>${vars1}</span>`;
+        newHtml += `<span style="margin:0 2px">·</span>`;
+        newHtml += `<span>${vars2}</span>`;
+
+        eqDiv.innerHTML = newHtml;
+        eqDiv.style.cursor = "default";
+
+        hintState.swapped = true;
+    }
+
+    let cancelSelection = null;
+    function bindCancelEvents() {
+        document.querySelectorAll('.x-chip').forEach(chip => {
+            chip.onclick = function(e) {
+                e.stopPropagation();
+                if(this.classList.contains('cancelled')) return;
+                
+                const loc = this.dataset.loc;
+                if (!cancelSelection) {
+                    cancelSelection = { el: this, loc: loc };
+                    this.style.background = "#ffeaa7";
+                } else {
+                    if (cancelSelection.loc !== loc) {
+                        this.classList.add('cancelled');
+                        cancelSelection.el.classList.add('cancelled');
+                        this.style.background = ""; 
+                        cancelSelection.el.style.background = "";
+                        cancelSelection = null;
+                    } else {
+                        cancelSelection.el.style.background = "";
+                        cancelSelection = { el: this, loc: loc };
+                        this.style.background = "#ffeaa7";
+                    }
+                }
+            };
+        });
+    }
+
+    startGame();
+
+</script>
+</body>
+</html>

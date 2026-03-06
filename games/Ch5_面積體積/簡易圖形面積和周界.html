@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+ <title>幾何獵人 - 精簡觸控版</title>
+ <style>
+ :root {
+ --primary: #3498db;
+ --area-color: rgba(52, 152, 219, 0.2);
+ --perimeter-color: #e74c3c;
+ --text: #2c3e50;
+ --bg: #f9f9f9;
+ }
+
+ body {
+ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+ background-color: var(--bg);
+ color: var(--text);
+ display: flex;
+ justify-content: center;
+ align-items: center;
+ min-height: 100vh;
+ margin: 0;
+ touch-action: manipulation; 
+ }
+
+ .game-container {
+ background: white;
+ padding: 15px;
+ border-radius: 15px;
+ box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+ text-align: center;
+ max-width: 500px;
+ width: 100%;
+ position: relative;
+ box-sizing: border-box;
+ }
+
+ .header {
+ display: flex;
+ justify-content: space-between;
+ align-items: center;
+ margin-bottom: 8px;
+ font-weight: bold;
+ font-size: 1rem;
+ }
+
+ canvas {
+ background-color: #fff;
+ border: 2px dashed #bdc3c7;
+ border-radius: 10px;
+ margin-bottom: 8px;
+ width: 100%; 
+ height: auto;
+ max-height: 220px;
+ box-shadow: inset 0 0 20px rgba(0,0,0,0.05);
+ }
+
+ .question-text {
+ font-size: 1.1rem;
+ margin-bottom: 8px;
+ min-height: 1.5em; 
+ display: flex;
+ flex-wrap: wrap;
+ justify-content: center;
+ align-items: center;
+ line-height: 1.4;
+ }
+
+ .highlight-area { color: var(--primary); font-weight: bold; margin: 0 3px; }
+ .highlight-perimeter { color: var(--perimeter-color); font-weight: bold; margin: 0 3px; }
+ 
+ .badge {
+ display: inline-block;
+ padding: 2px 8px;
+ border-radius: 12px;
+ font-size: 0.9rem;
+ color: white;
+ margin: 0 5px;
+ vertical-align: middle;
+ }
+ .bg-blue { background: var(--primary); }
+ .bg-red { background: var(--perimeter-color); }
+
+ .input-display {
+ background: #eee;
+ border: 2px solid #ddd;
+ border-radius: 8px;
+ padding: 5px;
+ font-size: 1.4rem;
+ font-weight: bold;
+ letter-spacing: 2px;
+ min-height: 35px;
+ margin-bottom: 10px;
+ color: #333;
+ }
+ .input-display.placeholder { color: #aaa; }
+
+ .keypad {
+ display: grid;
+ grid-template-columns: repeat(6, 1fr); 
+ gap: 5px;
+ }
+
+ .key-btn {
+ background: #fff;
+ border: 1px solid #ddd;
+ border-radius: 6px;
+ padding: 12px 0;
+ font-size: 1.1rem;
+ cursor: pointer;
+ box-shadow: 0 2px 0 #ccc;
+ transition: all 0.1s;
+ user-select: none;
+ -webkit-tap-highlight-color: transparent;
+ }
+
+ .key-btn:active {
+ transform: translateY(2px);
+ box-shadow: none;
+ background-color: #f0f0f0;
+ }
+
+ .key-submit {
+ background-color: var(--primary);
+ color: white;
+ border-color: #2980b9;
+ box-shadow: 0 2px 0 #2980b9;
+ }
+ .key-submit:active { background-color: #2980b9; }
+
+ .key-clear {
+ background-color: #e74c3c;
+ color: white;
+ border-color: #c0392b;
+ box-shadow: 0 2px 0 #c0392b;
+ font-size: 0.9rem;
+ }
+ .key-clear:active { background-color: #c0392b; }
+
+ .overlay {
+ position: absolute;
+ top: 0; left: 0; width: 100%; height: 100%;
+ background: rgba(255,255,255,0.98);
+ border-radius: 15px;
+ display: flex;
+ flex-direction: column;
+ justify-content: center;
+ align-items: center;
+ z-index: 10;
+ }
+ .overlay.hidden { display: none; }
+
+ .mode-btn {
+ width: 80%;
+ margin: 10px 0;
+ padding: 15px;
+ font-size: 1.1rem;
+ border: none;
+ border-radius: 10px;
+ color: white;
+ background: var(--primary);
+ cursor: pointer;
+ box-shadow: 0 4px 0 #2980b9;
+ }
+ .mode-desc { font-size: 0.9rem; color: #7f8c8d; margin-bottom: 5px; }
+
+ .shake { animation: shake 0.4s; }
+ @keyframes shake {
+ 0%, 100% { transform: translateX(0); }
+ 25% { transform: translateX(-8px); }
+ 75% { transform: translateX(8px); }
+ }
+ </style>
+</head>
+<body>
+
+<div class="game-container" id="game-area">
+ <div class="header">
+ <span style="color: var(--primary)">幾何獵人</span>
+ <span>分數: <span id="score">0</span></span>
+ </div>
+
+ <canvas id="geoCanvas" width="400" height="260"></canvas>
+
+ <div class="question-text" id="question-display">
+ 題目載入中...
+ </div>
+
+ <div id="display-area" class="input-display placeholder">?</div>
+
+ <div class="keypad">
+ <button class="key-btn" onclick="pressKey('1')">1</button>
+ <button class="key-btn" onclick="pressKey('2')">2</button>
+ <button class="key-btn" onclick="pressKey('3')">3</button>
+ <button class="key-btn" onclick="pressKey('4')">4</button>
+ <button class="key-btn" onclick="pressKey('5')">5</button>
+ <button class="key-btn" onclick="pressKey('6')">6</button>
+ 
+ <button class="key-btn" onclick="pressKey('7')">7</button>
+ <button class="key-btn" onclick="pressKey('8')">8</button>
+ <button class="key-btn" onclick="pressKey('9')">9</button>
+ <button class="key-btn" onclick="pressKey('0')">0</button>
+ <button class="key-btn key-clear" onclick="pressKey('C')">清除</button>
+ <button class="key-btn key-submit" onclick="checkAnswer()">確認</button>
+ </div>
+
+ <div class="overlay" id="start-screen">
+ <h1 style="color: var(--primary); margin-bottom:10px;">幾何獵人</h1>
+ <p style="color:#7f8c8d; margin-bottom:20px;">選擇挑戰模式</p>
+ 
+ <div class="mode-desc">適合初學者</div>
+ <button class="mode-btn" onclick="startGame('calc')">📐 計算模式 (正向)</button>
+ 
+ <div class="mode-desc" style="margin-top:15px;">適合進階者</div>
+ <button class="mode-btn" style="background: #9b59b6; box-shadow: 0 4px 0 #8e44ad;" onclick="startGame('reverse')">🧠 推理模式 (逆向)</button>
+ </div>
+</div>
+
+<script>
+ const canvas = document.getElementById('geoCanvas');
+ const ctx = canvas.getContext('2d');
+ const questionDisplay = document.getElementById('question-display');
+ const displayArea = document.getElementById('display-area');
+ const scoreEl = document.getElementById('score');
+ const startScreen = document.getElementById('start-screen');
+ const gameArea = document.getElementById('game-area');
+
+ let score = 0;
+ let mode = 'calc'; 
+ let currentAnswer = 0;
+ let questionType = ''; 
+ let currentInput = "";
+ let currentShape = { w: 0, h: 0 };
+
+ document.addEventListener('keydown', function(event) {
+ if (event.key >= '0' && event.key <= '9') pressKey(event.key);
+ if (event.key === 'Backspace') pressKey('C');
+ if (event.key === 'Enter') checkAnswer();
+ });
+
+ function startGame(selectedMode) {
+ mode = selectedMode;
+ score = 0;
+ scoreEl.innerText = 0;
+ startScreen.classList.add('hidden');
+ nextQuestion();
+ }
+
+ function pressKey(key) {
+ if (displayArea.classList.contains('success')) return;
+ if (key === 'C') {
+ currentInput = "";
+ } else {
+ if (currentInput.length < 5) currentInput += key;
+ }
+ updateDisplay();
+ }
+
+ function updateDisplay() {
+ if (currentInput === "") {
+ displayArea.innerText = "?";
+ displayArea.classList.add('placeholder');
+ } else {
+ displayArea.innerText = currentInput;
+ displayArea.classList.remove('placeholder');
+ }
+ }
+
+ function nextQuestion() {
+ currentInput = "";
+ displayArea.classList.remove('success'); 
+ updateDisplay();
+
+ let min = 3, max = 10;
+ if (score > 50) { min = 5; max = 15; }
+ if (score > 100) { min = 8; max = 20; }
+
+ let w = Math.floor(Math.random() * (max - min + 1)) + min;
+ let h = Math.floor(Math.random() * (max - min + 1)) + min;
+ if (Math.random() > 0.7) h = w;
+
+ currentShape.w = w;
+ currentShape.h = h;
+ questionType = Math.random() > 0.5 ? 'area' : 'perimeter';
+
+ if (mode === 'calc') {
+ setupCalcMode(w, h);
+ } else {
+ setupReverseMode(w, h);
+ }
+ drawShape();
+ }
+
+ function setupCalcMode(w, h) {
+ if (questionType === 'area') {
+ currentAnswer = w * h;
+ questionDisplay.innerHTML = '長 <span class="highlight-area">' + w + '</span>, 寬 <span class="highlight-area">' + h + '</span>。請問 <span class="badge bg-blue">面積</span> ?';
+ } else {
+ currentAnswer = (w + h) * 2;
+ questionDisplay.innerHTML = '長 <span class="highlight-perimeter">' + w + '</span>, 寬 <span class="highlight-perimeter">' + h + '</span>。請問 <span class="badge bg-red">周界</span> ?';
+ }
+ }
+
+ function setupReverseMode(w, h) {
+ let hideWidth = Math.random() > 0.5;
+ let knownSide = hideWidth ? h : w;
+ 
+ if (questionType === 'area') {
+ let area = w * h;
+ currentAnswer = hideWidth ? w : h;
+ questionDisplay.innerHTML = '<span class="badge bg-blue">面積</span>' + area + ', 一邊 ' + knownSide + '。 求 <b>另一邊</b> ?';
+ } else {
+ let perimeter = (w + h) * 2;
+ currentAnswer = hideWidth ? w : h;
+ questionDisplay.innerHTML = '<span class="badge bg-red">周界</span>' + perimeter + ', 一邊 ' + knownSide + '。 求 <b>另一邊</b> ?';
+ }
+ }
+
+ function drawShape() {
+ ctx.clearRect(0, 0, canvas.width, canvas.height);
+ 
+ let maxDisplayW = canvas.width - 60; 
+ let maxDisplayH = canvas.height - 60;
+ 
+ let scale = Math.min(maxDisplayW / currentShape.w, maxDisplayH / currentShape.h);
+ if (scale > 35) scale = 35; 
+
+ let drawW = currentShape.w * scale;
+ let drawH = currentShape.h * scale;
+ let startX = (canvas.width - drawW) / 2;
+ let startY = (canvas.height - drawH) / 2;
+
+ ctx.lineWidth = 4;
+ ctx.lineJoin = 'round';
+ 
+ if (questionType === 'area') {
+ ctx.fillStyle = 'rgba(52, 152, 219, 0.2)';
+ ctx.strokeStyle = '#3498db';
+ ctx.fillRect(startX, startY, drawW, drawH);
+ ctx.strokeRect(startX, startY, drawW, drawH);
+ } else {
+ ctx.fillStyle = 'transparent';
+ ctx.strokeStyle = '#e74c3c';
+ ctx.setLineDash([10, 5]);
+ ctx.strokeRect(startX, startY, drawW, drawH);
+ ctx.setLineDash([]);
+ }
+
+ ctx.fillStyle = '#2c3e50';
+ ctx.font = 'bold 20px Arial';
+ ctx.textAlign = 'center';
+ ctx.textBaseline = 'middle';
+
+ let labelTop, labelRight;
+ if (mode === 'calc') {
+ labelTop = currentShape.w;
+ labelRight = currentShape.h;
+ } else {
+ if (currentAnswer === currentShape.w && currentShape.w !== currentShape.h) {
+ labelTop = "?"; labelRight = currentShape.h;
+ } else if (currentAnswer === currentShape.h && currentShape.w !== currentShape.h) {
+ labelTop = currentShape.w; labelRight = "?";
+ } else {
+ labelTop = (questionDisplay.innerHTML.includes('一邊 ' + currentShape.h)) ? "?" : currentShape.w;
+ labelRight = (labelTop === "?") ? currentShape.h : "?";
+ }
+ }
+
+ ctx.fillText(labelTop, startX + drawW / 2, startY - 20);
+ ctx.fillText(labelRight, startX + drawW + 20, startY + drawH / 2);
+
+ if (questionType === 'area') {
+ ctx.fillStyle = 'rgba(52, 152, 219, 0.5)';
+ ctx.font = 'bold 40px Arial';
+ ctx.fillText("Area", startX + drawW / 2, startY + drawH / 2);
+ }
+ }
+
+ function checkAnswer() {
+ if (currentInput === "") return;
+ let val = parseInt(currentInput);
+
+ if (val === currentAnswer) {
+ score += 10;
+ scoreEl.innerText = score;
+ displayArea.innerHTML = '<span style="color:green">✔ ' + currentAnswer + '</span>';
+ displayArea.classList.add('success');
+ gameArea.style.borderColor = "#2ecc71";
+ setTimeout(function() { gameArea.style.borderColor = "transparent"; nextQuestion(); }, 800);
+ } else {
+ gameArea.classList.add('shake');
+ displayArea.style.color = "#e74c3c";
+ setTimeout(function() { 
+ gameArea.classList.remove('shake');
+ displayArea.style.color = "#333";
+ currentInput = "";
+ updateDisplay();
+ }, 500);
+ }
+ 
+ ctx.font = '20px Arial';
+ ctx.fillStyle = '#aaa';
+ ctx.textAlign = 'center';
+ ctx.fillText("準備開始...", canvas.width/2, canvas.height/2);
+</script>
+
+</body>
+</html>

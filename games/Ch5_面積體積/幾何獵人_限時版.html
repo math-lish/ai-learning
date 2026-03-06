@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>幾何獵人：限時突擊 (觸控版)</title>
+    <style>
+        :root {
+            --primary: #3498db;
+            --area-color: rgba(52, 152, 219, 0.2);
+            --perimeter-color: #e74c3c;
+            --text: #2c3e50;
+            --bg: #f0f3f6;
+            --timer-good: #2ecc71;
+            --timer-warn: #f1c40f;
+            --timer-alert: #e74c3c;
+        }
+
+        * {
+            box-sizing: border-box;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            position: fixed;
+            background-color: var(--bg);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100dvh;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            background: #f4f6f9;
+        }
+
+        /* 1. 儀表板 (含時間條) */
+        .dashboard-group {
+            flex: 0 0 auto;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            z-index: 10;
+            padding-bottom: 5px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .timer-container {
+            width: 100%;
+            height: 6px;
+            background-color: #eee;
+            position: relative;
+        }
+
+        .timer-fill {
+            height: 100%;
+            width: 100%;
+            background-color: var(--timer-good);
+            transition: width 1s linear, background-color 0.5s;
+        }
+
+        .time-badge {
+            background: #2c3e50;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+        }
+
+        /* 2. 戰鬥區 */
+        .battle-zone {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 5px 10px;
+            position: relative;
+        }
+
+        .scope-container {
+            position: relative;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            padding: 5px;
+            border: 2px solid #dce4ec;
+            width: 100%;
+            height: auto;
+            max-height: 50vh; /* 限制高度 */
+            aspect-ratio: 4/3;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        canvas {
+            width: 100% !important;
+            height: 100% !important;
+            border-radius: 8px;
+            object-fit: contain;
+        }
+
+        .mission-text {
+            font-size: 1rem;
+            margin: 8px 0 0 0;
+            text-align: center;
+            font-weight: bold;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            white-space: nowrap;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            color: white;
+            margin-left: 5px;
+        }
+        .bg-blue { background: var(--primary); }
+        .bg-red { background: var(--perimeter-color); }
+
+        /* 3. 控制區 */
+        .control-panel {
+            flex: 0 0 auto;
+            background: white;
+            border-top-left-radius: 15px;
+            border-top-right-radius: 15px;
+            padding: 10px;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+        .input-screen {
+            width: 100%;
+            height: 45px;
+            background: #2c3e50;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2ecc71;
+            margin-bottom: 8px;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 2px;
+        }
+        .input-screen.placeholder { color: #5d6d7e; letter-spacing: normal; font-size: 1.2rem; }
+
+        .tactical-numpad {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 5px;
+            width: 100%;
+        }
+
+        .key {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 12px 0;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text);
+            box-shadow: 0 2px 0 #cbd3da;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .key:active { transform: translateY(2px); box-shadow: none; background: #e2e6ea; }
+
+        .key-fire {
+            background-color: var(--primary);
+            color: white;
+            border-color: #2980b9;
+            box-shadow: 0 2px 0 #2980b9;
+            font-size: 1rem;
+        }
+        .key-fire:active { background-color: #2980b9; }
+
+        .key-del { color: var(--perimeter-color); background: #fff5f5; font-size: 1rem; }
+
+        /* 覆蓋層 */
+        .overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.98);
+            border-radius: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+        }
+        .overlay.hidden { display: none; }
+
+        .mode-btn {
+            width: 80%;
+            margin: 10px 0;
+            padding: 15px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 10px;
+            color: white;
+            background: var(--primary);
+            cursor: pointer;
+            box-shadow: 0 4px 0 #2980b9;
+        }
+        .mode-desc { font-size: 0.9rem; color: #7f8c8d; margin-bottom: 5px; }
+
+        /* 動畫 */
+        .shake { animation: shake 0.4s; }
+        .bonus-flash { animation: bonusFlash 0.5s; }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+        @keyframes bonusFlash {
+            0% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7); }
+            70% { box-shadow: 0 0 0 20px rgba(46, 204, 113, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container" id="game-area">
+    <div class="dashboard-group">
+        <div class="header">
+            <span style="color: var(--primary)">幾何獵人 <span style="font-size:0.8rem; color:#999">限時版</span></span>
+            <span class="time-badge" id="time-text">60s</span>
+            <span style="color: var(--primary)">分數: <span id="score">0</span></span>
+        </div>
+        <div class="timer-container">
+            <div class="timer-fill" id="timer-bar"></div>
+        </div>
+    </div>
+
+    <div class="battle-zone" id="battle-zone">
+        <div class="scope-container" id="scope">
+            <canvas id="geoCanvas" width="800" height="600"></canvas>
+        </div>
+        <div class="mission-text" id="mission-text">
+            準備開始...
+        </div>
+    </div>
+
+    <div class="control-panel">
+        <div class="input-screen placeholder" id="input-screen">READY</div>
+
+        <div class="tactical-numpad">
+            <button class="key" onclick="press(1)">1</button>
+            <button class="key" onclick="press(2)">2</button>
+            <button class="key" onclick="press(3)">3</button>
+            <button class="key" onclick="press(4)">4</button>
+            <button class="key" onclick="press(5)">5</button>
+            <button class="key" onclick="press(6)">6</button>
+            <button class="key" onclick="press(7)">7</button>
+            <button class="key" onclick="press(8)">8</button>
+            <button class="key" onclick="press(9)">9</button>
+            <button class="key" onclick="press(0)">0</button>
+            <button class="key key-del" onclick="press('del')">清除</button>
+            <button class="key key-fire" id="fire-btn" onclick="fire()">提交</button>
+        </div>
+    </div>
+
+    <div class="overlay" id="start-screen">
+        <h1 style="color: var(--primary); margin-bottom:10px;">幾何獵人</h1>
+        <p style="color:#7f8c8d; margin-bottom:30px;">限時挑戰模式</p>
+        
+        <div class="mode-desc">含 L 形複合圖形</div>
+        <button class="mode-btn" onclick="startGame('calc')">📐 計算模式 (正向)</button>
+        
+        <div class="mode-desc" style="margin-top:15px;">僅矩形，已知求邊長</div>
+        <button class="mode-btn" style="background: #9b59b6; box-shadow: 0 4px 0 #8e44ad;" onclick="startGame('reverse')">🧠 推理模式 (逆向)</button>
+    </div>
+
+    <div class="overlay hidden" id="end-screen">
+        <h2 style="color: #e74c3c">時間到！</h2>
+        <p>你的最終分數</p>
+        <h1 style="font-size: 3rem; margin: 10px 0;" id="final-score">0</h1>
+        <button class="mode-btn" style="width: 200px" onclick="location.reload()">再玩一次</button>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById('geoCanvas');
+    const ctx = canvas.getContext('2d');
+    const inputScreen = document.getElementById('input-screen');
+    const missionText = document.getElementById('mission-text');
+    const scoreEl = document.getElementById('score');
+    const startScreen = document.getElementById('start-screen');
+    const endScreen = document.getElementById('end-screen');
+    const finalScoreEl = document.getElementById('final-score');
+    const timerBar = document.getElementById('timer-bar');
+    const timeText = document.getElementById('time-text');
+    const scope = document.getElementById('scope');
+    const fireBtn = document.getElementById('fire-btn');
+
+    let score = 0;
+    let mode = 'calc';
+    let currentAnswer = 0;
+    let questionType = '';
+    let isComposite = false;
+    let currentVal = "";
+    
+    // 時間變數
+    let timeLeft = 60;
+    const MAX_TIME = 60;
+    let timerInterval = null;
+    let isPlaying = false;
+
+    let currentShape = { w: 0, h: 0, cutW: 0, cutH: 0 };
+
+    function press(num) {
+        if (!isPlaying) return;
+        if (num === 'del') {
+            currentVal = "";
+        } else {
+            if (currentVal === "SUCCESS" || currentVal === "MISS" || currentVal === "READY") currentVal = "";
+            if (currentVal.length < 6) currentVal += num;
+        }
+        updateInputScreen();
+    }
+
+    function updateInputScreen() {
+        if (currentVal === "" || currentVal === "READY") {
+            inputScreen.innerText = "READY";
+            inputScreen.classList.add('placeholder');
+        } else {
+            inputScreen.innerText = currentVal;
+            inputScreen.classList.remove('placeholder');
+        }
+    }
+
+    function startGame(selectedMode) {
+        mode = selectedMode;
+        score = 0;
+        scoreEl.innerText = 0;
+        startScreen.classList.add('hidden');
+        endScreen.classList.add('hidden');
+        
+        // 重置時間
+        timeLeft = MAX_TIME;
+        isPlaying = true;
+        currentVal = "";
+        updateInputScreen();
+        updateTimerUI();
+        startTimer();
+        
+        nextQuestion();
+    }
+
+    function startTimer() {
+        if (timerInterval) clearInterval(timerInterval);
+        
+        timerInterval = setInterval(() => {
+            if (timeLeft > 0) {
+                timeLeft--;
+                updateTimerUI();
+            } else {
+                endGame();
+            }
+        }, 1000);
+    }
+
+    function updateTimerUI() {
+        let pct = (timeLeft / MAX_TIME) * 100;
+        if (pct > 100) pct = 100;
+        
+        timerBar.style.width = `${pct}%`;
+        timeText.innerText = `${timeLeft}s`;
+
+        if (timeLeft > 30) {
+            timerBar.style.backgroundColor = 'var(--timer-good)';
+        } else if (timeLeft > 10) {
+            timerBar.style.backgroundColor = 'var(--timer-warn)';
+        } else {
+            timerBar.style.backgroundColor = 'var(--timer-alert)';
+        }
+    }
+
+    function endGame() {
+        isPlaying = false;
+        clearInterval(timerInterval);
+        finalScoreEl.innerText = score;
+        endScreen.classList.remove('hidden');
+    }
+
+    function fire() {
+        if (!isPlaying || currentVal === "" || currentVal === "READY") return;
+        
+        let val = parseInt(currentVal);
+        if (val === currentAnswer) {
+            score += isComposite ? 15 : 10;
+            scoreEl.innerText = score;
+            
+            // 答對獎勵
+            timeLeft = Math.min(timeLeft + 5, MAX_TIME);
+            updateTimerUI();
+            
+            inputScreen.style.color = "#2ecc71";
+            inputScreen.innerText = "SUCCESS (+5s)";
+            scope.classList.add('bonus-flash');
+            
+            setTimeout(() => {
+                scope.classList.remove('bonus-flash');
+                inputScreen.style.color = "#2ecc71"; // Reset color
+                currentVal = "";
+                updateInputScreen();
+                nextQuestion();
+            }, 800);
+            
+        } else {
+            scope.classList.add('shake');
+            setTimeout(() => scope.classList.remove('shake'), 400);
+            
+            inputScreen.style.color = "#e74c3c";
+            inputScreen.innerText = "MISS";
+            setTimeout(() => {
+                inputScreen.style.color = "#2ecc71";
+                currentVal = "";
+                updateInputScreen();
+            }, 500);
+        }
+    }
+
+    function nextQuestion() {
+        // 設定題型
+        isComposite = (mode === 'calc' && Math.random() > 0.5);
+
+        let min = 5, max = 12;
+        if (score > 50) { min = 8; max = 15; }
+
+        let w = Math.floor(Math.random() * (max - min + 1)) + min;
+        let h = Math.floor(Math.random() * (max - min + 1)) + min;
+        
+        currentShape.w = w;
+        currentShape.h = h;
+        currentShape.cutW = 0;
+        currentShape.cutH = 0;
+
+        if (isComposite) {
+            currentShape.cutW = Math.floor(Math.random() * (w - 3)) + 2;
+            currentShape.cutH = Math.floor(Math.random() * (h - 3)) + 2;
+        } else {
+            if (Math.random() > 0.7) currentShape.h = currentShape.w;
+            h = currentShape.h;
+        }
+
+        questionType = Math.random() > 0.5 ? 'area' : 'perimeter';
+
+        // 設定文字與答案
+        if (isComposite) {
+            setupCompositeQuestion();
+        } else if (mode === 'calc') {
+            setupCalcMode(w, h);
+        } else {
+            setupReverseMode(w, h);
+        }
+
+        drawShape();
+    }
+
+    function setupCompositeQuestion() {
+        let totalArea = currentShape.w * currentShape.h;
+        let cutArea = currentShape.cutW * currentShape.cutH;
+        
+        if (questionType === 'area') {
+            currentAnswer = totalArea - cutArea;
+            missionText.innerHTML = `任務：計算 <span class="badge bg-blue">面積</span>`;
+        } else {
+            currentAnswer = (currentShape.w + currentShape.h) * 2;
+            missionText.innerHTML = `任務：計算 <span class="badge bg-red">周界</span>`;
+        }
+    }
+
+    function setupCalcMode(w, h) {
+        if (questionType === 'area') {
+            currentAnswer = w * h;
+            missionText.innerHTML = `任務：計算 <span class="badge bg-blue">面積</span>`;
+        } else {
+            currentAnswer = (w + h) * 2;
+            missionText.innerHTML = `任務：計算 <span class="badge bg-red">周界</span>`;
+        }
+    }
+
+    function setupReverseMode(w, h) {
+        let hideWidth = Math.random() > 0.5;
+        let knownSide = hideWidth ? h : w;
+        
+        if (questionType === 'area') {
+            let area = w * h;
+            currentAnswer = hideWidth ? w : h;
+            missionText.innerHTML = `<span class="badge bg-blue">面積</span> ${area}，一邊 ${knownSide}，求另一邊`;
+        } else {
+            let perimeter = (w + h) * 2;
+            currentAnswer = hideWidth ? w : h;
+            missionText.innerHTML = `<span class="badge bg-red">周界</span> ${perimeter}，一邊 ${knownSide}，求另一邊`;
+        }
+    }
+
+    function drawShape() {
+        let cvsW = canvas.width;
+        let cvsH = canvas.height;
+        ctx.clearRect(0, 0, cvsW, cvsH);
+        
+        // 防遮擋 Padding
+        let padding = 160;
+        let scale = Math.min((cvsW - padding)/currentShape.w, (cvsH - padding)/currentShape.h);
+        if (scale > 40) scale = 40;
+
+        let drawW = currentShape.w * scale;
+        let drawH = currentShape.h * scale;
+        let startX = (cvsW - drawW) / 2;
+        let startY = (cvsH - drawH) / 2;
+
+        ctx.lineWidth = 4;
+        ctx.lineJoin = 'round';
+        
+        if (questionType === 'area') {
+            ctx.fillStyle = 'rgba(52, 152, 219, 0.2)';
+            ctx.strokeStyle = '#3498db';
+        } else {
+            ctx.fillStyle = 'transparent';
+            ctx.strokeStyle = '#e74c3c';
+        }
+
+        ctx.beginPath();
+        if (isComposite) {
+            let drawCutW = currentShape.cutW * scale;
+            let drawCutH = currentShape.cutH * scale;
+
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(startX, startY + drawH);
+            ctx.lineTo(startX + drawW, startY + drawH);
+            ctx.lineTo(startX + drawW, startY + drawCutH);
+            ctx.lineTo(startX + drawW - drawCutW, startY + drawCutH);
+            ctx.lineTo(startX + drawW - drawCutW, startY);
+            ctx.closePath();
+        } else {
+            ctx.rect(startX, startY, drawW, drawH);
+        }
+        
+        ctx.fill();
+        
+        if (questionType === 'perimeter') ctx.setLineDash([15, 10]);
+        ctx.stroke();
+        ctx.setLineDash([]); 
+
+        // 標籤繪製邏輯 (置中防遮擋)
+        let labelOffset = 50;
+
+        if (isComposite) {
+            // L 形標籤 (左、下、上短、右短)
+            drawLabel(currentShape.h, startX - labelOffset, startY + drawH/2);
+            drawLabel(currentShape.w, startX + drawW/2, startY + drawH + labelOffset);
+            
+            let topPart = currentShape.w - currentShape.cutW;
+            let topCenter = startX + (drawW - currentShape.cutW * scale)/2;
+            drawLabel(topPart, topCenter, startY - labelOffset);
+
+            let rightPart = currentShape.h - currentShape.cutH;
+            let rightCenterY = startY + drawH - (rightPart*scale)/2;
+            drawLabel(rightPart, startX + drawW + labelOffset, rightCenterY);
+
+        } else if (mode === 'calc') {
+            // 正向矩形 (上、右)
+            drawLabel(currentShape.w, startX + drawW/2, startY - labelOffset);
+            drawLabel(currentShape.h, startX + drawW + labelOffset, startY + drawH/2);
+
+        } else {
+            // 逆向矩形 (依據 missionText 判斷哪邊是問號)
+            let text = missionText.innerHTML;
+            let isHeightKnown = text.includes(`一邊 ${currentShape.h}`);
+            
+            let labelTop = isHeightKnown ? "?" : currentShape.w;
+            let labelRight = isHeightKnown ? currentShape.h : "?";
+            
+            drawLabel(labelTop, startX + drawW/2, startY - labelOffset);
+            drawLabel(labelRight, startX + drawW + labelOffset, startY + drawH/2);
+        }
+
+        // 面積/周界 標記
+        let markText = questionType === 'area' ? 'A' : 'P';
+        let markColor = questionType === 'area' ? '#3498db' : '#e74c3c';
+        
+        let centerX = startX + drawW / 2;
+        let centerY = startY + drawH / 2;
+        if(isComposite) { 
+            centerX -= (currentShape.cutW * scale)/4; 
+            centerY += (currentShape.cutH * scale)/4;
+        }
+        drawMissionMark(markText, markColor, centerX, centerY);
+    }
+
+    function drawLabel(text, x, y) {
+        ctx.font = 'bold 36px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        let metrics = ctx.measureText(text);
+        let bgW = metrics.width + 30;
+        let bgH = 50;
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = "rgba(0,0,0,0.2)";
+        ctx.shadowBlur = 5;
+        ctx.fillRect(x - bgW/2, y - bgH/2, bgW, bgH);
+        ctx.shadowBlur = 0;
+        
+        ctx.fillStyle = '#2c3e50';
+        ctx.fillText(text, x, y);
+    }
+
+    function drawMissionMark(text, color, x, y) {
+        ctx.font = '900 120px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = color;
+        ctx.globalAlpha = 0.15;
+        ctx.fillText(text, x, y);
+        ctx.globalAlpha = 1.0;
+    }
+</script>
+
+</body>
+</html>

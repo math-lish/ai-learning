@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zach's Math Class - 數學教學網站</title>
+    <title>少康老師教學網站</title>
     <style>
         * {
             margin: 0;
@@ -11,300 +11,394 @@
             box-sizing: border-box;
         }
         
-        :root {
-            --primary: #FF6B35;
-            --secondary: #4ECDC4;
-            --accent: #FFE66D;
-            --dark: #292F36;
-            --s1-color: #FF6B6B;
-            --s3-color: #4ECDC4;
-            --s5-color: #95E1D3;
-        }
-        
         body {
-            font-family: "PingFang HK", "Microsoft YaHei", sans-serif;
-            background: linear-gradient(135deg, #FFE66D 0%, #FF6B35 50%, #4ECDC4 100%);
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang HK", "Microsoft YaHei", sans-serif;
+            background: #f5f7fa;
             min-height: 100vh;
-            color: var(--dark);
-            padding: 20px;
+            color: #333;
         }
         
         .container {
-            max-width: 900px;
+            max-width: 1000px;
             margin: 0 auto;
+            padding: 20px;
         }
         
-        /* Header */
         header {
             text-align: center;
             padding: 30px 20px;
-            background: rgba(255,255,255,0.95);
-            border-radius: 25px;
-            margin-bottom: 25px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
         }
         
         header h1 {
-            font-size: 2.2em;
-            margin-bottom: 5px;
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: #333;
         }
         
-        header h1 span {
-            color: #FF6B35;
-        }
-        
-        header p {
-            font-size: 1.1em;
-            color: #666;
-        }
-        
-        /* Grade Selection */
-        .grade-section {
-            margin-bottom: 25px;
-        }
-        
-        .section-title {
-            text-align: center;
-            color: white;
-            font-size: 1.3em;
-            margin-bottom: 15px;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
-        }
-        
-        .grade-cards {
+        /* 年級按鈕 - 横行顯示 */
+        .grade-buttons {
             display: flex;
             justify-content: center;
-            gap: 20px;
+            gap: 15px;
             flex-wrap: wrap;
+            margin-bottom: 30px;
         }
         
-        .grade-card {
-            background: white;
-            border-radius: 20px;
-            padding: 30px 40px;
-            text-align: center;
+        .grade-btn {
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 12px;
             cursor: pointer;
             transition: all 0.3s;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-            border: 3px solid transparent;
-            text-decoration: none;
-            color: var(--dark);
-            min-width: 150px;
+            color: white;
         }
         
-        .grade-card:hover {
-            transform: translateY(-5px);
-            border-color: var(--accent);
+        .grade-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
         
-        .grade-card .grade-num {
-            font-size: 2.5em;
-            font-weight: bold;
+        .grade-btn.active {
+            box-shadow: 0 0 0 3px #333;
         }
         
-        .grade-card.s1 { color: var(--s1-color); }
-        .grade-card.s3 { color: var(--s3-color); }
-        .grade-card.s5 { color: #9b59b6; }
+        .grade-s1 { background: #ff6b6b; }
+        .grade-s2 { background: #4ecdc4; }
+        .grade-s3 { background: #45b7d1; }
+        .grade-s4 { background: #96ceb4; }
+        .grade-s5 { background: #ffeaa7; color: #333; }
+        .grade-s6 { background: #dfe6e9; color: #333; }
         
-        /* Chapters Grid */
+        /* 課題選擇區 */
         .chapters-section {
             display: none;
-            background: rgba(255,255,255,0.98);
-            border-radius: 25px;
-            padding: 30px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
-            margin-bottom: 25px;
-            animation: slideUp 0.4s ease-out;
         }
         
         .chapters-section.active {
             display: block;
         }
         
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .back-btn {
-            display: inline-block;
-            padding: 8px 16px;
-            background: #f0f0f0;
-            border-radius: 20px;
-            color: #666;
-            text-decoration: none;
-            font-size: 0.9em;
-            margin-bottom: 20px;
-            cursor: pointer;
-            border: none;
-        }
-        
-        .back-btn:hover {
-            background: #e0e0e0;
-        }
-        
         .chapters-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 12px;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
         }
         
         .chapter-card {
-            padding: 20px 15px;
-            border-radius: 15px;
-            text-align: center;
-            text-decoration: none;
-            color: white;
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
             transition: all 0.3s;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
         }
         
         .chapter-card:hover {
             transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
         }
         
-        .chapter-card .ch-num {
-            font-size: 1.8em;
+        .chapter-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .chapter-num {
+            background: #4A90E2;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-weight: bold;
+            margin-right: 12px;
         }
         
-        .chapter-card .ch-name {
-            font-size: 0.9em;
-            margin-top: 5px;
+        .chapter-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #333;
         }
         
-        /* Chapter Colors */
-        .ch01 { background: linear-gradient(135deg, #FF6B6B, #c0392b); }
-        .ch02 { background: linear-gradient(135deg, #f39c12, #e67e22); }
-        .ch03 { background: linear-gradient(135deg, #9b59b6, #8e44ad); }
-        .ch04 { background: linear-gradient(135deg, #3498db, #2980b9); }
-        .ch05 { background: linear-gradient(135deg, #1abc9c, #16a085); }
-        .ch06 { background: linear-gradient(135deg, #e74c3c, #c0392b); }
-        .ch07 { background: linear-gradient(135deg, #f39c12, #d68910); }
-        .ch08 { background: linear-gradient(135deg, #8e44ad, #7d3c98); }
-        .ch09 { background: linear-gradient(135deg, #307e91, #287d8a); }
-        .ch10 { background: linear-gradient(135deg, #2ecc71, #27ae60); }
+        /* 筆記同練習按鈕 */
+        .tools-row {
+            display: flex;
+            gap: 10px;
+        }
         
-        /* Footer */
-        footer {
+        .tool-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
             text-align: center;
-            padding: 20px;
-            color: rgba(255,255,255,0.9);
-            font-size: 0.9em;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
         }
         
-        /* Responsive */
-        @media (max-width: 600px) {
-            header h1 { font-size: 1.8em; }
-            .grade-cards { flex-direction: column; align-items: center; }
-            .chapters-grid { grid-template-columns: repeat(2, 1fr); }
+        .tool-btn.notes {
+            background: #e8f4fd;
+            color: #4A90E2;
+        }
+        
+        .tool-btn.notes:hover {
+            background: #4A90E2;
+            color: white;
+        }
+        
+        .tool-btn.practice {
+            background: #fef5e7;
+            color: #f39c12;
+        }
+        
+        .tool-btn.practice:hover {
+            background: #f39c12;
+            color: white;
+        }
+        
+        .tool-btn.exam {
+            background: #fdf2e9;
+            color: #e74c3c;
+        }
+        
+        .tool-btn.exam:hover {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        /* 特別按鈕 - 考試溫習 */
+        .exam-card {
+            background: linear-gradient(135deg, #fff5f5, #fff);
+            border: 2px solid #ff6b6b;
+        }
+        
+        .exam-card .chapter-num {
+            background: #e74c3c;
+        }
+        
+        .back-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #e9ecef;
+            color: #333;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+        
+        .back-btn:hover {
+            background: #dee2e6;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🎓 <span>Zach's</span> Math Class</h1>
-            <p>中一、中三、中五 數學專門班</p>
+            <h1>📚 少康老師教學網站</h1>
+            <p>選擇你的年級開始學習</p>
         </header>
         
-        <!-- 年級選擇 -->
-        <div class="grade-section">
-            <p class="section-title">你想讀邊個年級？</p>
-            <div class="grade-cards">
-                <a href="#" class="grade-card s1" onclick="showChapters('s1')">
-                    <div class="grade-num">中一</div>
-                    <div>S1</div>
-                </a>
-                <a href="#" class="grade-card s3" onclick="showChapters('s3')">
-                    <div class="grade-num">中三</div>
-                    <div>S3</div>
-                </a>
-                <a href="#" class="grade-card s5" onclick="showChapters('s5')">
-                    <div class="grade-num">中五</div>
-                    <div>S5</div>
-                </a>
-            </div>
+        <!-- 年級按鈕 -->
+        <div class="grade-buttons">
+            <button class="grade-btn grade-s1" onclick="showGrade('s1')">中一</button>
+            <button class="grade-btn grade-s2" onclick="showGrade('s2')">中二</button>
+            <button class="grade-btn grade-s3" onclick="showGrade('s3')">中三</button>
+            <button class="grade-btn grade-s4" onclick="showGrade('s4')">中四</button>
+            <button class="grade-btn grade-s5" onclick="showGrade('s5')">中五</button>
+            <button class="grade-btn grade-s6" onclick="showGrade('s6')">中六</button>
         </div>
         
-        <!-- S1 課題 -->
+        <!-- 中一課題 -->
         <div id="s1-chapters" class="chapters-section">
-            <button class="back-btn" onclick="goBack()">← 返回</button>
-            <h2 style="margin-bottom: 20px;">📗 中一數學 - 選擇課題</h2>
+            <a class="back-btn" onclick="hideGrades()">← 返回年級選擇</a>
+            
             <div class="chapters-grid">
-                <a href="tutor/s1/ch01_basic_operations/index.html" class="chapter-card ch01">
-                    <div class="ch-num">Ch1</div>
-                    <div class="ch-name">基礎運算</div>
-                </a>
-                <a href="tutor/s1/ch02_directed_numbers/index.html" class="chapter-card ch02">
-                    <div class="ch-num">Ch2</div>
-                    <div class="ch-name">有向數</div>
-                </a>
-                <a href="tutor/s1/ch03_algebraic_expressions/index.html" class="chapter-card ch03">
-                    <div class="ch-num">Ch3</div>
-                    <div class="ch-name">代數式</div>
-                </a>
-                <a href="tutor/s1/ch04_linear_equations/index.html" class="chapter-card ch04">
-                    <div class="ch-num">Ch4</div>
-                    <div class="ch-name">方程（一）</div>
-                </a>
-                <a href="tutor/s1/ch05_area_volume/index.html" class="chapter-card ch05">
-                    <div class="ch-num">Ch5</div>
-                    <div class="ch-name">面積與體積</div>
-                </a>
-                <a href="tutor/s1/ch06_polynomials/index.html" class="chapter-card ch06">
-                    <div class="ch-num">Ch6</div>
-                    <div class="ch-name">多項式</div>
-                </a>
-                <a href="tutor/s1/ch07_equations_2/index.html" class="chapter-card ch07">
-                    <div class="ch-num">Ch7</div>
-                    <div class="ch-name">方程（二）</div>
-                </a>
-                <a href="tutor/s1/ch08_quadrilaterals/index.html" class="chapter-card ch08">
-                    <div class="ch-num">Ch8</div>
-                    <div class="ch-name">四邊形</div>
-                </a>
-                <a href="tutor/s1/ch09_congruence_similarity/index.html" class="chapter-card ch09">
-                    <div class="ch-num">Ch9</div>
-                    <div class="ch-name">全等與相似</div>
-                </a>
-                <a href="tutor/s1/ch10_coordinates/index.html" class="chapter-card ch10">
-                    <div class="ch-num">Ch10</div>
-                    <div class="ch-name">坐標幾何</div>
-                </a>
+                <!-- 考試溫習 - 放在最上面 -->
+                <div class="chapter-card exam-card">
+                    <div class="chapter-header">
+                        <div class="chapter-num">📝</div>
+                        <div class="chapter-title">第二學期考試短答題</div>
+                    </div>
+                    <div class="tools-row">
+                        <a href="https://script.google.com/a/macros/lsc.edu.hk/s/A1/exec" target="_blank" class="tool-btn exam">進入工具</a>
+                    </div>
+                </div>
+                
+                <!-- Ch1 基礎運算 -->
+                <div class="chapter-card">
+                    <div class="chapter-header">
+                        <div class="chapter-num">Ch1</div>
+                        <div class="chapter-title">基礎運算</div>
+                    </div>
+                    <div class="tools-row">
+                        <a href="tutor/s1/ch01_basic_operations/index.html" class="tool-btn notes">📖 筆記</a>
+                        <a href="games/Ch1_基礎運算/" class="tool-btn practice">🎮 練習工具</a>
+                    </div>
+                </div>
+                
+                <!-- Ch2 有向數 -->
+                <div class="chapter-card">
+                    <div class="chapter-header">
+                        <div class="chapter-num">Ch2</div>
+                        <div class="chapter-title">有向數</div>
+                    </div>
+                    <div class="tools-row">
+                        <a href="tutor/s1/ch02_directed_numbers/index.html" class="tool-btn notes">📖 筆記</a>
+                        <a href="games/Ch2_有向數/" class="tool-btn practice">🎮 練習工具</a>
+                    </div>
+                </div>
+                
+                <!-- Ch3 代數式 -->
+                <div class="chapter-card">
+                    <div class="chapter-header">
+                        <div class="chapter-num">Ch3</div>
+                        <div class="chapter-title">代數式</div>
+                    </div>
+                    <div class="tools-row">
+                        <a href="tutor/s1/ch03_algebraic_expressions/index.html" class="tool-btn notes">📖 筆記</a>
+                        <a href="games/Ch3_代數式/" class="tool-btn practice">🎮 練習工具</a>
+                    </div>
+                </div>
+                
+                <!-- Ch4 一元一次方程（一） -->
+                <div class="chapter-card">
+                    <div class="chapter-header">
+                        <div class="chapter-num">Ch4</div>
+                        <div class="chapter-title">一元一次方程（一）</div>
+                    </div>
+                    <div class="tools-row">
+                        <a href="tutor/s1/ch04_linear_equations/index.html" class="tool-btn notes">📖 筆記</a>
+                        <a href="#" class="tool-btn practice">🎮 練習工具</a>
+                    </div>
+                </div>
+                
+                <!-- Ch5 面積和體積（一） -->
+                <div class="chapter-card">
+                    <div class="chapter-header">
+                        <div class="chapter-num">Ch5</div>
+                        <div class="chapter-title">面積和體積（一）</div>
+                    </div>
+                    <div class="tools-row">
+                        <a href="tutor/s1/ch05_area_volume/index.html" class="tool-btn notes">📖 筆記</a>
+                        <a href="games/Ch5_面積體積/" class="tool-btn practice">🎮 練習工具</a>
+                    </div>
+                </div>
+                
+                <!-- Ch6 多項式的運算 -->
+                <div class="chapter-card">
+                    <div class="chapter-header">
+                        <div class="chapter-num">Ch6</div>
+                        <div class="chapter-title">多項式的運算</div>
+                    </div>
+                    <div class="tools-row">
+                        <a href="tutor/s1/ch06_polynomials/index.html" class="tool-btn notes">📖 筆記</a>
+                        <a href="games/Ch4_多項式/" class="tool-btn practice">🎮 練習工具</a>
+                    </div>
+                </div>
+                
+                <!-- Ch7 一元一次方程（二） -->
+                <div class="chapter-card">
+                    <div class="chapter-header">
+                        <div class="chapter-num">Ch7</div>
+                        <div class="chapter-title">一元一次方程（二）</div>
+                    </div>
+                    <div class="tools-row">
+                        <a href="tutor/s1/ch07_equations_2/index.html" class="tool-btn notes">📖 筆記</a>
+                        <a href="#" class="tool-btn practice">🎮 練習工具</a>
+                    </div>
+                </div>
+                
+                <!-- Ch10 坐標簡介 -->
+                <div class="chapter-card">
+                    <div class="chapter-header">
+                        <div class="chapter-num">Ch10</div>
+                        <div class="chapter-title">坐標簡介</div>
+                    </div>
+                    <div class="tools-row">
+                        <a href="tutor/s1/ch10_coordinates/index.html" class="tool-btn notes">📖 筆記</a>
+                        <a href="games/Ch10_坐標/" class="tool-btn practice">🎮 練習工具</a>
+                    </div>
+                </div>
             </div>
         </div>
         
-        <!-- S3 課題 -->
+        <!-- 中二課題 (預留) -->
+        <div id="s2-chapters" class="chapters-section">
+            <a class="back-btn" onclick="hideGrades()">← 返回年級選擇</a>
+            <p style="text-align: center; padding: 40px; color: #666;">
+                🚧 中二課題開發中...敬請期待！
+            </p>
+        </div>
+        
+        <!-- 中三課題 (預留) -->
         <div id="s3-chapters" class="chapters-section">
-            <button class="back-btn" onclick="goBack()">← 返回</button>
-            <h2 style="margin-bottom: 20px;">📙 中三數學 - 選擇課題</h2>
-            <p style="color: #666;">中三課題即將推出...</p>
+            <a class="back-btn" onclick="hideGrades()">← 返回年級選擇</a>
+            <p style="text-align: center; padding: 40px; color: #666;">
+                🚧 中三課題開發中...敬請期待！
+            </p>
         </div>
         
-        <!-- S5 課題 -->
+        <!-- 中四課題 (預留) -->
+        <div id="s4-chapters" class="chapters-section">
+            <a class="back-btn" onclick="hideGrades()">← 返回年級選擇</a>
+            <p style="text-align: center; padding: 40px; color: #666;">
+                🚧 中四課題開發中...敬請期待！
+            </p>
+        </div>
+        
+        <!-- 中五課題 (預留) -->
         <div id="s5-chapters" class="chapters-section">
-            <button class="back-btn" onclick="goBack()">← 返回</button>
-            <h2 style="margin-bottom: 20px;">📕 中五數學 - 選擇課題</h2>
-            <p style="color: #666;">中五課題即將推出...</p>
+            <a class="back-btn" onclick="hideGrades()">← 返回年級選擇</a>
+            <p style="text-align: center; padding: 40px; color: #666;">
+                🚧 中五課題開發中...敬請期待！
+            </p>
         </div>
         
-        <footer>
-            <p>📧 zach@school.edu.hk | 🎓 Zach's Math Class</p>
-        </footer>
+        <!-- 中六課題 (預留) -->
+        <div id="s6-chapters" class="chapters-section">
+            <a class="back-btn" onclick="hideGrades()">← 返回年級選擇</a>
+            <p style="text-align: center; padding: 40px; color: #666;">
+                🚧 中六課題開發中...敬請期待！
+            </p>
+        </div>
+        
     </div>
     
     <script>
-        function showChapters(grade) {
+        function showGrade(grade) {
+            // 隱藏所有課題區
+            document.querySelectorAll('.chapters-section').forEach(el => {
+                el.classList.remove('active');
+            });
+            
+            // 顯示選擇既課題區
             document.getElementById(grade + '-chapters').classList.add('active');
-            window.scrollTo({ top: 200, behavior: 'smooth' });
+            
+            // 更新按鈕狀態
+            document.querySelectorAll('.grade-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector('.grade-' + grade).classList.add('active');
         }
         
-        function goBack() {
-            document.querySelectorAll('.chapters-section').forEach(s => s.classList.remove('active'));
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+        function hideGrades() {
+            // 隱藏所有課題區
+            document.querySelectorAll('.chapters-section').forEach(el => {
+                el.classList.remove('active');
+            });
+            
+            // 清除按鈕狀態
+            document.querySelectorAll('.grade-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
         }
     </script>
 </body>

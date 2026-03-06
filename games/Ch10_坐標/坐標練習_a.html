@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中一坐標幾何練習</title>
+    <style>
+        :root { --primary: #2c3e50; --accent: #3498db; --bg: #ecf0f1; --white: #ffffff; }
+        body { font-family: "Microsoft JhengHei", -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); margin: 0; padding: 10px; display: flex; justify-content: center; }
+        #app { max-width: 480px; width: 100%; background: var(--white); border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); overflow: hidden; display: flex; flex-direction: column; min-height: 80vh; }
+        
+        /* 通用按鈕樣式 */
+        .btn { border: none; padding: 12px; border-radius: 8px; font-size: 16px; cursor: pointer; transition: 0.2s; width: 100%; margin-bottom: 8px; font-weight: bold; }
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-warning { background: #f39c12; color: white; }
+        .btn-outline { background: transparent; border: 2px solid #bdc3c7; color: #7f8c8d; }
+        .btn-home { background: #95a5a6; color: white; margin-top: 10px; }
+        
+        /* 布局與隱藏 */
+        .hidden { display: none !important; }
+        .screen { padding: 20px; flex: 1; display: flex; flex-direction: column; }
+        
+        /* 首頁 */
+        #menu h2 { color: var(--primary); text-align: center; margin-bottom: 10px; }
+        #menu .desc { text-align: center; color: #7f8c8d; margin-bottom: 30px; font-size: 14px; }
+
+        /* 遊戲區 */
+        .top-bar { display: flex; justify-content: space-between; font-size: 14px; font-weight: bold; color: #34495e; background: #f8f9fa; padding: 10px 20px; border-bottom: 1px solid #eee; }
+        #canvas-container { margin: 15px 0; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; background: #fff; }
+        canvas { display: block; width: 100%; height: 250px; }
+        .q-text { font-size: 16px; margin-bottom: 15px; line-height: 1.6; color: #2c3e50; }
+        input[type="number"], input[type="text"] { width: 100%; padding: 12px; border: 2px solid #bdc3c7; border-radius: 8px; font-size: 18px; box-sizing: border-box; margin-bottom: 10px; }
+        input:focus { border-color: var(--accent); outline: none; }
+
+        /* 歷史紀錄表格 */
+        .history-summary { background: #f1f2f6; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
+        .history-summary p { margin: 5px 0; font-weight: bold; color: #2c3e50; }
+        .table-wrap { overflow-x: auto; margin-bottom: 15px; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 300px; }
+        th { background: #34495e; color: white; padding: 8px; text-align: left; }
+        td { border-bottom: 1px solid #eee; padding: 8px; color: #555; }
+        tr.wrong-answer { background-color: #ffebee; }
+        tr.wrong-answer td { color: #c0392b; }
+        .tag { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-right: 4px; }
+        .tag-area { background: #e1f5fe; color: #0288d1; }
+        .tag-peri { background: #f3e5f5; color: #7b1fa2; }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <div id="menu" class="screen">
+        <h2>坐標幾何挑戰</h2>
+        <p class="desc">中一數學：計算水平/垂直距離、周界與面積</p>
+        
+        <button class="btn btn-primary" onclick="initGame('mc')">模式 A：多項選擇題</button>
+        <button class="btn btn-primary" onclick="initGame('input')">模式 B：數字填充題</button>
+        <button class="btn btn-primary" onclick="initGame('unit')">模式 C：題解 (含單位)</button>
+    </div>
+
+    <div id="game" class="screen hidden" style="padding:0">
+        <div class="top-bar">
+            <span id="round-info">第 1 輪</span>
+            <span id="progress-info">題目 1/10</span>
+            <span id="score-info">得分 0</span>
+        </div>
+        <div style="padding: 20px;">
+            <div id="canvas-container">
+                <canvas id="geoCanvas"></canvas>
+            </div>
+            <div class="q-text" id="question-desc"></div>
+            
+            <div id="input-area-mc" class="hidden"></div>
+            
+            <div id="input-area-text" class="hidden">
+                <input type="text" id="user-input" placeholder="輸入答案" autocomplete="off">
+                <button class="btn btn-success" onclick="submitAnswer()">提交答案</button>
+            </div>
+
+            <button class="btn btn-outline btn-home" onclick="goHome()">回到首頁</button>
+        </div>
+    </div>
+
+    <div id="history" class="screen hidden">
+        <h2 style="text-align:center; margin-top:0">本輪成績單</h2>
+        
+        <div class="history-summary">
+            <p id="res-round">第 1 輪結算</p>
+            <p id="res-score" style="font-size: 1.2em; color: var(--accent);">得分：8 / 10</p>
+            <p id="res-msg" style="font-size: 0.9em; color: #7f8c8d;">做得不錯！</p>
+        </div>
+
+        <div class="table-wrap">
+            <table id="history-table">
+                <thead>
+                    <tr>
+                        <th>圖形/題型</th>
+                        <th>正確</th>
+                        <th>你的</th>
+                    </tr>
+                </thead>
+                <tbody id="history-body"></tbody>
+            </table>
+        </div>
+
+        <button class="btn btn-success" onclick="startNextRound()">再做 10 題 (新題目)</button>
+        <button id="btn-redo" class="btn btn-warning hidden" onclick="startRedo()">重做錯題 (<span id="wrong-count">0</span>題)</button>
+        <button class="btn btn-outline btn-home" onclick="goHome()">回到首頁</button>
+    </div>
+</div>
+
+<script>
+/** 遊戲狀態變數 */
+const state = {
+    mode: 'mc',        // mc, input, unit
+    round: 1,          // 輪次
+    qIndex: 0,         // 當前題號 (0-9)
+    score: 0,
+    questions: [],     // 本輪題目
+    logs: [],          // 本輪答題紀錄
+    mistakes: [],      // 錯題庫 (用於重做)
+    isRedoMode: false, // 是否處於重做模式
+    currentQ: null     // 當前題目物件
+};
+
+const shapes = ['長方形', '三角形', '平行四邊形', '梯形'];
+
+// 初始化遊戲
+function initGame(mode) {
+    state.mode = mode;
+    state.round = 1;
+    state.mistakes = [];
+    startRound(false);
+}
+
+// 開始新的一輪 (正常模式或重做模式)
+function startRound(isRedo) {
+    state.isRedoMode = isRedo;
+    state.qIndex = 0;
+    state.score = 0;
+    state.logs = [];
+    
+    // 切換畫面
+    showScreen('game');
+
+    if (isRedo) {
+        // 重做模式：題目來自錯題庫
+        state.questions = [...state.mistakes];
+        state.mistakes = []; // 清空錯題庫，準備存入"重做時又錯"的題目
+    } else {
+        // 正常模式：生成 10 題新題目
+        state.questions = [];
+        for(let i=0; i<10; i++) state.questions.push(generateQuestion());
+    }
+
+    renderHeader();
+    loadQuestion();
+}
+
+// 產生題目邏輯
+function generateQuestion() {
+    const type = shapes[Math.floor(Math.random() * shapes.length)];
+    const isArea = Math.random() > 0.5;
+    
+    // 限制在第一象限，數值範圍 1-9，確保圖形不會太大
+    let x = Math.floor(Math.random() * 5 + 1);
+    let y = Math.floor(Math.random() * 5 + 1);
+    let w = Math.floor(Math.random() * 5 + 3); // 寬度 3-7
+    let h = Math.floor(Math.random() * 4 + 3); // 高度 3-6
+    
+    let pts = [], ans = 0, target = isArea ? "面積" : "周界";
+    
+    if (type === '長方形') {
+        pts = [[x,y], [x+w,y], [x+w,y+h], [x,y+h]];
+        ans = isArea ? w*h : (w+h)*2;
+    } else if (type === '三角形') {
+        // 為了方便中一計算，設定為直角三角形或底邊水平
+        pts = [[x,y], [x+w,y], [x,y+h]];
+        // 周界需計算斜邊 (毕氏定理)，面積 = 底*高/2
+        ans = isArea ? (w*h)/2 : (w + h + Math.sqrt(w*w + h*h));
+    } else if (type === '平行四邊形') {
+        let s = 2; // 偏移量
+        pts = [[x,y], [x+w,y], [x+w+s,y+h], [x+s,y+h]];
+        ans = isArea ? w*h : (w + Math.sqrt(s*s+h*h))*2;
+    } else if (type === '梯形') {
+        let topW = w - 2;
+        pts = [[x,y], [x+w,y], [x+topW,y+h], [x+(w-topW),y+h]]; // 簡化梯形
+        // 重新調整頂點確保是梯形
+        pts = [[x,y], [x+w,y], [x+w-1,y+h], [x+1,y+h]];
+        let b_top = w-2;
+        ans = isArea ? ((w + b_top)*h)/2 : (w + b_top + Math.sqrt(1+h*h)*2);
+    }
+    
+    return {
+        type, pts, isArea, target,
+        ans: parseFloat(ans.toFixed(1)), // 取一位小數
+        unit: isArea ? "cm²" : "cm"
+    };
+}
+
+// 載入題目到 UI
+function loadQuestion() {
+    if (state.qIndex >= state.questions.length) {
+        showHistory();
+        return;
+    }
+
+    state.currentQ = state.questions[state.qIndex];
+    
+    // 更新頂部資訊
+    document.getElementById('progress-info').innerText = `題目 ${state.qIndex + 1}/${state.questions.length}`;
+    document.getElementById('score-info').innerText = `得分 ${state.score}`;
+    
+    // 繪圖
+    drawShape(state.currentQ.pts);
+    
+    // 題目描述
+    let coordText = state.currentQ.pts.map(p => `(${p[0]},${p[1]})`).join(', ');
+    document.getElementById('question-desc').innerHTML = 
+        `圖形：<b>${state.currentQ.type}</b><br>` +
+        `坐標：${coordText}<br>` +
+        `求此圖形的 <span class="tag ${state.currentQ.isArea?'tag-area':'tag-peri'}">${state.currentQ.target}</span>`;
+
+    // 重置輸入區
+    const mcArea = document.getElementById('input-area-mc');
+    const textArea = document.getElementById('input-area-text');
+    const inputField = document.getElementById('user-input');
+    
+    mcArea.classList.add('hidden');
+    textArea.classList.add('hidden');
+    inputField.value = '';
+
+    if (state.mode === 'mc') {
+        mcArea.classList.remove('hidden');
+        mcArea.innerHTML = '';
+        generateOptions(state.currentQ).forEach(opt => {
+            let btn = document.createElement('button');
+            btn.className = 'btn btn-outline';
+            btn.innerText = opt;
+            btn.onclick = () => checkAnswer(opt);
+            mcArea.appendChild(btn);
+        });
+    } else {
+        textArea.classList.remove('hidden');
+        inputField.placeholder = state.mode === 'unit' ? `例如: ${state.currentQ.ans}${state.currentQ.unit}` : '請輸入數字';
+        inputField.type = state.mode === 'unit' ? 'text' : 'number';
+    }
+}
+
+// 產生選擇題選項
+function generateOptions(q) {
+    let opts = new Set();
+    opts.add(q.ans);
+    while(opts.size < 4) {
+        let wrong = q.ans + Math.floor(Math.random() * 10 - 5);
+        if(wrong > 0 && wrong !== q.ans) opts.add(parseFloat(wrong.toFixed(1)));
+    }
+    return Array.from(opts).sort(() => Math.random() - 0.5);
+}
+
+// 提交答案 (文本模式)
+function submitAnswer() {
+    let val = document.getElementById('user-input').value.trim();
+    if(!val) return;
+    checkAnswer(val);
+}
+
+// 檢查答案
+function checkAnswer(userAns) {
+    let isCorrect = false;
+    let correctStr = state.currentQ.ans + (state.mode === 'unit' ? state.currentQ.unit : '');
+    
+    // 格式化用戶答案以進行比對
+    let compareUser = String(userAns).replace(/\s/g, '').toLowerCase();
+    let compareCorrect = String(correctStr).toLowerCase();
+
+    if (state.mode === 'mc' || state.mode === 'input') {
+        // 數字比對
+        isCorrect = Math.abs(parseFloat(compareUser) - state.currentQ.ans) < 0.1;
+    } else {
+        // 單位比對
+        isCorrect = compareUser === compareCorrect;
+    }
+
+    // 記錄結果
+    if (isCorrect) {
+        state.score++;
+    } else {
+        // 答錯，加入錯題庫 (為了下一輪重做)
+        state.mistakes.push(state.currentQ);
+    }
+
+    state.logs.push({
+        q: state.currentQ,
+        user: userAns,
+        correct: correctStr,
+        isCorrect: isCorrect
+    });
+
+    state.qIndex++;
+    loadQuestion();
+}
+
+// 繪圖 Canvas
+function drawShape(pts) {
+    const canvas = document.getElementById('geoCanvas');
+    const ctx = canvas.getContext('2d');
+    // 設置適當的解析度
+    const rect = canvas.parentNode.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = 250;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // 計算縮放
+    const padding = 40;
+    const cw = canvas.width;
+    const ch = canvas.height;
+    const step = (Math.min(cw, ch) - padding*2) / 10; 
+
+    // 畫網格
+    ctx.strokeStyle = '#f0f0f0';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for(let i=0; i<=12; i++) {
+        let p = padding + i*step;
+        // 垂直線
+        ctx.moveTo(p, 0); ctx.lineTo(p, ch);
+        // 水平線
+        ctx.moveTo(0, ch - p); ctx.lineTo(cw, ch - p);
+    }
+    ctx.stroke();
+
+    // 畫圖形
+    ctx.beginPath();
+    pts.forEach((p, i) => {
+        let x = padding + p[0]*step;
+        let y = ch - (padding + p[1]*step);
+        if(i===0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+    });
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(52, 152, 219, 0.15)';
+    ctx.fill();
+    ctx.strokeStyle = '#2980b9';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // 標示坐標點
+    ctx.fillStyle = '#2c3e50';
+    ctx.font = '12px Arial';
+    pts.forEach(p => {
+        let x = padding + p[0]*step;
+        let y = ch - (padding + p[1]*step);
+        ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI*2); ctx.fill();
+        ctx.fillText(`(${p[0]},${p[1]})`, x+5, y-5);
+    });
+}
+
+// 顯示歷史結算畫面
+function showHistory() {
+    showScreen('history');
+    
+    const totalQ = state.questions.length;
+    document.getElementById('res-round').innerText = state.isRedoMode ? `重做錯題結算` : `第 ${state.round} 輪結算`;
+    document.getElementById('res-score').innerText = `得分：${state.score} / ${totalQ}`;
+    
+    let msg = "";
+    if (state.score === totalQ) msg = "太棒了！全對！🎉";
+    else if (state.score >= totalQ * 0.6) msg = "成績不錯，繼續加油！💪";
+    else msg = "別氣餒，再試一次！🔥";
+    document.getElementById('res-msg').innerText = msg;
+
+    // 表格內容
+    const tbody = document.getElementById('history-body');
+    tbody.innerHTML = '';
+    state.logs.forEach(log => {
+        let tr = document.createElement('tr');
+        if (!log.isCorrect) tr.className = 'wrong-answer';
+        tr.innerHTML = `
+            <td>
+                <span class="tag ${log.q.isArea?'tag-area':'tag-peri'}">${log.q.target}</span><br>
+                ${log.q.type}
+            </td>
+            <td>${log.correct}</td>
+            <td>${log.user} ${log.isCorrect ? '✅' : '❌'}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    // 重做按鈕控制
+    const redoBtn = document.getElementById('btn-redo');
+    if (state.mistakes.length > 0) {
+        redoBtn.classList.remove('hidden');
+        document.getElementById('wrong-count').innerText = state.mistakes.length;
+    } else {
+        redoBtn.classList.add('hidden');
+    }
+}
+
+// 下一輪 (新題目)
+function startNextRound() {
+    if (!state.isRedoMode) state.round++;
+    startRound(false);
+}
+
+// 重做錯題
+function startRedo() {
+    startRound(true);
+}
+
+// 回到首頁
+function goHome() {
+    if(confirm("確定要回到首頁嗎？當前的進度將會重置。")) {
+        showScreen('menu');
+    }
+}
+
+// 畫面切換輔助
+function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(el => el.classList.add('hidden'));
+    document.getElementById(id).classList.remove('hidden');
+}
+
+// 更新 Header
+function renderHeader() {
+    let title = state.isRedoMode ? "重做錯題" : `第 ${state.round} 輪`;
+    document.getElementById('round-info').innerText = title;
+}
+
+</script>
+</body>
+</html>
