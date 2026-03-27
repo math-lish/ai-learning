@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Learning</title>
+    <script>
+        function renderExtendedList(data) {
+            const listContainer = document.getElementById('extended-list');
+            listContainer.innerHTML = '';
+            data.forEach(item => {
+                const listItem = document.createElement('li');
+                listItem.textContent = item;
+                listContainer.appendChild(listItem);
+            });
+        }
+    </script>
+</head>
+<body>
+    <header>
+        <h1>Welcome to AI Learning!</h1>
+    </header>
+    <main>
+        <section id="homework-extended-list">
+            <h2>Homework Extended List</h2>
+            <ul id="extended-list"></ul>
+        </section>
+    </main>
+</body>
+</html>
